@@ -24,7 +24,8 @@ const credentialsSchema = z.object({
 });
 
 export const authConfig = {
-  adapter: PrismaAdapter(db),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+  adapter: PrismaAdapter(db as any),
 
   providers: [
     /**
