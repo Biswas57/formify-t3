@@ -4,7 +4,7 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, AlertCircle, Mic } from "lucide-react";
 
 function LoginForm() {
     const router = useRouter();
@@ -81,9 +81,14 @@ function LoginForm() {
                 {/* Logo */}
                 <div className="relative z-10">
                     <Link href="/">
-                        <span className="text-3xl font-extrabold tracking-tight text-white italic">
-                            Formify
-                        </span>
+                        <div className="flex items-center gap-2.5 animate-fade-in">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                                <Mic className="w-6 h-6 text-white" />
+                            </div>
+                            <span className="text-3xl font-extrabold tracking-tight text-white">
+                                Formify
+                            </span>
+                        </div>
                     </Link>
                 </div>
 

@@ -33,8 +33,10 @@ export default function HomePage() {
       <header className="border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50 animate-slide-down">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5 animate-fade-in">
-            <img src="/favicon.svg" alt="Formify logo" className="w-8 h-8" />
-            <span className="text-xl sm:text-2xl font-bold text-gray-900">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <Mic className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-3xl font-extrabold tracking-tight text-black">
               Formify
             </span>
           </div>

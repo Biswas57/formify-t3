@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, CheckCircle2, AlertCircle, Mic } from "lucide-react";
 
 interface PasswordStrength {
     score: number;        // 0-4
@@ -142,9 +142,14 @@ export default function RegisterPage() {
 
                 <div className="relative z-10">
                     <Link href="/">
-                        <span className="text-3xl font-extrabold tracking-tight text-white italic">
-                            Formify
-                        </span>
+                        <div className="flex items-center gap-2.5 animate-fade-in">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                                <Mic className="w-6 h-6 text-white" />
+                            </div>
+                            <span className="text-3xl font-extrabold tracking-tight text-white">
+                                Formify
+                            </span>
+                        </div>
                     </Link>
                 </div>
 
@@ -310,10 +315,10 @@ export default function RegisterPage() {
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="Re-enter your password"
                                     className={`w-full border rounded-lg px-4 py-3 pr-12 text-slate-900 placeholder-[#848494] outline-none transition-all duration-200 bg-white focus:ring-2 ${confirmPassword && !passwordsMatch
-                                            ? "border-red-400 focus:border-red-400 focus:ring-red-200"
-                                            : passwordsMatch
-                                                ? "border-emerald-400 focus:border-emerald-400 focus:ring-emerald-200"
-                                                : "border-slate-300 focus:border-[#2149A1] focus:ring-[#2149A1]/20"
+                                        ? "border-red-400 focus:border-red-400 focus:ring-red-200"
+                                        : passwordsMatch
+                                            ? "border-emerald-400 focus:border-emerald-400 focus:ring-emerald-200"
+                                            : "border-slate-300 focus:border-[#2149A1] focus:ring-[#2149A1]/20"
                                         }`}
                                 />
                                 <button
