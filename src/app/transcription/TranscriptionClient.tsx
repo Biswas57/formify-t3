@@ -6,8 +6,11 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import {
     Mic, Square, Wifi, WifiOff, RotateCcw, ChevronDown,
-    Pencil, Check, AlertCircle, RefreshCw, Loader2
+    Pencil, Check, AlertCircle, RefreshCw, Loader2,
+    Download, Mail, X
 } from "lucide-react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,6 +89,14 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const [editedValues, setEditedValues] = useState<Record<string, string>>({});
     const [isEditing, setIsEditing] = useState(false);
 
+    // Export features
+    const formContainerRef = useRef<HTMLDivElement>(null);
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [emailOption, setEmailOption] = useState<"self" | "custom">("self");
+    const [customEmail, setCustomEmail] = useState("");
+    const [isSendingEmail, setIsSendingEmail] = useState(false);
+    const [emailStatus, setEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
     // Derived
     const blocks = parseBlocks(templateRaw);
     const allFields = Object.values(blocks).flat();
@@ -102,7 +113,13 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
     const { data: preloadedTemplate } = api.template.get.useQuery(
         { id: templateId! },
-        { enabled: !!templateId }
+        {
+            enabled: !!templateId,
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
+            staleTime: Infinity, // Template won't change during the session
+        }
     );
 
     useEffect(() => {
@@ -140,26 +157,41 @@ export default function TranscriptionClient({ user }: { user: User }) {
         if (wsRef.current?.readyState === WebSocket.OPEN) return;
         setWsStatus("connecting");
         setWsError(null);
+        console.log("[Formify] WebSocket connecting to:", getWSUrl());
 
         const ws = new WebSocket(getWSUrl());
         ws.binaryType = "arraybuffer";
         wsRef.current = ws;
 
+        // Timeout to detect if connection truly fails
+        const connectionTimeout = setTimeout(() => {
+            if (ws.readyState !== WebSocket.OPEN) {
+                console.error("[Formify] WebSocket connection timeout");
+                setWsStatus("error");
+                setWsError("Could not connect to the transcription server. Make sure it is running and try again.");
+                ws.close();
+            }
+        }, 3000); // 3 second timeout
+
         ws.onopen = () => {
+            clearTimeout(connectionTimeout);
             setWsStatus("connected");
+            setWsError(null); // Clear any previous errors
             console.log("[Formify] WebSocket connected");
         };
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
+            clearTimeout(connectionTimeout);
             setWsStatus("disconnected");
             blocksReadyRef.current = false;
             setBlocksReady(false);
-            console.log("[Formify] WebSocket disconnected");
+            console.log("[Formify] WebSocket disconnected", event.code, event.reason);
         };
 
         ws.onerror = () => {
-            setWsStatus("error");
-            setWsError("Could not connect to the transcription server. Make sure it is running and try again.");
+            // Don't set error state or log here - let the timeout handle it
+            // WebSocket onerror fires even on successful connections, causing false positives
+            // The connectionTimeout will catch true connection failures
         };
 
         ws.onmessage = (ev: MessageEvent) => {
@@ -282,6 +314,107 @@ export default function TranscriptionClient({ user }: { user: User }) {
         blocksReadyRef.current = false;
         setBlocksReady(false);
         sendBlocks();
+    };
+
+    // ── PDF Export ────────────────────────────────────────────────────────────
+
+    const handleSavePDF = async () => {
+        if (!formContainerRef.current) return;
+
+        try {
+            // Create a clean version of the form for PDF
+            const canvas = await html2canvas(formContainerRef.current, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                logging: false,
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4',
+            });
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+            const imgX = (pdfWidth - imgWidth * ratio) / 2;
+            const imgY = 10;
+
+            pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+            pdf.save(`${formTitle.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (error) {
+            console.error('PDF generation error:', error);
+            alert('Failed to generate PDF. Please try again.');
+        }
+    };
+
+    // ── Email Export ──────────────────────────────────────────────────────────
+
+    const handleSendEmail = async () => {
+        setIsSendingEmail(true);
+        setEmailStatus(null);
+
+        const recipientEmail = emailOption === "self" ? user.email : customEmail;
+
+        if (!recipientEmail) {
+            setEmailStatus({ type: "error", message: "No email address available" });
+            setIsSendingEmail(false);
+            return;
+        }
+
+        try {
+            // Generate form data as HTML for email body
+            const formHTML = Object.entries(blocks)
+                .map(([blockName, fields]) => `
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #2149A1; font-size: 14px; font-weight: 600; margin-bottom: 10px;">${blockName}</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            ${fields.map(field => `
+                                <tr>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: 500; color: #6b7280; width: 40%;">${field}</td>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; color: #111827;">${attributes[field] || '—'}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
+                `).join('');
+
+            const response = await fetch('/api/send-form-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: recipientEmail,
+                    formTitle,
+                    formHTML,
+                    formData: attributes,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to send email');
+            }
+
+            setEmailStatus({ type: "success", message: `Email sent successfully to ${recipientEmail}` });
+            setTimeout(() => {
+                setShowEmailModal(false);
+                setEmailStatus(null);
+                setCustomEmail("");
+            }, 2000);
+        } catch (error) {
+            console.error('Email send error:', error);
+            setEmailStatus({
+                type: "error",
+                message: error instanceof Error ? error.message : 'Failed to send email'
+            });
+        } finally {
+            setIsSendingEmail(false);
+        }
     };
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -431,6 +564,28 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         )
                     )}
 
+                    {/* PDF Export — only show when paused */}
+                    {isPaused && (
+                        <button
+                            onClick={handleSavePDF}
+                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            Save as PDF
+                        </button>
+                    )}
+
+                    {/* Email Export — only show when paused */}
+                    {isPaused && (
+                        <button
+                            onClick={() => setShowEmailModal(true)}
+                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200"
+                        >
+                            <Mail className="w-3.5 h-3.5" />
+                            Email Form
+                        </button>
+                    )}
+
                     {/* Reset — only show once something has happened */}
                     {(isPaused || isRecording) && (
                         <button
@@ -444,7 +599,19 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 </div>
 
                 {/* ── Form blocks ── */}
-                <div className="space-y-5">
+                <div ref={formContainerRef} className="space-y-5">
+                    {/* Form Title for PDF */}
+                    <div className="mb-4">
+                        <h2 className="text-2xl font-bold text-slate-900">{formTitle}</h2>
+                        <p className="text-sm text-slate-500 mt-1">
+                            {new Date().toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            })}
+                        </p>
+                    </div>
+
                     {Object.entries(blocks).map(([blockName, fields]) => (
                         <div key={blockName} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                             {/* Block header */}
@@ -534,6 +701,113 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     Not saved — refreshing this page will clear the form.
                 </p>
             </div>
+
+            {/* ── Email Modal ── */}
+            {showEmailModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-slate-900">Email Form</h3>
+                            <button
+                                onClick={() => {
+                                    setShowEmailModal(false);
+                                    setEmailStatus(null);
+                                    setCustomEmail("");
+                                }}
+                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {emailStatus && (
+                            <div className={`mb-4 p-3 rounded-lg text-sm ${emailStatus.type === "success"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-red-50 text-red-700 border border-red-200"
+                                }`}>
+                                {emailStatus.message}
+                            </div>
+                        )}
+
+                        {/* Testing Notice */}
+                        <div className="mb-4 p-3 rounded-lg text-xs bg-blue-50 text-blue-700 border border-blue-200">
+                            <p className="font-medium mb-1">📧 Testing Mode</p>
+                            <p>Without domain verification, use <code className="bg-blue-100 px-1 py-0.5 rounded font-mono">biswas.simk@gmail.com</code> to test emails.</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="emailOption"
+                                        checked={emailOption === "self"}
+                                        onChange={() => setEmailOption("self")}
+                                        className="w-4 h-4 text-[#2149A1]"
+                                    />
+                                    <span className="text-sm text-slate-700">
+                                        Send to my email ({user.email ?? "No email"})
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div>
+                                <label className="flex items-center gap-2 cursor-pointer mb-2">
+                                    <input
+                                        type="radio"
+                                        name="emailOption"
+                                        checked={emailOption === "custom"}
+                                        onChange={() => setEmailOption("custom")}
+                                        className="w-4 h-4 text-[#2149A1]"
+                                    />
+                                    <span className="text-sm text-slate-700">
+                                        Send to custom email
+                                    </span>
+                                </label>
+                                {emailOption === "custom" && (
+                                    <input
+                                        type="email"
+                                        value={customEmail}
+                                        onChange={(e) => setCustomEmail(e.target.value)}
+                                        placeholder="recipient@example.com"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1]"
+                                    />
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => {
+                                    setShowEmailModal(false);
+                                    setEmailStatus(null);
+                                    setCustomEmail("");
+                                }}
+                                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSendEmail}
+                                disabled={isSendingEmail || (emailOption === "custom" && !customEmail)}
+                                className="flex-1 px-4 py-2 bg-[#2149A1] text-white rounded-lg hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                            >
+                                {isSendingEmail ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Sending...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Mail className="w-4 h-4" />
+                                        Send Email
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
