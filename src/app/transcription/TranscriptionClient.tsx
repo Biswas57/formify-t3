@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { formatFieldLabel } from "@/lib/format-field-label";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -375,7 +376,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         <table style="width: 100%; border-collapse: collapse;">
                             ${fields.map(field => `
                                 <tr>
-                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: 500; color: #6b7280; width: 40%;">${field}</td>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: 500; color: #6b7280; width: 40%;">${formatFieldLabel(field)}</td>
                                     <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; color: #111827;">${attributes[field] ?? '—'}</td>
                                 </tr>
                             `).join('')}
@@ -631,8 +632,8 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
                                     return (
                                         <div key={field}>
-                                            <label className="block text-xs font-medium text-[#868C94] mb-1.5 capitalize">
-                                                {field}
+                                            <label className="block text-xs font-medium text-[#868C94] mb-1.5">
+                                                {formatFieldLabel(field)}
                                             </label>
                                             <input
                                                 type="text"
