@@ -1,7 +1,7 @@
 import { api } from "@/trpc/server";
 import TemplateBuilder from "../TemplateBuilder";
 
-export const metadata = { title: "New Template — Formify" };
+export const metadata = { title: "Formify" };
 
 export default async function NewTemplatePage() {
     const library = await api.block.listLibrary();

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
-import DashboardSidebar from "./DashboardSidebar";
+import DashboardHeader from "./DashboardHeader";
 
 export default async function DashboardLayout({
     children,
@@ -11,8 +11,8 @@ export default async function DashboardLayout({
     if (!session?.user) redirect("/login");
 
     return (
-        <div className="min-h-screen bg-[#FBFBFB] flex">
-            <DashboardSidebar user={session.user} />
+        <div className="min-h-screen bg-[#FBFBFB] flex flex-col">
+            <DashboardHeader user={session.user} />
             <main className="flex-1 min-w-0 flex flex-col">{children}</main>
         </div>
     );

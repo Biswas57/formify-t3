@@ -2,7 +2,7 @@ import { api } from "@/trpc/server";
 import { EXAMPLE_TEMPLATES, SYSTEM_BLOCKS } from "@/server/blocks-library";
 import TemplateList from "./TemplateList";
 
-export const metadata = { title: "Form Bank — Formify" };
+export const metadata = { title: "Formify" };
 
 export default async function TemplatesPage() {
     const templates = await api.template.list();

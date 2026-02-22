@@ -3,7 +3,7 @@ import { db } from "@/server/db";
 import { redirect } from "next/navigation";
 import ProfileClient from "./ProfileClient";
 
-export const metadata = { title: "Profile — Formify" };
+export const metadata = { title: "Formify" };
 
 export default async function ProfilePage() {
     const session = await auth();

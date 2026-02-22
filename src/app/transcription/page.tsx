@@ -4,7 +4,7 @@ import { auth } from "@/server/auth";
 import TranscriptionClient from "./TranscriptionClient";
 
 export const metadata = {
-    title: "Recording — Formify",
+    title: "Formify",
 };
 
 export default async function TranscriptionPage() {

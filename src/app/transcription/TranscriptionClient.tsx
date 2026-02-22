@@ -51,7 +51,7 @@ function parseBlocks(raw: string): Record<string, string[]> {
 }
 
 function getWSUrl(): string {
-    return process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:5551";
+    return process.env.NEXT_PUBLIC_WS_URL ?? "wss://formify-transcription-server.onrender.com";
 }
 
 const SUPPORTED_MIME =
@@ -429,7 +429,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
             {/* ── Header ── */}
             <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
                 <div className="container mx-auto px-4 py-3.5 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2.5">
+                    <Link href="/dashboard" className="flex items-center gap-2.5">
                         <div className="flex items-center gap-2.5 animate-fade-in">
                             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
                                 <Mic className="w-6 h-6 text-white" />
@@ -467,14 +467,14 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         </div>
 
                         {/* User */}
-                        <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+                        <Link href="/dashboard/profile" className="flex items-center gap-2 pl-3 border-l border-slate-200 hover:opacity-80 transition-opacity">
                             <div className="w-7 h-7 rounded-full bg-[#2149A1] flex items-center justify-center text-xs font-bold text-white">
                                 {user.name?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? "?"}
                             </div>
                             <span className="text-sm text-[#868C94] hidden sm:block">
                                 {user.name ?? user.email}
                             </span>
-                        </div>
+                        </Link>
                     </div>
                 </div>
             </header>
