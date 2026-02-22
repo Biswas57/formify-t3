@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { FileText, User, Menu, X, LogOut, Mic } from "lucide-react";
+import { FileText, User, Menu, X, LogOut } from "lucide-react";
 
 interface SidebarUser {
     name?: string | null;

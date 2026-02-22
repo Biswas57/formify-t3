@@ -376,7 +376,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                             ${fields.map(field => `
                                 <tr>
                                     <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: 500; color: #6b7280; width: 40%;">${field}</td>
-                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; color: #111827;">${attributes[field] || '—'}</td>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; color: #111827;">${attributes[field] ?? '—'}</td>
                                 </tr>
                             `).join('')}
                         </table>
@@ -394,10 +394,11 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 }),
             });
 
-            const result = await response.json();
+            const result = (await response.json()) as { error?: unknown };
 
             if (!response.ok) {
-                throw new Error(result.error || 'Failed to send email');
+                const errorMsg = typeof result.error === 'string' ? result.error : 'Failed to send email';
+                throw new Error(errorMsg);
             }
 
             setEmailStatus({ type: "success", message: `Email sent successfully to ${recipientEmail}` });
@@ -408,9 +409,10 @@ export default function TranscriptionClient({ user }: { user: User }) {
             }, 2000);
         } catch (error) {
             console.error('Email send error:', error);
+            const errorMessage = error instanceof Error ? error.message ?? 'Failed to send email' : 'Failed to send email';
             setEmailStatus({
                 type: "error",
-                message: error instanceof Error ? error.message : 'Failed to send email'
+                message: errorMessage
             });
         } finally {
             setIsSendingEmail(false);

@@ -114,11 +114,6 @@ export default function TemplateList({ initialTemplates, exampleTemplates, syste
         createFromExample.mutate({ name: ex.name, blocks });
     };
 
-    const formatDate = (d: Date) =>
-        new Date(d).toLocaleDateString("en-AU", {
-            day: "numeric", month: "short", year: "numeric",
-        });
-
     return (
         <div>
             {/* Header */}
@@ -251,7 +246,6 @@ function TemplateRow({
     onDuplicate: (id: string) => void;
     isDeleting: boolean;
 }) {
-    const router = useRouter();
     const blockCount = template.blocks.length;
     const fieldCount = template.blocks.reduce((sum, b) => sum + b.fields.length, 0);
 

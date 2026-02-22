@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useRef, useCallback, useId } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
 import {
     ChevronDown, ChevronUp, X, Plus, Save, ArrowLeft,
-    GripVertical, ChevronRight, Loader2, Check, Settings2,
-    Pencil, Trash2,
+    GripVertical, Loader2, Check,
 } from "lucide-react";
 import type { SystemBlock } from "@/server/blocks-library";
 
@@ -121,7 +120,6 @@ interface Props {
 
 export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlocks }: Props) {
     const router = useRouter();
-    const uid = useId();
 
     // Canvas state
     const [templateName, setTemplateName] = useState(initialTemplate?.name ?? "Untitled Template");
@@ -638,13 +636,9 @@ function LibraryBlockRow({
     block: LibraryBlock;
     onAdd: () => void;
 }) {
-    const [hovered, setHovered] = useState(false);
-
     return (
         <div
             className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-slate-100 hover:border-[#2149A1]/30 hover:bg-[#e8eef9]/40 transition-all group cursor-default"
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
         >
             <div className="min-w-0">
                 <p className="text-sm font-medium text-slate-700 truncate">{block.name}</p>

@@ -1,7 +1,6 @@
 "use client";
 
 import { signOut } from "next-auth/react";
-import Link from "next/link";
 import { LogOut, User, Mail, Calendar, FileText, ShieldCheck } from "lucide-react";
 
 interface Props {
