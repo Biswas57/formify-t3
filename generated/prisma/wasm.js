@@ -132,6 +132,51 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.TemplateScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TemplateBlockScalarFieldEnum = {
+  id: 'id',
+  templateId: 'templateId',
+  order: 'order',
+  title: 'title',
+  sourceType: 'sourceType',
+  sourceBlockId: 'sourceBlockId'
+};
+
+exports.Prisma.TemplateFieldScalarFieldEnum = {
+  id: 'id',
+  templateBlockId: 'templateBlockId',
+  order: 'order',
+  key: 'key',
+  label: 'label',
+  fieldType: 'fieldType',
+  required: 'required'
+};
+
+exports.Prisma.BlockDefinitionScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BlockFieldDefinitionScalarFieldEnum = {
+  id: 'id',
+  blockId: 'blockId',
+  order: 'order',
+  key: 'key',
+  label: 'label',
+  fieldType: 'fieldType',
+  required: 'required'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -146,13 +191,32 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+exports.BlockSource = exports.$Enums.BlockSource = {
+  SYSTEM: 'SYSTEM',
+  USER: 'USER',
+  CUSTOM_INLINE: 'CUSTOM_INLINE'
+};
 
+exports.FieldType = exports.$Enums.FieldType = {
+  TEXT: 'TEXT',
+  NUMBER: 'NUMBER',
+  DATE: 'DATE',
+  EMAIL: 'EMAIL',
+  PHONE: 'PHONE',
+  TEXTAREA: 'TEXTAREA',
+  SELECT: 'SELECT'
+};
 
 exports.Prisma.ModelName = {
   Account: 'Account',
   Session: 'Session',
   VerificationToken: 'VerificationToken',
-  User: 'User'
+  User: 'User',
+  Template: 'Template',
+  TemplateBlock: 'TemplateBlock',
+  TemplateField: 'TemplateField',
+  BlockDefinition: 'BlockDefinition',
+  BlockFieldDefinition: 'BlockFieldDefinition'
 };
 /**
  * Create the Client
@@ -193,7 +257,6 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -202,13 +265,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// ─── Add this to your existing schema.prisma ─────────────────────────────────\n// If starting fresh, replace the entire file with the block below.\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\" // or \"mysql\" / \"sqlite\"\n  url      = env(\"DATABASE_URL\")\n}\n\n// ── NextAuth core models ─────────────────────────────────────────────────────\n\nmodel Account {\n  id                String  @id @default(cuid())\n  userId            String\n  type              String\n  provider          String\n  providerAccountId String\n  refresh_token     String? @db.Text\n  access_token      String? @db.Text\n  expires_at        Int?\n  token_type        String?\n  scope             String?\n  id_token          String? @db.Text\n  session_state     String?\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([provider, providerAccountId])\n}\n\nmodel Session {\n  id           String   @id @default(cuid())\n  sessionToken String   @unique\n  userId       String\n  expires      DateTime\n  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n}\n\nmodel VerificationToken {\n  identifier String\n  token      String   @unique\n  expires    DateTime\n\n  @@unique([identifier, token])\n}\n\n// ── Formify User ─────────────────────────────────────────────────────────────\n\nmodel User {\n  id            String    @id @default(cuid())\n  name          String?\n  email         String?   @unique\n  emailVerified DateTime?\n  image         String?\n  passwordHash  String? // null for OAuth-only accounts\n\n  accounts Account[]\n  sessions Session[]\n\n  // Formify-specific relations (add as you build)\n  // sessions FormSession[]\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n\n// ── (Optional) Form Session ───────────────────────────────────────────────────\n// Uncomment when you're ready to persist form sessions.\n//\n// model FormSession {\n//   id         String   @id @default(cuid())\n//   userId     String\n//   user       User     @relation(fields: [userId], references: [id])\n//   template   Json\n//   transcript String   @db.Text\n//   attributes Json\n//   createdAt  DateTime @default(now())\n//   updatedAt  DateTime @updatedAt\n// }\n",
-  "inlineSchemaHash": "965cebc559b711ab8212ebb957251714a6cb258f3b6f027689f82a19769097a8",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\n// ── NextAuth models ───────────────────────────────────────────────────────────\n\nmodel Account {\n  id                String  @id @default(cuid())\n  userId            String\n  type              String\n  provider          String\n  providerAccountId String\n  refresh_token     String? @db.Text\n  access_token      String? @db.Text\n  expires_at        Int?\n  token_type        String?\n  scope             String?\n  id_token          String? @db.Text\n  session_state     String?\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([provider, providerAccountId])\n}\n\nmodel Session {\n  id           String   @id @default(cuid())\n  sessionToken String   @unique\n  userId       String\n  expires      DateTime\n  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n}\n\nmodel VerificationToken {\n  identifier String\n  token      String   @unique\n  expires    DateTime\n\n  @@unique([identifier, token])\n}\n\n// ── User ─────────────────────────────────────────────────────────────────────\n\nmodel User {\n  id            String    @id @default(cuid())\n  name          String?\n  email         String?   @unique\n  emailVerified DateTime?\n  image         String?\n  passwordHash  String?\n\n  accounts         Account[]\n  sessions         Session[]\n  templates        Template[]\n  blockDefinitions BlockDefinition[]\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n\n// ── Templates ─────────────────────────────────────────────────────────────────\n\nmodel Template {\n  id        String   @id @default(cuid())\n  ownerId   String\n  name      String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  blocks TemplateBlock[]\n  owner  User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)\n\n  @@index([ownerId])\n}\n\nmodel TemplateBlock {\n  id            String      @id @default(cuid())\n  templateId    String\n  order         Int\n  title         String\n  sourceType    BlockSource\n  sourceBlockId String?\n\n  fields   TemplateField[]\n  template Template        @relation(fields: [templateId], references: [id], onDelete: Cascade)\n\n  @@index([templateId])\n}\n\nmodel TemplateField {\n  id              String    @id @default(cuid())\n  templateBlockId String\n  order           Int\n  key             String\n  label           String?\n  fieldType       FieldType @default(TEXT)\n  required        Boolean   @default(false)\n\n  templateBlock TemplateBlock @relation(fields: [templateBlockId], references: [id], onDelete: Cascade)\n\n  @@index([templateBlockId])\n}\n\n// ── Block Library ─────────────────────────────────────────────────────────────\n\nmodel BlockDefinition {\n  id        String   @id @default(cuid())\n  ownerId   String?\n  name      String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  fields BlockFieldDefinition[]\n  owner  User?                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)\n\n  @@index([ownerId])\n}\n\nmodel BlockFieldDefinition {\n  id        String    @id @default(cuid())\n  blockId   String\n  order     Int\n  key       String\n  label     String?\n  fieldType FieldType @default(TEXT)\n  required  Boolean   @default(false)\n\n  block BlockDefinition @relation(fields: [blockId], references: [id], onDelete: Cascade)\n\n  @@index([blockId])\n}\n\n// ── Enums ─────────────────────────────────────────────────────────────────────\n\nenum BlockSource {\n  SYSTEM\n  USER\n  CUSTOM_INLINE\n}\n\nenum FieldType {\n  TEXT\n  NUMBER\n  DATE\n  EMAIL\n  PHONE\n  TEXTAREA\n  SELECT\n}\n",
+  "inlineSchemaHash": "da83873d0de100b9c69ed0eb10f715086dd08db39fedc58e8dfd542a20884bb1",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Account\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"provider\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"providerAccountId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"refresh_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"access_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires_at\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"token_type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"scope\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"id_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"session_state\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"AccountToUser\"}],\"dbName\":null},\"Session\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sessionToken\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"SessionToUser\"}],\"dbName\":null},\"VerificationToken\":{\"fields\":[{\"name\":\"identifier\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"emailVerified\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"accounts\",\"kind\":\"object\",\"type\":\"Account\",\"relationName\":\"AccountToUser\"},{\"name\":\"sessions\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"SessionToUser\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Account\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"provider\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"providerAccountId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"refresh_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"access_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires_at\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"token_type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"scope\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"id_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"session_state\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"AccountToUser\"}],\"dbName\":null},\"Session\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sessionToken\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"SessionToUser\"}],\"dbName\":null},\"VerificationToken\":{\"fields\":[{\"name\":\"identifier\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"emailVerified\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"accounts\",\"kind\":\"object\",\"type\":\"Account\",\"relationName\":\"AccountToUser\"},{\"name\":\"sessions\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"SessionToUser\"},{\"name\":\"templates\",\"kind\":\"object\",\"type\":\"Template\",\"relationName\":\"TemplateToUser\"},{\"name\":\"blockDefinitions\",\"kind\":\"object\",\"type\":\"BlockDefinition\",\"relationName\":\"BlockDefinitionToUser\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Template\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ownerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"blocks\",\"kind\":\"object\",\"type\":\"TemplateBlock\",\"relationName\":\"TemplateToTemplateBlock\"},{\"name\":\"owner\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TemplateToUser\"}],\"dbName\":null},\"TemplateBlock\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"templateId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"order\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sourceType\",\"kind\":\"enum\",\"type\":\"BlockSource\"},{\"name\":\"sourceBlockId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fields\",\"kind\":\"object\",\"type\":\"TemplateField\",\"relationName\":\"TemplateBlockToTemplateField\"},{\"name\":\"template\",\"kind\":\"object\",\"type\":\"Template\",\"relationName\":\"TemplateToTemplateBlock\"}],\"dbName\":null},\"TemplateField\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"templateBlockId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"order\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"key\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"label\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fieldType\",\"kind\":\"enum\",\"type\":\"FieldType\"},{\"name\":\"required\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"templateBlock\",\"kind\":\"object\",\"type\":\"TemplateBlock\",\"relationName\":\"TemplateBlockToTemplateField\"}],\"dbName\":null},\"BlockDefinition\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ownerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"fields\",\"kind\":\"object\",\"type\":\"BlockFieldDefinition\",\"relationName\":\"BlockDefinitionToBlockFieldDefinition\"},{\"name\":\"owner\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"BlockDefinitionToUser\"}],\"dbName\":null},\"BlockFieldDefinition\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"blockId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"order\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"key\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"label\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fieldType\",\"kind\":\"enum\",\"type\":\"FieldType\"},{\"name\":\"required\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"block\",\"kind\":\"object\",\"type\":\"BlockDefinition\",\"relationName\":\"BlockDefinitionToBlockFieldDefinition\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

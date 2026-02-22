@@ -160,6 +160,51 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.TemplateScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TemplateBlockScalarFieldEnum = {
+  id: 'id',
+  templateId: 'templateId',
+  order: 'order',
+  title: 'title',
+  sourceType: 'sourceType',
+  sourceBlockId: 'sourceBlockId'
+};
+
+exports.Prisma.TemplateFieldScalarFieldEnum = {
+  id: 'id',
+  templateBlockId: 'templateBlockId',
+  order: 'order',
+  key: 'key',
+  label: 'label',
+  fieldType: 'fieldType',
+  required: 'required'
+};
+
+exports.Prisma.BlockDefinitionScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BlockFieldDefinitionScalarFieldEnum = {
+  id: 'id',
+  blockId: 'blockId',
+  order: 'order',
+  key: 'key',
+  label: 'label',
+  fieldType: 'fieldType',
+  required: 'required'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -174,13 +219,32 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+exports.BlockSource = exports.$Enums.BlockSource = {
+  SYSTEM: 'SYSTEM',
+  USER: 'USER',
+  CUSTOM_INLINE: 'CUSTOM_INLINE'
+};
 
+exports.FieldType = exports.$Enums.FieldType = {
+  TEXT: 'TEXT',
+  NUMBER: 'NUMBER',
+  DATE: 'DATE',
+  EMAIL: 'EMAIL',
+  PHONE: 'PHONE',
+  TEXTAREA: 'TEXTAREA',
+  SELECT: 'SELECT'
+};
 
 exports.Prisma.ModelName = {
   Account: 'Account',
   Session: 'Session',
   VerificationToken: 'VerificationToken',
-  User: 'User'
+  User: 'User',
+  Template: 'Template',
+  TemplateBlock: 'TemplateBlock',
+  TemplateField: 'TemplateField',
+  BlockDefinition: 'BlockDefinition',
+  BlockFieldDefinition: 'BlockFieldDefinition'
 };
 
 /**

@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { api } from "@/trpc/react";
 import Link from "next/link";
 import {
     Mic, Square, Wifi, WifiOff, RotateCcw, ChevronDown,
@@ -32,7 +34,7 @@ function parseBlocks(raw: string): Record<string, string[]> {
     const result: Record<string, string[]> = {};
     for (const line of raw.split("\n")) {
         const trimmed = line.trim();
-        if (!trimmed || !trimmed.includes(":")) continue;
+        if (!trimmed?.includes(":")) continue;
         const colonIdx = trimmed.indexOf(":");
         const blockName = trimmed.slice(0, colonIdx).trim();
         const fields = trimmed
@@ -93,6 +95,25 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const isPaused = recordStatus === "paused";
     const canRecord = isConnected && blocksReady && !isFinalizing;
     const errorMessage = wsError ?? micError;
+
+    // ── Template preload from query param ────────────────────────────────────────
+    const searchParams = useSearchParams();
+    const templateId = searchParams.get("templateId");
+
+    const { data: preloadedTemplate } = api.template.get.useQuery(
+        { id: templateId! },
+        { enabled: !!templateId }
+    );
+
+    useEffect(() => {
+        if (!preloadedTemplate) return;
+        setFormTitle(preloadedTemplate.name);
+        const raw = preloadedTemplate.blocks
+            .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
+            .map((b: { title: string; fields: { key: string; order: number }[] }) => `${b.title}: ${b.fields.sort((a: { order: number }, b: { order: number }) => a.order - b.order).map((f: { key: string }) => f.key).join(", ")}`)
+            .join("\n");
+        setTemplateRaw(raw);
+    }, [preloadedTemplate]);
 
     // ── Sync attributes → editedValues when not editing ──────────────────────
 
@@ -182,7 +203,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
     const sendBlocks = useCallback(() => {
         const ws = wsRef.current;
-        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        if (ws?.readyState !== WebSocket.OPEN) return;
         const parsed = parseBlocks(templateRaw);
         if (Object.keys(parsed).length === 0) return;
         ws.send(JSON.stringify({ action: "start", blocks: parsed }));
@@ -198,7 +219,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const startRecording = useCallback(async () => {
         setMicError(null);
         const ws = wsRef.current;
-        if (!ws || ws.readyState !== WebSocket.OPEN || !blocksReadyRef.current) return;
+        if (ws?.readyState !== WebSocket.OPEN || !blocksReadyRef.current) return;
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });

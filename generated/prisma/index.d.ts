@@ -33,6 +33,66 @@ export type VerificationToken = $Result.DefaultSelection<Prisma.$VerificationTok
  * 
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
+/**
+ * Model Template
+ * 
+ */
+export type Template = $Result.DefaultSelection<Prisma.$TemplatePayload>
+/**
+ * Model TemplateBlock
+ * 
+ */
+export type TemplateBlock = $Result.DefaultSelection<Prisma.$TemplateBlockPayload>
+/**
+ * Model TemplateField
+ * 
+ */
+export type TemplateField = $Result.DefaultSelection<Prisma.$TemplateFieldPayload>
+/**
+ * Model BlockDefinition
+ * 
+ */
+export type BlockDefinition = $Result.DefaultSelection<Prisma.$BlockDefinitionPayload>
+/**
+ * Model BlockFieldDefinition
+ * 
+ */
+export type BlockFieldDefinition = $Result.DefaultSelection<Prisma.$BlockFieldDefinitionPayload>
+
+/**
+ * Enums
+ */
+export namespace $Enums {
+  export const BlockSource: {
+  SYSTEM: 'SYSTEM',
+  USER: 'USER',
+  CUSTOM_INLINE: 'CUSTOM_INLINE'
+};
+
+export type BlockSource = (typeof BlockSource)[keyof typeof BlockSource]
+
+
+export const FieldType: {
+  TEXT: 'TEXT',
+  NUMBER: 'NUMBER',
+  DATE: 'DATE',
+  EMAIL: 'EMAIL',
+  PHONE: 'PHONE',
+  TEXTAREA: 'TEXTAREA',
+  SELECT: 'SELECT'
+};
+
+export type FieldType = (typeof FieldType)[keyof typeof FieldType]
+
+}
+
+export type BlockSource = $Enums.BlockSource
+
+export const BlockSource: typeof $Enums.BlockSource
+
+export type FieldType = $Enums.FieldType
+
+export const FieldType: typeof $Enums.FieldType
 
 /**
  * ##  Prisma Client ʲˢ
@@ -191,6 +251,56 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.template`: Exposes CRUD operations for the **Template** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Templates
+    * const templates = await prisma.template.findMany()
+    * ```
+    */
+  get template(): Prisma.TemplateDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.templateBlock`: Exposes CRUD operations for the **TemplateBlock** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TemplateBlocks
+    * const templateBlocks = await prisma.templateBlock.findMany()
+    * ```
+    */
+  get templateBlock(): Prisma.TemplateBlockDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.templateField`: Exposes CRUD operations for the **TemplateField** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TemplateFields
+    * const templateFields = await prisma.templateField.findMany()
+    * ```
+    */
+  get templateField(): Prisma.TemplateFieldDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.blockDefinition`: Exposes CRUD operations for the **BlockDefinition** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BlockDefinitions
+    * const blockDefinitions = await prisma.blockDefinition.findMany()
+    * ```
+    */
+  get blockDefinition(): Prisma.BlockDefinitionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.blockFieldDefinition`: Exposes CRUD operations for the **BlockFieldDefinition** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BlockFieldDefinitions
+    * const blockFieldDefinitions = await prisma.blockFieldDefinition.findMany()
+    * ```
+    */
+  get blockFieldDefinition(): Prisma.BlockFieldDefinitionDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -635,7 +745,12 @@ export namespace Prisma {
     Account: 'Account',
     Session: 'Session',
     VerificationToken: 'VerificationToken',
-    User: 'User'
+    User: 'User',
+    Template: 'Template',
+    TemplateBlock: 'TemplateBlock',
+    TemplateField: 'TemplateField',
+    BlockDefinition: 'BlockDefinition',
+    BlockFieldDefinition: 'BlockFieldDefinition'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -654,7 +769,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "account" | "session" | "verificationToken" | "user"
+      modelProps: "account" | "session" | "verificationToken" | "user" | "template" | "templateBlock" | "templateField" | "blockDefinition" | "blockFieldDefinition"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -954,6 +1069,376 @@ export namespace Prisma {
           }
         }
       }
+      Template: {
+        payload: Prisma.$TemplatePayload<ExtArgs>
+        fields: Prisma.TemplateFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TemplateFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplatePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TemplateFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplatePayload>
+          }
+          findFirst: {
+            args: Prisma.TemplateFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplatePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TemplateFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplatePayload>
+          }
+          findMany: {
+            args: Prisma.TemplateFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplatePayload>[]
+          }
+          create: {
+            args: Prisma.TemplateCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplatePayload>
+          }
+          createMany: {
+            args: Prisma.TemplateCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TemplateCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplatePayload>[]
+          }
+          delete: {
+            args: Prisma.TemplateDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplatePayload>
+          }
+          update: {
+            args: Prisma.TemplateUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplatePayload>
+          }
+          deleteMany: {
+            args: Prisma.TemplateDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TemplateUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TemplateUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplatePayload>[]
+          }
+          upsert: {
+            args: Prisma.TemplateUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplatePayload>
+          }
+          aggregate: {
+            args: Prisma.TemplateAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTemplate>
+          }
+          groupBy: {
+            args: Prisma.TemplateGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TemplateGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TemplateCountArgs<ExtArgs>
+            result: $Utils.Optional<TemplateCountAggregateOutputType> | number
+          }
+        }
+      }
+      TemplateBlock: {
+        payload: Prisma.$TemplateBlockPayload<ExtArgs>
+        fields: Prisma.TemplateBlockFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TemplateBlockFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateBlockPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TemplateBlockFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateBlockPayload>
+          }
+          findFirst: {
+            args: Prisma.TemplateBlockFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateBlockPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TemplateBlockFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateBlockPayload>
+          }
+          findMany: {
+            args: Prisma.TemplateBlockFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateBlockPayload>[]
+          }
+          create: {
+            args: Prisma.TemplateBlockCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateBlockPayload>
+          }
+          createMany: {
+            args: Prisma.TemplateBlockCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TemplateBlockCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateBlockPayload>[]
+          }
+          delete: {
+            args: Prisma.TemplateBlockDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateBlockPayload>
+          }
+          update: {
+            args: Prisma.TemplateBlockUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateBlockPayload>
+          }
+          deleteMany: {
+            args: Prisma.TemplateBlockDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TemplateBlockUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TemplateBlockUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateBlockPayload>[]
+          }
+          upsert: {
+            args: Prisma.TemplateBlockUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateBlockPayload>
+          }
+          aggregate: {
+            args: Prisma.TemplateBlockAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTemplateBlock>
+          }
+          groupBy: {
+            args: Prisma.TemplateBlockGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TemplateBlockGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TemplateBlockCountArgs<ExtArgs>
+            result: $Utils.Optional<TemplateBlockCountAggregateOutputType> | number
+          }
+        }
+      }
+      TemplateField: {
+        payload: Prisma.$TemplateFieldPayload<ExtArgs>
+        fields: Prisma.TemplateFieldFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TemplateFieldFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFieldPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TemplateFieldFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFieldPayload>
+          }
+          findFirst: {
+            args: Prisma.TemplateFieldFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFieldPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TemplateFieldFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFieldPayload>
+          }
+          findMany: {
+            args: Prisma.TemplateFieldFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFieldPayload>[]
+          }
+          create: {
+            args: Prisma.TemplateFieldCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFieldPayload>
+          }
+          createMany: {
+            args: Prisma.TemplateFieldCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TemplateFieldCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFieldPayload>[]
+          }
+          delete: {
+            args: Prisma.TemplateFieldDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFieldPayload>
+          }
+          update: {
+            args: Prisma.TemplateFieldUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFieldPayload>
+          }
+          deleteMany: {
+            args: Prisma.TemplateFieldDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TemplateFieldUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TemplateFieldUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFieldPayload>[]
+          }
+          upsert: {
+            args: Prisma.TemplateFieldUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFieldPayload>
+          }
+          aggregate: {
+            args: Prisma.TemplateFieldAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTemplateField>
+          }
+          groupBy: {
+            args: Prisma.TemplateFieldGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TemplateFieldGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TemplateFieldCountArgs<ExtArgs>
+            result: $Utils.Optional<TemplateFieldCountAggregateOutputType> | number
+          }
+        }
+      }
+      BlockDefinition: {
+        payload: Prisma.$BlockDefinitionPayload<ExtArgs>
+        fields: Prisma.BlockDefinitionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BlockDefinitionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockDefinitionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BlockDefinitionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockDefinitionPayload>
+          }
+          findFirst: {
+            args: Prisma.BlockDefinitionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockDefinitionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BlockDefinitionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockDefinitionPayload>
+          }
+          findMany: {
+            args: Prisma.BlockDefinitionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockDefinitionPayload>[]
+          }
+          create: {
+            args: Prisma.BlockDefinitionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockDefinitionPayload>
+          }
+          createMany: {
+            args: Prisma.BlockDefinitionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BlockDefinitionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockDefinitionPayload>[]
+          }
+          delete: {
+            args: Prisma.BlockDefinitionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockDefinitionPayload>
+          }
+          update: {
+            args: Prisma.BlockDefinitionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockDefinitionPayload>
+          }
+          deleteMany: {
+            args: Prisma.BlockDefinitionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BlockDefinitionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BlockDefinitionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockDefinitionPayload>[]
+          }
+          upsert: {
+            args: Prisma.BlockDefinitionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockDefinitionPayload>
+          }
+          aggregate: {
+            args: Prisma.BlockDefinitionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBlockDefinition>
+          }
+          groupBy: {
+            args: Prisma.BlockDefinitionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BlockDefinitionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BlockDefinitionCountArgs<ExtArgs>
+            result: $Utils.Optional<BlockDefinitionCountAggregateOutputType> | number
+          }
+        }
+      }
+      BlockFieldDefinition: {
+        payload: Prisma.$BlockFieldDefinitionPayload<ExtArgs>
+        fields: Prisma.BlockFieldDefinitionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BlockFieldDefinitionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockFieldDefinitionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BlockFieldDefinitionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockFieldDefinitionPayload>
+          }
+          findFirst: {
+            args: Prisma.BlockFieldDefinitionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockFieldDefinitionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BlockFieldDefinitionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockFieldDefinitionPayload>
+          }
+          findMany: {
+            args: Prisma.BlockFieldDefinitionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockFieldDefinitionPayload>[]
+          }
+          create: {
+            args: Prisma.BlockFieldDefinitionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockFieldDefinitionPayload>
+          }
+          createMany: {
+            args: Prisma.BlockFieldDefinitionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BlockFieldDefinitionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockFieldDefinitionPayload>[]
+          }
+          delete: {
+            args: Prisma.BlockFieldDefinitionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockFieldDefinitionPayload>
+          }
+          update: {
+            args: Prisma.BlockFieldDefinitionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockFieldDefinitionPayload>
+          }
+          deleteMany: {
+            args: Prisma.BlockFieldDefinitionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BlockFieldDefinitionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BlockFieldDefinitionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockFieldDefinitionPayload>[]
+          }
+          upsert: {
+            args: Prisma.BlockFieldDefinitionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockFieldDefinitionPayload>
+          }
+          aggregate: {
+            args: Prisma.BlockFieldDefinitionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBlockFieldDefinition>
+          }
+          groupBy: {
+            args: Prisma.BlockFieldDefinitionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BlockFieldDefinitionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BlockFieldDefinitionCountArgs<ExtArgs>
+            result: $Utils.Optional<BlockFieldDefinitionCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1054,6 +1539,11 @@ export namespace Prisma {
     session?: SessionOmit
     verificationToken?: VerificationTokenOmit
     user?: UserOmit
+    template?: TemplateOmit
+    templateBlock?: TemplateBlockOmit
+    templateField?: TemplateFieldOmit
+    blockDefinition?: BlockDefinitionOmit
+    blockFieldDefinition?: BlockFieldDefinitionOmit
   }
 
   /* Types for Logging */
@@ -1136,11 +1626,15 @@ export namespace Prisma {
   export type UserCountOutputType = {
     accounts: number
     sessions: number
+    templates: number
+    blockDefinitions: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     accounts?: boolean | UserCountOutputTypeCountAccountsArgs
     sessions?: boolean | UserCountOutputTypeCountSessionsArgs
+    templates?: boolean | UserCountOutputTypeCountTemplatesArgs
+    blockDefinitions?: boolean | UserCountOutputTypeCountBlockDefinitionsArgs
   }
 
   // Custom InputTypes
@@ -1166,6 +1660,113 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: SessionWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountTemplatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TemplateWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountBlockDefinitionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BlockDefinitionWhereInput
+  }
+
+
+  /**
+   * Count Type TemplateCountOutputType
+   */
+
+  export type TemplateCountOutputType = {
+    blocks: number
+  }
+
+  export type TemplateCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    blocks?: boolean | TemplateCountOutputTypeCountBlocksArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * TemplateCountOutputType without action
+   */
+  export type TemplateCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateCountOutputType
+     */
+    select?: TemplateCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * TemplateCountOutputType without action
+   */
+  export type TemplateCountOutputTypeCountBlocksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TemplateBlockWhereInput
+  }
+
+
+  /**
+   * Count Type TemplateBlockCountOutputType
+   */
+
+  export type TemplateBlockCountOutputType = {
+    fields: number
+  }
+
+  export type TemplateBlockCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    fields?: boolean | TemplateBlockCountOutputTypeCountFieldsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * TemplateBlockCountOutputType without action
+   */
+  export type TemplateBlockCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlockCountOutputType
+     */
+    select?: TemplateBlockCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * TemplateBlockCountOutputType without action
+   */
+  export type TemplateBlockCountOutputTypeCountFieldsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TemplateFieldWhereInput
+  }
+
+
+  /**
+   * Count Type BlockDefinitionCountOutputType
+   */
+
+  export type BlockDefinitionCountOutputType = {
+    fields: number
+  }
+
+  export type BlockDefinitionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    fields?: boolean | BlockDefinitionCountOutputTypeCountFieldsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * BlockDefinitionCountOutputType without action
+   */
+  export type BlockDefinitionCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinitionCountOutputType
+     */
+    select?: BlockDefinitionCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * BlockDefinitionCountOutputType without action
+   */
+  export type BlockDefinitionCountOutputTypeCountFieldsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BlockFieldDefinitionWhereInput
   }
 
 
@@ -4560,6 +5161,8 @@ export namespace Prisma {
     updatedAt?: boolean
     accounts?: boolean | User$accountsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
+    templates?: boolean | User$templatesArgs<ExtArgs>
+    blockDefinitions?: boolean | User$blockDefinitionsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -4600,6 +5203,8 @@ export namespace Prisma {
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     accounts?: boolean | User$accountsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
+    templates?: boolean | User$templatesArgs<ExtArgs>
+    blockDefinitions?: boolean | User$blockDefinitionsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -4610,6 +5215,8 @@ export namespace Prisma {
     objects: {
       accounts: Prisma.$AccountPayload<ExtArgs>[]
       sessions: Prisma.$SessionPayload<ExtArgs>[]
+      templates: Prisma.$TemplatePayload<ExtArgs>[]
+      blockDefinitions: Prisma.$BlockDefinitionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5016,6 +5623,8 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     accounts<T extends User$accountsArgs<ExtArgs> = {}>(args?: Subset<T, User$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     sessions<T extends User$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    templates<T extends User$templatesArgs<ExtArgs> = {}>(args?: Subset<T, User$templatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    blockDefinitions<T extends User$blockDefinitionsArgs<ExtArgs> = {}>(args?: Subset<T, User$blockDefinitionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5489,6 +6098,54 @@ export namespace Prisma {
   }
 
   /**
+   * User.templates
+   */
+  export type User$templatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateInclude<ExtArgs> | null
+    where?: TemplateWhereInput
+    orderBy?: TemplateOrderByWithRelationInput | TemplateOrderByWithRelationInput[]
+    cursor?: TemplateWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TemplateScalarFieldEnum | TemplateScalarFieldEnum[]
+  }
+
+  /**
+   * User.blockDefinitions
+   */
+  export type User$blockDefinitionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionInclude<ExtArgs> | null
+    where?: BlockDefinitionWhereInput
+    orderBy?: BlockDefinitionOrderByWithRelationInput | BlockDefinitionOrderByWithRelationInput[]
+    cursor?: BlockDefinitionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BlockDefinitionScalarFieldEnum | BlockDefinitionScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5504,6 +6161,5572 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Template
+   */
+
+  export type AggregateTemplate = {
+    _count: TemplateCountAggregateOutputType | null
+    _min: TemplateMinAggregateOutputType | null
+    _max: TemplateMaxAggregateOutputType | null
+  }
+
+  export type TemplateMinAggregateOutputType = {
+    id: string | null
+    ownerId: string | null
+    name: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TemplateMaxAggregateOutputType = {
+    id: string | null
+    ownerId: string | null
+    name: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TemplateCountAggregateOutputType = {
+    id: number
+    ownerId: number
+    name: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TemplateMinAggregateInputType = {
+    id?: true
+    ownerId?: true
+    name?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TemplateMaxAggregateInputType = {
+    id?: true
+    ownerId?: true
+    name?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TemplateCountAggregateInputType = {
+    id?: true
+    ownerId?: true
+    name?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TemplateAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Template to aggregate.
+     */
+    where?: TemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Templates to fetch.
+     */
+    orderBy?: TemplateOrderByWithRelationInput | TemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Templates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Templates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Templates
+    **/
+    _count?: true | TemplateCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TemplateMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TemplateMaxAggregateInputType
+  }
+
+  export type GetTemplateAggregateType<T extends TemplateAggregateArgs> = {
+        [P in keyof T & keyof AggregateTemplate]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTemplate[P]>
+      : GetScalarType<T[P], AggregateTemplate[P]>
+  }
+
+
+
+
+  export type TemplateGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TemplateWhereInput
+    orderBy?: TemplateOrderByWithAggregationInput | TemplateOrderByWithAggregationInput[]
+    by: TemplateScalarFieldEnum[] | TemplateScalarFieldEnum
+    having?: TemplateScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TemplateCountAggregateInputType | true
+    _min?: TemplateMinAggregateInputType
+    _max?: TemplateMaxAggregateInputType
+  }
+
+  export type TemplateGroupByOutputType = {
+    id: string
+    ownerId: string
+    name: string
+    createdAt: Date
+    updatedAt: Date
+    _count: TemplateCountAggregateOutputType | null
+    _min: TemplateMinAggregateOutputType | null
+    _max: TemplateMaxAggregateOutputType | null
+  }
+
+  type GetTemplateGroupByPayload<T extends TemplateGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TemplateGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TemplateGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TemplateGroupByOutputType[P]>
+            : GetScalarType<T[P], TemplateGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TemplateSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    name?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    blocks?: boolean | Template$blocksArgs<ExtArgs>
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+    _count?: boolean | TemplateCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["template"]>
+
+  export type TemplateSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    name?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["template"]>
+
+  export type TemplateSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    name?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["template"]>
+
+  export type TemplateSelectScalar = {
+    id?: boolean
+    ownerId?: boolean
+    name?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TemplateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ownerId" | "name" | "createdAt" | "updatedAt", ExtArgs["result"]["template"]>
+  export type TemplateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    blocks?: boolean | Template$blocksArgs<ExtArgs>
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+    _count?: boolean | TemplateCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type TemplateIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type TemplateIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $TemplatePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Template"
+    objects: {
+      blocks: Prisma.$TemplateBlockPayload<ExtArgs>[]
+      owner: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      ownerId: string
+      name: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["template"]>
+    composites: {}
+  }
+
+  type TemplateGetPayload<S extends boolean | null | undefined | TemplateDefaultArgs> = $Result.GetResult<Prisma.$TemplatePayload, S>
+
+  type TemplateCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TemplateFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TemplateCountAggregateInputType | true
+    }
+
+  export interface TemplateDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Template'], meta: { name: 'Template' } }
+    /**
+     * Find zero or one Template that matches the filter.
+     * @param {TemplateFindUniqueArgs} args - Arguments to find a Template
+     * @example
+     * // Get one Template
+     * const template = await prisma.template.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TemplateFindUniqueArgs>(args: SelectSubset<T, TemplateFindUniqueArgs<ExtArgs>>): Prisma__TemplateClient<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Template that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TemplateFindUniqueOrThrowArgs} args - Arguments to find a Template
+     * @example
+     * // Get one Template
+     * const template = await prisma.template.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TemplateFindUniqueOrThrowArgs>(args: SelectSubset<T, TemplateFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TemplateClient<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Template that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFindFirstArgs} args - Arguments to find a Template
+     * @example
+     * // Get one Template
+     * const template = await prisma.template.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TemplateFindFirstArgs>(args?: SelectSubset<T, TemplateFindFirstArgs<ExtArgs>>): Prisma__TemplateClient<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Template that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFindFirstOrThrowArgs} args - Arguments to find a Template
+     * @example
+     * // Get one Template
+     * const template = await prisma.template.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TemplateFindFirstOrThrowArgs>(args?: SelectSubset<T, TemplateFindFirstOrThrowArgs<ExtArgs>>): Prisma__TemplateClient<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Templates that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Templates
+     * const templates = await prisma.template.findMany()
+     * 
+     * // Get first 10 Templates
+     * const templates = await prisma.template.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const templateWithIdOnly = await prisma.template.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TemplateFindManyArgs>(args?: SelectSubset<T, TemplateFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Template.
+     * @param {TemplateCreateArgs} args - Arguments to create a Template.
+     * @example
+     * // Create one Template
+     * const Template = await prisma.template.create({
+     *   data: {
+     *     // ... data to create a Template
+     *   }
+     * })
+     * 
+     */
+    create<T extends TemplateCreateArgs>(args: SelectSubset<T, TemplateCreateArgs<ExtArgs>>): Prisma__TemplateClient<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Templates.
+     * @param {TemplateCreateManyArgs} args - Arguments to create many Templates.
+     * @example
+     * // Create many Templates
+     * const template = await prisma.template.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TemplateCreateManyArgs>(args?: SelectSubset<T, TemplateCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Templates and returns the data saved in the database.
+     * @param {TemplateCreateManyAndReturnArgs} args - Arguments to create many Templates.
+     * @example
+     * // Create many Templates
+     * const template = await prisma.template.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Templates and only return the `id`
+     * const templateWithIdOnly = await prisma.template.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TemplateCreateManyAndReturnArgs>(args?: SelectSubset<T, TemplateCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Template.
+     * @param {TemplateDeleteArgs} args - Arguments to delete one Template.
+     * @example
+     * // Delete one Template
+     * const Template = await prisma.template.delete({
+     *   where: {
+     *     // ... filter to delete one Template
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TemplateDeleteArgs>(args: SelectSubset<T, TemplateDeleteArgs<ExtArgs>>): Prisma__TemplateClient<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Template.
+     * @param {TemplateUpdateArgs} args - Arguments to update one Template.
+     * @example
+     * // Update one Template
+     * const template = await prisma.template.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TemplateUpdateArgs>(args: SelectSubset<T, TemplateUpdateArgs<ExtArgs>>): Prisma__TemplateClient<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Templates.
+     * @param {TemplateDeleteManyArgs} args - Arguments to filter Templates to delete.
+     * @example
+     * // Delete a few Templates
+     * const { count } = await prisma.template.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TemplateDeleteManyArgs>(args?: SelectSubset<T, TemplateDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Templates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Templates
+     * const template = await prisma.template.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TemplateUpdateManyArgs>(args: SelectSubset<T, TemplateUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Templates and returns the data updated in the database.
+     * @param {TemplateUpdateManyAndReturnArgs} args - Arguments to update many Templates.
+     * @example
+     * // Update many Templates
+     * const template = await prisma.template.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Templates and only return the `id`
+     * const templateWithIdOnly = await prisma.template.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TemplateUpdateManyAndReturnArgs>(args: SelectSubset<T, TemplateUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Template.
+     * @param {TemplateUpsertArgs} args - Arguments to update or create a Template.
+     * @example
+     * // Update or create a Template
+     * const template = await prisma.template.upsert({
+     *   create: {
+     *     // ... data to create a Template
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Template we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TemplateUpsertArgs>(args: SelectSubset<T, TemplateUpsertArgs<ExtArgs>>): Prisma__TemplateClient<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Templates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateCountArgs} args - Arguments to filter Templates to count.
+     * @example
+     * // Count the number of Templates
+     * const count = await prisma.template.count({
+     *   where: {
+     *     // ... the filter for the Templates we want to count
+     *   }
+     * })
+    **/
+    count<T extends TemplateCountArgs>(
+      args?: Subset<T, TemplateCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TemplateCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Template.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TemplateAggregateArgs>(args: Subset<T, TemplateAggregateArgs>): Prisma.PrismaPromise<GetTemplateAggregateType<T>>
+
+    /**
+     * Group by Template.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TemplateGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TemplateGroupByArgs['orderBy'] }
+        : { orderBy?: TemplateGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TemplateGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTemplateGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Template model
+   */
+  readonly fields: TemplateFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Template.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TemplateClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    blocks<T extends Template$blocksArgs<ExtArgs> = {}>(args?: Subset<T, Template$blocksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    owner<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Template model
+   */
+  interface TemplateFieldRefs {
+    readonly id: FieldRef<"Template", 'String'>
+    readonly ownerId: FieldRef<"Template", 'String'>
+    readonly name: FieldRef<"Template", 'String'>
+    readonly createdAt: FieldRef<"Template", 'DateTime'>
+    readonly updatedAt: FieldRef<"Template", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Template findUnique
+   */
+  export type TemplateFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which Template to fetch.
+     */
+    where: TemplateWhereUniqueInput
+  }
+
+  /**
+   * Template findUniqueOrThrow
+   */
+  export type TemplateFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which Template to fetch.
+     */
+    where: TemplateWhereUniqueInput
+  }
+
+  /**
+   * Template findFirst
+   */
+  export type TemplateFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which Template to fetch.
+     */
+    where?: TemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Templates to fetch.
+     */
+    orderBy?: TemplateOrderByWithRelationInput | TemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Templates.
+     */
+    cursor?: TemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Templates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Templates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Templates.
+     */
+    distinct?: TemplateScalarFieldEnum | TemplateScalarFieldEnum[]
+  }
+
+  /**
+   * Template findFirstOrThrow
+   */
+  export type TemplateFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which Template to fetch.
+     */
+    where?: TemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Templates to fetch.
+     */
+    orderBy?: TemplateOrderByWithRelationInput | TemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Templates.
+     */
+    cursor?: TemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Templates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Templates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Templates.
+     */
+    distinct?: TemplateScalarFieldEnum | TemplateScalarFieldEnum[]
+  }
+
+  /**
+   * Template findMany
+   */
+  export type TemplateFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which Templates to fetch.
+     */
+    where?: TemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Templates to fetch.
+     */
+    orderBy?: TemplateOrderByWithRelationInput | TemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Templates.
+     */
+    cursor?: TemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Templates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Templates.
+     */
+    skip?: number
+    distinct?: TemplateScalarFieldEnum | TemplateScalarFieldEnum[]
+  }
+
+  /**
+   * Template create
+   */
+  export type TemplateCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Template.
+     */
+    data: XOR<TemplateCreateInput, TemplateUncheckedCreateInput>
+  }
+
+  /**
+   * Template createMany
+   */
+  export type TemplateCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Templates.
+     */
+    data: TemplateCreateManyInput | TemplateCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Template createManyAndReturn
+   */
+  export type TemplateCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * The data used to create many Templates.
+     */
+    data: TemplateCreateManyInput | TemplateCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Template update
+   */
+  export type TemplateUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Template.
+     */
+    data: XOR<TemplateUpdateInput, TemplateUncheckedUpdateInput>
+    /**
+     * Choose, which Template to update.
+     */
+    where: TemplateWhereUniqueInput
+  }
+
+  /**
+   * Template updateMany
+   */
+  export type TemplateUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Templates.
+     */
+    data: XOR<TemplateUpdateManyMutationInput, TemplateUncheckedUpdateManyInput>
+    /**
+     * Filter which Templates to update
+     */
+    where?: TemplateWhereInput
+    /**
+     * Limit how many Templates to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Template updateManyAndReturn
+   */
+  export type TemplateUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * The data used to update Templates.
+     */
+    data: XOR<TemplateUpdateManyMutationInput, TemplateUncheckedUpdateManyInput>
+    /**
+     * Filter which Templates to update
+     */
+    where?: TemplateWhereInput
+    /**
+     * Limit how many Templates to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Template upsert
+   */
+  export type TemplateUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Template to update in case it exists.
+     */
+    where: TemplateWhereUniqueInput
+    /**
+     * In case the Template found by the `where` argument doesn't exist, create a new Template with this data.
+     */
+    create: XOR<TemplateCreateInput, TemplateUncheckedCreateInput>
+    /**
+     * In case the Template was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TemplateUpdateInput, TemplateUncheckedUpdateInput>
+  }
+
+  /**
+   * Template delete
+   */
+  export type TemplateDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateInclude<ExtArgs> | null
+    /**
+     * Filter which Template to delete.
+     */
+    where: TemplateWhereUniqueInput
+  }
+
+  /**
+   * Template deleteMany
+   */
+  export type TemplateDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Templates to delete
+     */
+    where?: TemplateWhereInput
+    /**
+     * Limit how many Templates to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Template.blocks
+   */
+  export type Template$blocksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockInclude<ExtArgs> | null
+    where?: TemplateBlockWhereInput
+    orderBy?: TemplateBlockOrderByWithRelationInput | TemplateBlockOrderByWithRelationInput[]
+    cursor?: TemplateBlockWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TemplateBlockScalarFieldEnum | TemplateBlockScalarFieldEnum[]
+  }
+
+  /**
+   * Template without action
+   */
+  export type TemplateDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Template
+     */
+    select?: TemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Template
+     */
+    omit?: TemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TemplateBlock
+   */
+
+  export type AggregateTemplateBlock = {
+    _count: TemplateBlockCountAggregateOutputType | null
+    _avg: TemplateBlockAvgAggregateOutputType | null
+    _sum: TemplateBlockSumAggregateOutputType | null
+    _min: TemplateBlockMinAggregateOutputType | null
+    _max: TemplateBlockMaxAggregateOutputType | null
+  }
+
+  export type TemplateBlockAvgAggregateOutputType = {
+    order: number | null
+  }
+
+  export type TemplateBlockSumAggregateOutputType = {
+    order: number | null
+  }
+
+  export type TemplateBlockMinAggregateOutputType = {
+    id: string | null
+    templateId: string | null
+    order: number | null
+    title: string | null
+    sourceType: $Enums.BlockSource | null
+    sourceBlockId: string | null
+  }
+
+  export type TemplateBlockMaxAggregateOutputType = {
+    id: string | null
+    templateId: string | null
+    order: number | null
+    title: string | null
+    sourceType: $Enums.BlockSource | null
+    sourceBlockId: string | null
+  }
+
+  export type TemplateBlockCountAggregateOutputType = {
+    id: number
+    templateId: number
+    order: number
+    title: number
+    sourceType: number
+    sourceBlockId: number
+    _all: number
+  }
+
+
+  export type TemplateBlockAvgAggregateInputType = {
+    order?: true
+  }
+
+  export type TemplateBlockSumAggregateInputType = {
+    order?: true
+  }
+
+  export type TemplateBlockMinAggregateInputType = {
+    id?: true
+    templateId?: true
+    order?: true
+    title?: true
+    sourceType?: true
+    sourceBlockId?: true
+  }
+
+  export type TemplateBlockMaxAggregateInputType = {
+    id?: true
+    templateId?: true
+    order?: true
+    title?: true
+    sourceType?: true
+    sourceBlockId?: true
+  }
+
+  export type TemplateBlockCountAggregateInputType = {
+    id?: true
+    templateId?: true
+    order?: true
+    title?: true
+    sourceType?: true
+    sourceBlockId?: true
+    _all?: true
+  }
+
+  export type TemplateBlockAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TemplateBlock to aggregate.
+     */
+    where?: TemplateBlockWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateBlocks to fetch.
+     */
+    orderBy?: TemplateBlockOrderByWithRelationInput | TemplateBlockOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TemplateBlockWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateBlocks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateBlocks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TemplateBlocks
+    **/
+    _count?: true | TemplateBlockCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TemplateBlockAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TemplateBlockSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TemplateBlockMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TemplateBlockMaxAggregateInputType
+  }
+
+  export type GetTemplateBlockAggregateType<T extends TemplateBlockAggregateArgs> = {
+        [P in keyof T & keyof AggregateTemplateBlock]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTemplateBlock[P]>
+      : GetScalarType<T[P], AggregateTemplateBlock[P]>
+  }
+
+
+
+
+  export type TemplateBlockGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TemplateBlockWhereInput
+    orderBy?: TemplateBlockOrderByWithAggregationInput | TemplateBlockOrderByWithAggregationInput[]
+    by: TemplateBlockScalarFieldEnum[] | TemplateBlockScalarFieldEnum
+    having?: TemplateBlockScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TemplateBlockCountAggregateInputType | true
+    _avg?: TemplateBlockAvgAggregateInputType
+    _sum?: TemplateBlockSumAggregateInputType
+    _min?: TemplateBlockMinAggregateInputType
+    _max?: TemplateBlockMaxAggregateInputType
+  }
+
+  export type TemplateBlockGroupByOutputType = {
+    id: string
+    templateId: string
+    order: number
+    title: string
+    sourceType: $Enums.BlockSource
+    sourceBlockId: string | null
+    _count: TemplateBlockCountAggregateOutputType | null
+    _avg: TemplateBlockAvgAggregateOutputType | null
+    _sum: TemplateBlockSumAggregateOutputType | null
+    _min: TemplateBlockMinAggregateOutputType | null
+    _max: TemplateBlockMaxAggregateOutputType | null
+  }
+
+  type GetTemplateBlockGroupByPayload<T extends TemplateBlockGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TemplateBlockGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TemplateBlockGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TemplateBlockGroupByOutputType[P]>
+            : GetScalarType<T[P], TemplateBlockGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TemplateBlockSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    templateId?: boolean
+    order?: boolean
+    title?: boolean
+    sourceType?: boolean
+    sourceBlockId?: boolean
+    fields?: boolean | TemplateBlock$fieldsArgs<ExtArgs>
+    template?: boolean | TemplateDefaultArgs<ExtArgs>
+    _count?: boolean | TemplateBlockCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["templateBlock"]>
+
+  export type TemplateBlockSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    templateId?: boolean
+    order?: boolean
+    title?: boolean
+    sourceType?: boolean
+    sourceBlockId?: boolean
+    template?: boolean | TemplateDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["templateBlock"]>
+
+  export type TemplateBlockSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    templateId?: boolean
+    order?: boolean
+    title?: boolean
+    sourceType?: boolean
+    sourceBlockId?: boolean
+    template?: boolean | TemplateDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["templateBlock"]>
+
+  export type TemplateBlockSelectScalar = {
+    id?: boolean
+    templateId?: boolean
+    order?: boolean
+    title?: boolean
+    sourceType?: boolean
+    sourceBlockId?: boolean
+  }
+
+  export type TemplateBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "templateId" | "order" | "title" | "sourceType" | "sourceBlockId", ExtArgs["result"]["templateBlock"]>
+  export type TemplateBlockInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    fields?: boolean | TemplateBlock$fieldsArgs<ExtArgs>
+    template?: boolean | TemplateDefaultArgs<ExtArgs>
+    _count?: boolean | TemplateBlockCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type TemplateBlockIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    template?: boolean | TemplateDefaultArgs<ExtArgs>
+  }
+  export type TemplateBlockIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    template?: boolean | TemplateDefaultArgs<ExtArgs>
+  }
+
+  export type $TemplateBlockPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TemplateBlock"
+    objects: {
+      fields: Prisma.$TemplateFieldPayload<ExtArgs>[]
+      template: Prisma.$TemplatePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      templateId: string
+      order: number
+      title: string
+      sourceType: $Enums.BlockSource
+      sourceBlockId: string | null
+    }, ExtArgs["result"]["templateBlock"]>
+    composites: {}
+  }
+
+  type TemplateBlockGetPayload<S extends boolean | null | undefined | TemplateBlockDefaultArgs> = $Result.GetResult<Prisma.$TemplateBlockPayload, S>
+
+  type TemplateBlockCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TemplateBlockFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TemplateBlockCountAggregateInputType | true
+    }
+
+  export interface TemplateBlockDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TemplateBlock'], meta: { name: 'TemplateBlock' } }
+    /**
+     * Find zero or one TemplateBlock that matches the filter.
+     * @param {TemplateBlockFindUniqueArgs} args - Arguments to find a TemplateBlock
+     * @example
+     * // Get one TemplateBlock
+     * const templateBlock = await prisma.templateBlock.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TemplateBlockFindUniqueArgs>(args: SelectSubset<T, TemplateBlockFindUniqueArgs<ExtArgs>>): Prisma__TemplateBlockClient<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TemplateBlock that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TemplateBlockFindUniqueOrThrowArgs} args - Arguments to find a TemplateBlock
+     * @example
+     * // Get one TemplateBlock
+     * const templateBlock = await prisma.templateBlock.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TemplateBlockFindUniqueOrThrowArgs>(args: SelectSubset<T, TemplateBlockFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TemplateBlockClient<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TemplateBlock that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateBlockFindFirstArgs} args - Arguments to find a TemplateBlock
+     * @example
+     * // Get one TemplateBlock
+     * const templateBlock = await prisma.templateBlock.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TemplateBlockFindFirstArgs>(args?: SelectSubset<T, TemplateBlockFindFirstArgs<ExtArgs>>): Prisma__TemplateBlockClient<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TemplateBlock that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateBlockFindFirstOrThrowArgs} args - Arguments to find a TemplateBlock
+     * @example
+     * // Get one TemplateBlock
+     * const templateBlock = await prisma.templateBlock.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TemplateBlockFindFirstOrThrowArgs>(args?: SelectSubset<T, TemplateBlockFindFirstOrThrowArgs<ExtArgs>>): Prisma__TemplateBlockClient<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TemplateBlocks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateBlockFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TemplateBlocks
+     * const templateBlocks = await prisma.templateBlock.findMany()
+     * 
+     * // Get first 10 TemplateBlocks
+     * const templateBlocks = await prisma.templateBlock.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const templateBlockWithIdOnly = await prisma.templateBlock.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TemplateBlockFindManyArgs>(args?: SelectSubset<T, TemplateBlockFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TemplateBlock.
+     * @param {TemplateBlockCreateArgs} args - Arguments to create a TemplateBlock.
+     * @example
+     * // Create one TemplateBlock
+     * const TemplateBlock = await prisma.templateBlock.create({
+     *   data: {
+     *     // ... data to create a TemplateBlock
+     *   }
+     * })
+     * 
+     */
+    create<T extends TemplateBlockCreateArgs>(args: SelectSubset<T, TemplateBlockCreateArgs<ExtArgs>>): Prisma__TemplateBlockClient<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TemplateBlocks.
+     * @param {TemplateBlockCreateManyArgs} args - Arguments to create many TemplateBlocks.
+     * @example
+     * // Create many TemplateBlocks
+     * const templateBlock = await prisma.templateBlock.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TemplateBlockCreateManyArgs>(args?: SelectSubset<T, TemplateBlockCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TemplateBlocks and returns the data saved in the database.
+     * @param {TemplateBlockCreateManyAndReturnArgs} args - Arguments to create many TemplateBlocks.
+     * @example
+     * // Create many TemplateBlocks
+     * const templateBlock = await prisma.templateBlock.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TemplateBlocks and only return the `id`
+     * const templateBlockWithIdOnly = await prisma.templateBlock.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TemplateBlockCreateManyAndReturnArgs>(args?: SelectSubset<T, TemplateBlockCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TemplateBlock.
+     * @param {TemplateBlockDeleteArgs} args - Arguments to delete one TemplateBlock.
+     * @example
+     * // Delete one TemplateBlock
+     * const TemplateBlock = await prisma.templateBlock.delete({
+     *   where: {
+     *     // ... filter to delete one TemplateBlock
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TemplateBlockDeleteArgs>(args: SelectSubset<T, TemplateBlockDeleteArgs<ExtArgs>>): Prisma__TemplateBlockClient<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TemplateBlock.
+     * @param {TemplateBlockUpdateArgs} args - Arguments to update one TemplateBlock.
+     * @example
+     * // Update one TemplateBlock
+     * const templateBlock = await prisma.templateBlock.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TemplateBlockUpdateArgs>(args: SelectSubset<T, TemplateBlockUpdateArgs<ExtArgs>>): Prisma__TemplateBlockClient<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TemplateBlocks.
+     * @param {TemplateBlockDeleteManyArgs} args - Arguments to filter TemplateBlocks to delete.
+     * @example
+     * // Delete a few TemplateBlocks
+     * const { count } = await prisma.templateBlock.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TemplateBlockDeleteManyArgs>(args?: SelectSubset<T, TemplateBlockDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TemplateBlocks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateBlockUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TemplateBlocks
+     * const templateBlock = await prisma.templateBlock.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TemplateBlockUpdateManyArgs>(args: SelectSubset<T, TemplateBlockUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TemplateBlocks and returns the data updated in the database.
+     * @param {TemplateBlockUpdateManyAndReturnArgs} args - Arguments to update many TemplateBlocks.
+     * @example
+     * // Update many TemplateBlocks
+     * const templateBlock = await prisma.templateBlock.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TemplateBlocks and only return the `id`
+     * const templateBlockWithIdOnly = await prisma.templateBlock.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TemplateBlockUpdateManyAndReturnArgs>(args: SelectSubset<T, TemplateBlockUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TemplateBlock.
+     * @param {TemplateBlockUpsertArgs} args - Arguments to update or create a TemplateBlock.
+     * @example
+     * // Update or create a TemplateBlock
+     * const templateBlock = await prisma.templateBlock.upsert({
+     *   create: {
+     *     // ... data to create a TemplateBlock
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TemplateBlock we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TemplateBlockUpsertArgs>(args: SelectSubset<T, TemplateBlockUpsertArgs<ExtArgs>>): Prisma__TemplateBlockClient<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TemplateBlocks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateBlockCountArgs} args - Arguments to filter TemplateBlocks to count.
+     * @example
+     * // Count the number of TemplateBlocks
+     * const count = await prisma.templateBlock.count({
+     *   where: {
+     *     // ... the filter for the TemplateBlocks we want to count
+     *   }
+     * })
+    **/
+    count<T extends TemplateBlockCountArgs>(
+      args?: Subset<T, TemplateBlockCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TemplateBlockCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TemplateBlock.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateBlockAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TemplateBlockAggregateArgs>(args: Subset<T, TemplateBlockAggregateArgs>): Prisma.PrismaPromise<GetTemplateBlockAggregateType<T>>
+
+    /**
+     * Group by TemplateBlock.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateBlockGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TemplateBlockGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TemplateBlockGroupByArgs['orderBy'] }
+        : { orderBy?: TemplateBlockGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TemplateBlockGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTemplateBlockGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TemplateBlock model
+   */
+  readonly fields: TemplateBlockFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TemplateBlock.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TemplateBlockClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    fields<T extends TemplateBlock$fieldsArgs<ExtArgs> = {}>(args?: Subset<T, TemplateBlock$fieldsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    template<T extends TemplateDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TemplateDefaultArgs<ExtArgs>>): Prisma__TemplateClient<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TemplateBlock model
+   */
+  interface TemplateBlockFieldRefs {
+    readonly id: FieldRef<"TemplateBlock", 'String'>
+    readonly templateId: FieldRef<"TemplateBlock", 'String'>
+    readonly order: FieldRef<"TemplateBlock", 'Int'>
+    readonly title: FieldRef<"TemplateBlock", 'String'>
+    readonly sourceType: FieldRef<"TemplateBlock", 'BlockSource'>
+    readonly sourceBlockId: FieldRef<"TemplateBlock", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TemplateBlock findUnique
+   */
+  export type TemplateBlockFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateBlock to fetch.
+     */
+    where: TemplateBlockWhereUniqueInput
+  }
+
+  /**
+   * TemplateBlock findUniqueOrThrow
+   */
+  export type TemplateBlockFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateBlock to fetch.
+     */
+    where: TemplateBlockWhereUniqueInput
+  }
+
+  /**
+   * TemplateBlock findFirst
+   */
+  export type TemplateBlockFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateBlock to fetch.
+     */
+    where?: TemplateBlockWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateBlocks to fetch.
+     */
+    orderBy?: TemplateBlockOrderByWithRelationInput | TemplateBlockOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TemplateBlocks.
+     */
+    cursor?: TemplateBlockWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateBlocks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateBlocks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TemplateBlocks.
+     */
+    distinct?: TemplateBlockScalarFieldEnum | TemplateBlockScalarFieldEnum[]
+  }
+
+  /**
+   * TemplateBlock findFirstOrThrow
+   */
+  export type TemplateBlockFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateBlock to fetch.
+     */
+    where?: TemplateBlockWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateBlocks to fetch.
+     */
+    orderBy?: TemplateBlockOrderByWithRelationInput | TemplateBlockOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TemplateBlocks.
+     */
+    cursor?: TemplateBlockWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateBlocks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateBlocks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TemplateBlocks.
+     */
+    distinct?: TemplateBlockScalarFieldEnum | TemplateBlockScalarFieldEnum[]
+  }
+
+  /**
+   * TemplateBlock findMany
+   */
+  export type TemplateBlockFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateBlocks to fetch.
+     */
+    where?: TemplateBlockWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateBlocks to fetch.
+     */
+    orderBy?: TemplateBlockOrderByWithRelationInput | TemplateBlockOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TemplateBlocks.
+     */
+    cursor?: TemplateBlockWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateBlocks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateBlocks.
+     */
+    skip?: number
+    distinct?: TemplateBlockScalarFieldEnum | TemplateBlockScalarFieldEnum[]
+  }
+
+  /**
+   * TemplateBlock create
+   */
+  export type TemplateBlockCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TemplateBlock.
+     */
+    data: XOR<TemplateBlockCreateInput, TemplateBlockUncheckedCreateInput>
+  }
+
+  /**
+   * TemplateBlock createMany
+   */
+  export type TemplateBlockCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TemplateBlocks.
+     */
+    data: TemplateBlockCreateManyInput | TemplateBlockCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TemplateBlock createManyAndReturn
+   */
+  export type TemplateBlockCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * The data used to create many TemplateBlocks.
+     */
+    data: TemplateBlockCreateManyInput | TemplateBlockCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TemplateBlock update
+   */
+  export type TemplateBlockUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TemplateBlock.
+     */
+    data: XOR<TemplateBlockUpdateInput, TemplateBlockUncheckedUpdateInput>
+    /**
+     * Choose, which TemplateBlock to update.
+     */
+    where: TemplateBlockWhereUniqueInput
+  }
+
+  /**
+   * TemplateBlock updateMany
+   */
+  export type TemplateBlockUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TemplateBlocks.
+     */
+    data: XOR<TemplateBlockUpdateManyMutationInput, TemplateBlockUncheckedUpdateManyInput>
+    /**
+     * Filter which TemplateBlocks to update
+     */
+    where?: TemplateBlockWhereInput
+    /**
+     * Limit how many TemplateBlocks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TemplateBlock updateManyAndReturn
+   */
+  export type TemplateBlockUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * The data used to update TemplateBlocks.
+     */
+    data: XOR<TemplateBlockUpdateManyMutationInput, TemplateBlockUncheckedUpdateManyInput>
+    /**
+     * Filter which TemplateBlocks to update
+     */
+    where?: TemplateBlockWhereInput
+    /**
+     * Limit how many TemplateBlocks to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TemplateBlock upsert
+   */
+  export type TemplateBlockUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TemplateBlock to update in case it exists.
+     */
+    where: TemplateBlockWhereUniqueInput
+    /**
+     * In case the TemplateBlock found by the `where` argument doesn't exist, create a new TemplateBlock with this data.
+     */
+    create: XOR<TemplateBlockCreateInput, TemplateBlockUncheckedCreateInput>
+    /**
+     * In case the TemplateBlock was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TemplateBlockUpdateInput, TemplateBlockUncheckedUpdateInput>
+  }
+
+  /**
+   * TemplateBlock delete
+   */
+  export type TemplateBlockDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockInclude<ExtArgs> | null
+    /**
+     * Filter which TemplateBlock to delete.
+     */
+    where: TemplateBlockWhereUniqueInput
+  }
+
+  /**
+   * TemplateBlock deleteMany
+   */
+  export type TemplateBlockDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TemplateBlocks to delete
+     */
+    where?: TemplateBlockWhereInput
+    /**
+     * Limit how many TemplateBlocks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TemplateBlock.fields
+   */
+  export type TemplateBlock$fieldsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldInclude<ExtArgs> | null
+    where?: TemplateFieldWhereInput
+    orderBy?: TemplateFieldOrderByWithRelationInput | TemplateFieldOrderByWithRelationInput[]
+    cursor?: TemplateFieldWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TemplateFieldScalarFieldEnum | TemplateFieldScalarFieldEnum[]
+  }
+
+  /**
+   * TemplateBlock without action
+   */
+  export type TemplateBlockDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateBlock
+     */
+    select?: TemplateBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateBlock
+     */
+    omit?: TemplateBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateBlockInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TemplateField
+   */
+
+  export type AggregateTemplateField = {
+    _count: TemplateFieldCountAggregateOutputType | null
+    _avg: TemplateFieldAvgAggregateOutputType | null
+    _sum: TemplateFieldSumAggregateOutputType | null
+    _min: TemplateFieldMinAggregateOutputType | null
+    _max: TemplateFieldMaxAggregateOutputType | null
+  }
+
+  export type TemplateFieldAvgAggregateOutputType = {
+    order: number | null
+  }
+
+  export type TemplateFieldSumAggregateOutputType = {
+    order: number | null
+  }
+
+  export type TemplateFieldMinAggregateOutputType = {
+    id: string | null
+    templateBlockId: string | null
+    order: number | null
+    key: string | null
+    label: string | null
+    fieldType: $Enums.FieldType | null
+    required: boolean | null
+  }
+
+  export type TemplateFieldMaxAggregateOutputType = {
+    id: string | null
+    templateBlockId: string | null
+    order: number | null
+    key: string | null
+    label: string | null
+    fieldType: $Enums.FieldType | null
+    required: boolean | null
+  }
+
+  export type TemplateFieldCountAggregateOutputType = {
+    id: number
+    templateBlockId: number
+    order: number
+    key: number
+    label: number
+    fieldType: number
+    required: number
+    _all: number
+  }
+
+
+  export type TemplateFieldAvgAggregateInputType = {
+    order?: true
+  }
+
+  export type TemplateFieldSumAggregateInputType = {
+    order?: true
+  }
+
+  export type TemplateFieldMinAggregateInputType = {
+    id?: true
+    templateBlockId?: true
+    order?: true
+    key?: true
+    label?: true
+    fieldType?: true
+    required?: true
+  }
+
+  export type TemplateFieldMaxAggregateInputType = {
+    id?: true
+    templateBlockId?: true
+    order?: true
+    key?: true
+    label?: true
+    fieldType?: true
+    required?: true
+  }
+
+  export type TemplateFieldCountAggregateInputType = {
+    id?: true
+    templateBlockId?: true
+    order?: true
+    key?: true
+    label?: true
+    fieldType?: true
+    required?: true
+    _all?: true
+  }
+
+  export type TemplateFieldAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TemplateField to aggregate.
+     */
+    where?: TemplateFieldWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateFields to fetch.
+     */
+    orderBy?: TemplateFieldOrderByWithRelationInput | TemplateFieldOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TemplateFieldWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateFields from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateFields.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TemplateFields
+    **/
+    _count?: true | TemplateFieldCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TemplateFieldAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TemplateFieldSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TemplateFieldMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TemplateFieldMaxAggregateInputType
+  }
+
+  export type GetTemplateFieldAggregateType<T extends TemplateFieldAggregateArgs> = {
+        [P in keyof T & keyof AggregateTemplateField]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTemplateField[P]>
+      : GetScalarType<T[P], AggregateTemplateField[P]>
+  }
+
+
+
+
+  export type TemplateFieldGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TemplateFieldWhereInput
+    orderBy?: TemplateFieldOrderByWithAggregationInput | TemplateFieldOrderByWithAggregationInput[]
+    by: TemplateFieldScalarFieldEnum[] | TemplateFieldScalarFieldEnum
+    having?: TemplateFieldScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TemplateFieldCountAggregateInputType | true
+    _avg?: TemplateFieldAvgAggregateInputType
+    _sum?: TemplateFieldSumAggregateInputType
+    _min?: TemplateFieldMinAggregateInputType
+    _max?: TemplateFieldMaxAggregateInputType
+  }
+
+  export type TemplateFieldGroupByOutputType = {
+    id: string
+    templateBlockId: string
+    order: number
+    key: string
+    label: string | null
+    fieldType: $Enums.FieldType
+    required: boolean
+    _count: TemplateFieldCountAggregateOutputType | null
+    _avg: TemplateFieldAvgAggregateOutputType | null
+    _sum: TemplateFieldSumAggregateOutputType | null
+    _min: TemplateFieldMinAggregateOutputType | null
+    _max: TemplateFieldMaxAggregateOutputType | null
+  }
+
+  type GetTemplateFieldGroupByPayload<T extends TemplateFieldGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TemplateFieldGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TemplateFieldGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TemplateFieldGroupByOutputType[P]>
+            : GetScalarType<T[P], TemplateFieldGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TemplateFieldSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    templateBlockId?: boolean
+    order?: boolean
+    key?: boolean
+    label?: boolean
+    fieldType?: boolean
+    required?: boolean
+    templateBlock?: boolean | TemplateBlockDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["templateField"]>
+
+  export type TemplateFieldSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    templateBlockId?: boolean
+    order?: boolean
+    key?: boolean
+    label?: boolean
+    fieldType?: boolean
+    required?: boolean
+    templateBlock?: boolean | TemplateBlockDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["templateField"]>
+
+  export type TemplateFieldSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    templateBlockId?: boolean
+    order?: boolean
+    key?: boolean
+    label?: boolean
+    fieldType?: boolean
+    required?: boolean
+    templateBlock?: boolean | TemplateBlockDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["templateField"]>
+
+  export type TemplateFieldSelectScalar = {
+    id?: boolean
+    templateBlockId?: boolean
+    order?: boolean
+    key?: boolean
+    label?: boolean
+    fieldType?: boolean
+    required?: boolean
+  }
+
+  export type TemplateFieldOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "templateBlockId" | "order" | "key" | "label" | "fieldType" | "required", ExtArgs["result"]["templateField"]>
+  export type TemplateFieldInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    templateBlock?: boolean | TemplateBlockDefaultArgs<ExtArgs>
+  }
+  export type TemplateFieldIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    templateBlock?: boolean | TemplateBlockDefaultArgs<ExtArgs>
+  }
+  export type TemplateFieldIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    templateBlock?: boolean | TemplateBlockDefaultArgs<ExtArgs>
+  }
+
+  export type $TemplateFieldPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TemplateField"
+    objects: {
+      templateBlock: Prisma.$TemplateBlockPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      templateBlockId: string
+      order: number
+      key: string
+      label: string | null
+      fieldType: $Enums.FieldType
+      required: boolean
+    }, ExtArgs["result"]["templateField"]>
+    composites: {}
+  }
+
+  type TemplateFieldGetPayload<S extends boolean | null | undefined | TemplateFieldDefaultArgs> = $Result.GetResult<Prisma.$TemplateFieldPayload, S>
+
+  type TemplateFieldCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TemplateFieldFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TemplateFieldCountAggregateInputType | true
+    }
+
+  export interface TemplateFieldDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TemplateField'], meta: { name: 'TemplateField' } }
+    /**
+     * Find zero or one TemplateField that matches the filter.
+     * @param {TemplateFieldFindUniqueArgs} args - Arguments to find a TemplateField
+     * @example
+     * // Get one TemplateField
+     * const templateField = await prisma.templateField.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TemplateFieldFindUniqueArgs>(args: SelectSubset<T, TemplateFieldFindUniqueArgs<ExtArgs>>): Prisma__TemplateFieldClient<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TemplateField that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TemplateFieldFindUniqueOrThrowArgs} args - Arguments to find a TemplateField
+     * @example
+     * // Get one TemplateField
+     * const templateField = await prisma.templateField.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TemplateFieldFindUniqueOrThrowArgs>(args: SelectSubset<T, TemplateFieldFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TemplateFieldClient<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TemplateField that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFieldFindFirstArgs} args - Arguments to find a TemplateField
+     * @example
+     * // Get one TemplateField
+     * const templateField = await prisma.templateField.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TemplateFieldFindFirstArgs>(args?: SelectSubset<T, TemplateFieldFindFirstArgs<ExtArgs>>): Prisma__TemplateFieldClient<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TemplateField that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFieldFindFirstOrThrowArgs} args - Arguments to find a TemplateField
+     * @example
+     * // Get one TemplateField
+     * const templateField = await prisma.templateField.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TemplateFieldFindFirstOrThrowArgs>(args?: SelectSubset<T, TemplateFieldFindFirstOrThrowArgs<ExtArgs>>): Prisma__TemplateFieldClient<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TemplateFields that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFieldFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TemplateFields
+     * const templateFields = await prisma.templateField.findMany()
+     * 
+     * // Get first 10 TemplateFields
+     * const templateFields = await prisma.templateField.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const templateFieldWithIdOnly = await prisma.templateField.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TemplateFieldFindManyArgs>(args?: SelectSubset<T, TemplateFieldFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TemplateField.
+     * @param {TemplateFieldCreateArgs} args - Arguments to create a TemplateField.
+     * @example
+     * // Create one TemplateField
+     * const TemplateField = await prisma.templateField.create({
+     *   data: {
+     *     // ... data to create a TemplateField
+     *   }
+     * })
+     * 
+     */
+    create<T extends TemplateFieldCreateArgs>(args: SelectSubset<T, TemplateFieldCreateArgs<ExtArgs>>): Prisma__TemplateFieldClient<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TemplateFields.
+     * @param {TemplateFieldCreateManyArgs} args - Arguments to create many TemplateFields.
+     * @example
+     * // Create many TemplateFields
+     * const templateField = await prisma.templateField.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TemplateFieldCreateManyArgs>(args?: SelectSubset<T, TemplateFieldCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TemplateFields and returns the data saved in the database.
+     * @param {TemplateFieldCreateManyAndReturnArgs} args - Arguments to create many TemplateFields.
+     * @example
+     * // Create many TemplateFields
+     * const templateField = await prisma.templateField.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TemplateFields and only return the `id`
+     * const templateFieldWithIdOnly = await prisma.templateField.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TemplateFieldCreateManyAndReturnArgs>(args?: SelectSubset<T, TemplateFieldCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TemplateField.
+     * @param {TemplateFieldDeleteArgs} args - Arguments to delete one TemplateField.
+     * @example
+     * // Delete one TemplateField
+     * const TemplateField = await prisma.templateField.delete({
+     *   where: {
+     *     // ... filter to delete one TemplateField
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TemplateFieldDeleteArgs>(args: SelectSubset<T, TemplateFieldDeleteArgs<ExtArgs>>): Prisma__TemplateFieldClient<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TemplateField.
+     * @param {TemplateFieldUpdateArgs} args - Arguments to update one TemplateField.
+     * @example
+     * // Update one TemplateField
+     * const templateField = await prisma.templateField.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TemplateFieldUpdateArgs>(args: SelectSubset<T, TemplateFieldUpdateArgs<ExtArgs>>): Prisma__TemplateFieldClient<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TemplateFields.
+     * @param {TemplateFieldDeleteManyArgs} args - Arguments to filter TemplateFields to delete.
+     * @example
+     * // Delete a few TemplateFields
+     * const { count } = await prisma.templateField.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TemplateFieldDeleteManyArgs>(args?: SelectSubset<T, TemplateFieldDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TemplateFields.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFieldUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TemplateFields
+     * const templateField = await prisma.templateField.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TemplateFieldUpdateManyArgs>(args: SelectSubset<T, TemplateFieldUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TemplateFields and returns the data updated in the database.
+     * @param {TemplateFieldUpdateManyAndReturnArgs} args - Arguments to update many TemplateFields.
+     * @example
+     * // Update many TemplateFields
+     * const templateField = await prisma.templateField.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TemplateFields and only return the `id`
+     * const templateFieldWithIdOnly = await prisma.templateField.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TemplateFieldUpdateManyAndReturnArgs>(args: SelectSubset<T, TemplateFieldUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TemplateField.
+     * @param {TemplateFieldUpsertArgs} args - Arguments to update or create a TemplateField.
+     * @example
+     * // Update or create a TemplateField
+     * const templateField = await prisma.templateField.upsert({
+     *   create: {
+     *     // ... data to create a TemplateField
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TemplateField we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TemplateFieldUpsertArgs>(args: SelectSubset<T, TemplateFieldUpsertArgs<ExtArgs>>): Prisma__TemplateFieldClient<$Result.GetResult<Prisma.$TemplateFieldPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TemplateFields.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFieldCountArgs} args - Arguments to filter TemplateFields to count.
+     * @example
+     * // Count the number of TemplateFields
+     * const count = await prisma.templateField.count({
+     *   where: {
+     *     // ... the filter for the TemplateFields we want to count
+     *   }
+     * })
+    **/
+    count<T extends TemplateFieldCountArgs>(
+      args?: Subset<T, TemplateFieldCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TemplateFieldCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TemplateField.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFieldAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TemplateFieldAggregateArgs>(args: Subset<T, TemplateFieldAggregateArgs>): Prisma.PrismaPromise<GetTemplateFieldAggregateType<T>>
+
+    /**
+     * Group by TemplateField.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFieldGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TemplateFieldGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TemplateFieldGroupByArgs['orderBy'] }
+        : { orderBy?: TemplateFieldGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TemplateFieldGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTemplateFieldGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TemplateField model
+   */
+  readonly fields: TemplateFieldFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TemplateField.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TemplateFieldClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    templateBlock<T extends TemplateBlockDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TemplateBlockDefaultArgs<ExtArgs>>): Prisma__TemplateBlockClient<$Result.GetResult<Prisma.$TemplateBlockPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TemplateField model
+   */
+  interface TemplateFieldFieldRefs {
+    readonly id: FieldRef<"TemplateField", 'String'>
+    readonly templateBlockId: FieldRef<"TemplateField", 'String'>
+    readonly order: FieldRef<"TemplateField", 'Int'>
+    readonly key: FieldRef<"TemplateField", 'String'>
+    readonly label: FieldRef<"TemplateField", 'String'>
+    readonly fieldType: FieldRef<"TemplateField", 'FieldType'>
+    readonly required: FieldRef<"TemplateField", 'Boolean'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TemplateField findUnique
+   */
+  export type TemplateFieldFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateField to fetch.
+     */
+    where: TemplateFieldWhereUniqueInput
+  }
+
+  /**
+   * TemplateField findUniqueOrThrow
+   */
+  export type TemplateFieldFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateField to fetch.
+     */
+    where: TemplateFieldWhereUniqueInput
+  }
+
+  /**
+   * TemplateField findFirst
+   */
+  export type TemplateFieldFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateField to fetch.
+     */
+    where?: TemplateFieldWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateFields to fetch.
+     */
+    orderBy?: TemplateFieldOrderByWithRelationInput | TemplateFieldOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TemplateFields.
+     */
+    cursor?: TemplateFieldWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateFields from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateFields.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TemplateFields.
+     */
+    distinct?: TemplateFieldScalarFieldEnum | TemplateFieldScalarFieldEnum[]
+  }
+
+  /**
+   * TemplateField findFirstOrThrow
+   */
+  export type TemplateFieldFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateField to fetch.
+     */
+    where?: TemplateFieldWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateFields to fetch.
+     */
+    orderBy?: TemplateFieldOrderByWithRelationInput | TemplateFieldOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TemplateFields.
+     */
+    cursor?: TemplateFieldWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateFields from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateFields.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TemplateFields.
+     */
+    distinct?: TemplateFieldScalarFieldEnum | TemplateFieldScalarFieldEnum[]
+  }
+
+  /**
+   * TemplateField findMany
+   */
+  export type TemplateFieldFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateFields to fetch.
+     */
+    where?: TemplateFieldWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateFields to fetch.
+     */
+    orderBy?: TemplateFieldOrderByWithRelationInput | TemplateFieldOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TemplateFields.
+     */
+    cursor?: TemplateFieldWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateFields from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateFields.
+     */
+    skip?: number
+    distinct?: TemplateFieldScalarFieldEnum | TemplateFieldScalarFieldEnum[]
+  }
+
+  /**
+   * TemplateField create
+   */
+  export type TemplateFieldCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TemplateField.
+     */
+    data: XOR<TemplateFieldCreateInput, TemplateFieldUncheckedCreateInput>
+  }
+
+  /**
+   * TemplateField createMany
+   */
+  export type TemplateFieldCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TemplateFields.
+     */
+    data: TemplateFieldCreateManyInput | TemplateFieldCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TemplateField createManyAndReturn
+   */
+  export type TemplateFieldCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * The data used to create many TemplateFields.
+     */
+    data: TemplateFieldCreateManyInput | TemplateFieldCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TemplateField update
+   */
+  export type TemplateFieldUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TemplateField.
+     */
+    data: XOR<TemplateFieldUpdateInput, TemplateFieldUncheckedUpdateInput>
+    /**
+     * Choose, which TemplateField to update.
+     */
+    where: TemplateFieldWhereUniqueInput
+  }
+
+  /**
+   * TemplateField updateMany
+   */
+  export type TemplateFieldUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TemplateFields.
+     */
+    data: XOR<TemplateFieldUpdateManyMutationInput, TemplateFieldUncheckedUpdateManyInput>
+    /**
+     * Filter which TemplateFields to update
+     */
+    where?: TemplateFieldWhereInput
+    /**
+     * Limit how many TemplateFields to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TemplateField updateManyAndReturn
+   */
+  export type TemplateFieldUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * The data used to update TemplateFields.
+     */
+    data: XOR<TemplateFieldUpdateManyMutationInput, TemplateFieldUncheckedUpdateManyInput>
+    /**
+     * Filter which TemplateFields to update
+     */
+    where?: TemplateFieldWhereInput
+    /**
+     * Limit how many TemplateFields to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TemplateField upsert
+   */
+  export type TemplateFieldUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TemplateField to update in case it exists.
+     */
+    where: TemplateFieldWhereUniqueInput
+    /**
+     * In case the TemplateField found by the `where` argument doesn't exist, create a new TemplateField with this data.
+     */
+    create: XOR<TemplateFieldCreateInput, TemplateFieldUncheckedCreateInput>
+    /**
+     * In case the TemplateField was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TemplateFieldUpdateInput, TemplateFieldUncheckedUpdateInput>
+  }
+
+  /**
+   * TemplateField delete
+   */
+  export type TemplateFieldDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldInclude<ExtArgs> | null
+    /**
+     * Filter which TemplateField to delete.
+     */
+    where: TemplateFieldWhereUniqueInput
+  }
+
+  /**
+   * TemplateField deleteMany
+   */
+  export type TemplateFieldDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TemplateFields to delete
+     */
+    where?: TemplateFieldWhereInput
+    /**
+     * Limit how many TemplateFields to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TemplateField without action
+   */
+  export type TemplateFieldDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateField
+     */
+    select?: TemplateFieldSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateField
+     */
+    omit?: TemplateFieldOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFieldInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BlockDefinition
+   */
+
+  export type AggregateBlockDefinition = {
+    _count: BlockDefinitionCountAggregateOutputType | null
+    _min: BlockDefinitionMinAggregateOutputType | null
+    _max: BlockDefinitionMaxAggregateOutputType | null
+  }
+
+  export type BlockDefinitionMinAggregateOutputType = {
+    id: string | null
+    ownerId: string | null
+    name: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BlockDefinitionMaxAggregateOutputType = {
+    id: string | null
+    ownerId: string | null
+    name: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BlockDefinitionCountAggregateOutputType = {
+    id: number
+    ownerId: number
+    name: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type BlockDefinitionMinAggregateInputType = {
+    id?: true
+    ownerId?: true
+    name?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BlockDefinitionMaxAggregateInputType = {
+    id?: true
+    ownerId?: true
+    name?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BlockDefinitionCountAggregateInputType = {
+    id?: true
+    ownerId?: true
+    name?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type BlockDefinitionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BlockDefinition to aggregate.
+     */
+    where?: BlockDefinitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockDefinitions to fetch.
+     */
+    orderBy?: BlockDefinitionOrderByWithRelationInput | BlockDefinitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BlockDefinitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockDefinitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockDefinitions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BlockDefinitions
+    **/
+    _count?: true | BlockDefinitionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BlockDefinitionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BlockDefinitionMaxAggregateInputType
+  }
+
+  export type GetBlockDefinitionAggregateType<T extends BlockDefinitionAggregateArgs> = {
+        [P in keyof T & keyof AggregateBlockDefinition]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBlockDefinition[P]>
+      : GetScalarType<T[P], AggregateBlockDefinition[P]>
+  }
+
+
+
+
+  export type BlockDefinitionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BlockDefinitionWhereInput
+    orderBy?: BlockDefinitionOrderByWithAggregationInput | BlockDefinitionOrderByWithAggregationInput[]
+    by: BlockDefinitionScalarFieldEnum[] | BlockDefinitionScalarFieldEnum
+    having?: BlockDefinitionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BlockDefinitionCountAggregateInputType | true
+    _min?: BlockDefinitionMinAggregateInputType
+    _max?: BlockDefinitionMaxAggregateInputType
+  }
+
+  export type BlockDefinitionGroupByOutputType = {
+    id: string
+    ownerId: string | null
+    name: string
+    createdAt: Date
+    updatedAt: Date
+    _count: BlockDefinitionCountAggregateOutputType | null
+    _min: BlockDefinitionMinAggregateOutputType | null
+    _max: BlockDefinitionMaxAggregateOutputType | null
+  }
+
+  type GetBlockDefinitionGroupByPayload<T extends BlockDefinitionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BlockDefinitionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BlockDefinitionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BlockDefinitionGroupByOutputType[P]>
+            : GetScalarType<T[P], BlockDefinitionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BlockDefinitionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    name?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    fields?: boolean | BlockDefinition$fieldsArgs<ExtArgs>
+    owner?: boolean | BlockDefinition$ownerArgs<ExtArgs>
+    _count?: boolean | BlockDefinitionCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["blockDefinition"]>
+
+  export type BlockDefinitionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    name?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | BlockDefinition$ownerArgs<ExtArgs>
+  }, ExtArgs["result"]["blockDefinition"]>
+
+  export type BlockDefinitionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    name?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | BlockDefinition$ownerArgs<ExtArgs>
+  }, ExtArgs["result"]["blockDefinition"]>
+
+  export type BlockDefinitionSelectScalar = {
+    id?: boolean
+    ownerId?: boolean
+    name?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type BlockDefinitionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ownerId" | "name" | "createdAt" | "updatedAt", ExtArgs["result"]["blockDefinition"]>
+  export type BlockDefinitionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    fields?: boolean | BlockDefinition$fieldsArgs<ExtArgs>
+    owner?: boolean | BlockDefinition$ownerArgs<ExtArgs>
+    _count?: boolean | BlockDefinitionCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type BlockDefinitionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | BlockDefinition$ownerArgs<ExtArgs>
+  }
+  export type BlockDefinitionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | BlockDefinition$ownerArgs<ExtArgs>
+  }
+
+  export type $BlockDefinitionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BlockDefinition"
+    objects: {
+      fields: Prisma.$BlockFieldDefinitionPayload<ExtArgs>[]
+      owner: Prisma.$UserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      ownerId: string | null
+      name: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["blockDefinition"]>
+    composites: {}
+  }
+
+  type BlockDefinitionGetPayload<S extends boolean | null | undefined | BlockDefinitionDefaultArgs> = $Result.GetResult<Prisma.$BlockDefinitionPayload, S>
+
+  type BlockDefinitionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BlockDefinitionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BlockDefinitionCountAggregateInputType | true
+    }
+
+  export interface BlockDefinitionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BlockDefinition'], meta: { name: 'BlockDefinition' } }
+    /**
+     * Find zero or one BlockDefinition that matches the filter.
+     * @param {BlockDefinitionFindUniqueArgs} args - Arguments to find a BlockDefinition
+     * @example
+     * // Get one BlockDefinition
+     * const blockDefinition = await prisma.blockDefinition.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BlockDefinitionFindUniqueArgs>(args: SelectSubset<T, BlockDefinitionFindUniqueArgs<ExtArgs>>): Prisma__BlockDefinitionClient<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BlockDefinition that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BlockDefinitionFindUniqueOrThrowArgs} args - Arguments to find a BlockDefinition
+     * @example
+     * // Get one BlockDefinition
+     * const blockDefinition = await prisma.blockDefinition.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BlockDefinitionFindUniqueOrThrowArgs>(args: SelectSubset<T, BlockDefinitionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BlockDefinitionClient<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BlockDefinition that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockDefinitionFindFirstArgs} args - Arguments to find a BlockDefinition
+     * @example
+     * // Get one BlockDefinition
+     * const blockDefinition = await prisma.blockDefinition.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BlockDefinitionFindFirstArgs>(args?: SelectSubset<T, BlockDefinitionFindFirstArgs<ExtArgs>>): Prisma__BlockDefinitionClient<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BlockDefinition that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockDefinitionFindFirstOrThrowArgs} args - Arguments to find a BlockDefinition
+     * @example
+     * // Get one BlockDefinition
+     * const blockDefinition = await prisma.blockDefinition.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BlockDefinitionFindFirstOrThrowArgs>(args?: SelectSubset<T, BlockDefinitionFindFirstOrThrowArgs<ExtArgs>>): Prisma__BlockDefinitionClient<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BlockDefinitions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockDefinitionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BlockDefinitions
+     * const blockDefinitions = await prisma.blockDefinition.findMany()
+     * 
+     * // Get first 10 BlockDefinitions
+     * const blockDefinitions = await prisma.blockDefinition.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const blockDefinitionWithIdOnly = await prisma.blockDefinition.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BlockDefinitionFindManyArgs>(args?: SelectSubset<T, BlockDefinitionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BlockDefinition.
+     * @param {BlockDefinitionCreateArgs} args - Arguments to create a BlockDefinition.
+     * @example
+     * // Create one BlockDefinition
+     * const BlockDefinition = await prisma.blockDefinition.create({
+     *   data: {
+     *     // ... data to create a BlockDefinition
+     *   }
+     * })
+     * 
+     */
+    create<T extends BlockDefinitionCreateArgs>(args: SelectSubset<T, BlockDefinitionCreateArgs<ExtArgs>>): Prisma__BlockDefinitionClient<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BlockDefinitions.
+     * @param {BlockDefinitionCreateManyArgs} args - Arguments to create many BlockDefinitions.
+     * @example
+     * // Create many BlockDefinitions
+     * const blockDefinition = await prisma.blockDefinition.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BlockDefinitionCreateManyArgs>(args?: SelectSubset<T, BlockDefinitionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BlockDefinitions and returns the data saved in the database.
+     * @param {BlockDefinitionCreateManyAndReturnArgs} args - Arguments to create many BlockDefinitions.
+     * @example
+     * // Create many BlockDefinitions
+     * const blockDefinition = await prisma.blockDefinition.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BlockDefinitions and only return the `id`
+     * const blockDefinitionWithIdOnly = await prisma.blockDefinition.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BlockDefinitionCreateManyAndReturnArgs>(args?: SelectSubset<T, BlockDefinitionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BlockDefinition.
+     * @param {BlockDefinitionDeleteArgs} args - Arguments to delete one BlockDefinition.
+     * @example
+     * // Delete one BlockDefinition
+     * const BlockDefinition = await prisma.blockDefinition.delete({
+     *   where: {
+     *     // ... filter to delete one BlockDefinition
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BlockDefinitionDeleteArgs>(args: SelectSubset<T, BlockDefinitionDeleteArgs<ExtArgs>>): Prisma__BlockDefinitionClient<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BlockDefinition.
+     * @param {BlockDefinitionUpdateArgs} args - Arguments to update one BlockDefinition.
+     * @example
+     * // Update one BlockDefinition
+     * const blockDefinition = await prisma.blockDefinition.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BlockDefinitionUpdateArgs>(args: SelectSubset<T, BlockDefinitionUpdateArgs<ExtArgs>>): Prisma__BlockDefinitionClient<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BlockDefinitions.
+     * @param {BlockDefinitionDeleteManyArgs} args - Arguments to filter BlockDefinitions to delete.
+     * @example
+     * // Delete a few BlockDefinitions
+     * const { count } = await prisma.blockDefinition.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BlockDefinitionDeleteManyArgs>(args?: SelectSubset<T, BlockDefinitionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BlockDefinitions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockDefinitionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BlockDefinitions
+     * const blockDefinition = await prisma.blockDefinition.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BlockDefinitionUpdateManyArgs>(args: SelectSubset<T, BlockDefinitionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BlockDefinitions and returns the data updated in the database.
+     * @param {BlockDefinitionUpdateManyAndReturnArgs} args - Arguments to update many BlockDefinitions.
+     * @example
+     * // Update many BlockDefinitions
+     * const blockDefinition = await prisma.blockDefinition.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BlockDefinitions and only return the `id`
+     * const blockDefinitionWithIdOnly = await prisma.blockDefinition.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BlockDefinitionUpdateManyAndReturnArgs>(args: SelectSubset<T, BlockDefinitionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BlockDefinition.
+     * @param {BlockDefinitionUpsertArgs} args - Arguments to update or create a BlockDefinition.
+     * @example
+     * // Update or create a BlockDefinition
+     * const blockDefinition = await prisma.blockDefinition.upsert({
+     *   create: {
+     *     // ... data to create a BlockDefinition
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BlockDefinition we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BlockDefinitionUpsertArgs>(args: SelectSubset<T, BlockDefinitionUpsertArgs<ExtArgs>>): Prisma__BlockDefinitionClient<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BlockDefinitions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockDefinitionCountArgs} args - Arguments to filter BlockDefinitions to count.
+     * @example
+     * // Count the number of BlockDefinitions
+     * const count = await prisma.blockDefinition.count({
+     *   where: {
+     *     // ... the filter for the BlockDefinitions we want to count
+     *   }
+     * })
+    **/
+    count<T extends BlockDefinitionCountArgs>(
+      args?: Subset<T, BlockDefinitionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BlockDefinitionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BlockDefinition.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockDefinitionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BlockDefinitionAggregateArgs>(args: Subset<T, BlockDefinitionAggregateArgs>): Prisma.PrismaPromise<GetBlockDefinitionAggregateType<T>>
+
+    /**
+     * Group by BlockDefinition.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockDefinitionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BlockDefinitionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BlockDefinitionGroupByArgs['orderBy'] }
+        : { orderBy?: BlockDefinitionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BlockDefinitionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBlockDefinitionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BlockDefinition model
+   */
+  readonly fields: BlockDefinitionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BlockDefinition.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BlockDefinitionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    fields<T extends BlockDefinition$fieldsArgs<ExtArgs> = {}>(args?: Subset<T, BlockDefinition$fieldsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    owner<T extends BlockDefinition$ownerArgs<ExtArgs> = {}>(args?: Subset<T, BlockDefinition$ownerArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BlockDefinition model
+   */
+  interface BlockDefinitionFieldRefs {
+    readonly id: FieldRef<"BlockDefinition", 'String'>
+    readonly ownerId: FieldRef<"BlockDefinition", 'String'>
+    readonly name: FieldRef<"BlockDefinition", 'String'>
+    readonly createdAt: FieldRef<"BlockDefinition", 'DateTime'>
+    readonly updatedAt: FieldRef<"BlockDefinition", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BlockDefinition findUnique
+   */
+  export type BlockDefinitionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter, which BlockDefinition to fetch.
+     */
+    where: BlockDefinitionWhereUniqueInput
+  }
+
+  /**
+   * BlockDefinition findUniqueOrThrow
+   */
+  export type BlockDefinitionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter, which BlockDefinition to fetch.
+     */
+    where: BlockDefinitionWhereUniqueInput
+  }
+
+  /**
+   * BlockDefinition findFirst
+   */
+  export type BlockDefinitionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter, which BlockDefinition to fetch.
+     */
+    where?: BlockDefinitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockDefinitions to fetch.
+     */
+    orderBy?: BlockDefinitionOrderByWithRelationInput | BlockDefinitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BlockDefinitions.
+     */
+    cursor?: BlockDefinitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockDefinitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockDefinitions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BlockDefinitions.
+     */
+    distinct?: BlockDefinitionScalarFieldEnum | BlockDefinitionScalarFieldEnum[]
+  }
+
+  /**
+   * BlockDefinition findFirstOrThrow
+   */
+  export type BlockDefinitionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter, which BlockDefinition to fetch.
+     */
+    where?: BlockDefinitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockDefinitions to fetch.
+     */
+    orderBy?: BlockDefinitionOrderByWithRelationInput | BlockDefinitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BlockDefinitions.
+     */
+    cursor?: BlockDefinitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockDefinitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockDefinitions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BlockDefinitions.
+     */
+    distinct?: BlockDefinitionScalarFieldEnum | BlockDefinitionScalarFieldEnum[]
+  }
+
+  /**
+   * BlockDefinition findMany
+   */
+  export type BlockDefinitionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter, which BlockDefinitions to fetch.
+     */
+    where?: BlockDefinitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockDefinitions to fetch.
+     */
+    orderBy?: BlockDefinitionOrderByWithRelationInput | BlockDefinitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BlockDefinitions.
+     */
+    cursor?: BlockDefinitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockDefinitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockDefinitions.
+     */
+    skip?: number
+    distinct?: BlockDefinitionScalarFieldEnum | BlockDefinitionScalarFieldEnum[]
+  }
+
+  /**
+   * BlockDefinition create
+   */
+  export type BlockDefinitionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BlockDefinition.
+     */
+    data: XOR<BlockDefinitionCreateInput, BlockDefinitionUncheckedCreateInput>
+  }
+
+  /**
+   * BlockDefinition createMany
+   */
+  export type BlockDefinitionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BlockDefinitions.
+     */
+    data: BlockDefinitionCreateManyInput | BlockDefinitionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BlockDefinition createManyAndReturn
+   */
+  export type BlockDefinitionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * The data used to create many BlockDefinitions.
+     */
+    data: BlockDefinitionCreateManyInput | BlockDefinitionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BlockDefinition update
+   */
+  export type BlockDefinitionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BlockDefinition.
+     */
+    data: XOR<BlockDefinitionUpdateInput, BlockDefinitionUncheckedUpdateInput>
+    /**
+     * Choose, which BlockDefinition to update.
+     */
+    where: BlockDefinitionWhereUniqueInput
+  }
+
+  /**
+   * BlockDefinition updateMany
+   */
+  export type BlockDefinitionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BlockDefinitions.
+     */
+    data: XOR<BlockDefinitionUpdateManyMutationInput, BlockDefinitionUncheckedUpdateManyInput>
+    /**
+     * Filter which BlockDefinitions to update
+     */
+    where?: BlockDefinitionWhereInput
+    /**
+     * Limit how many BlockDefinitions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BlockDefinition updateManyAndReturn
+   */
+  export type BlockDefinitionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * The data used to update BlockDefinitions.
+     */
+    data: XOR<BlockDefinitionUpdateManyMutationInput, BlockDefinitionUncheckedUpdateManyInput>
+    /**
+     * Filter which BlockDefinitions to update
+     */
+    where?: BlockDefinitionWhereInput
+    /**
+     * Limit how many BlockDefinitions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BlockDefinition upsert
+   */
+  export type BlockDefinitionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BlockDefinition to update in case it exists.
+     */
+    where: BlockDefinitionWhereUniqueInput
+    /**
+     * In case the BlockDefinition found by the `where` argument doesn't exist, create a new BlockDefinition with this data.
+     */
+    create: XOR<BlockDefinitionCreateInput, BlockDefinitionUncheckedCreateInput>
+    /**
+     * In case the BlockDefinition was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BlockDefinitionUpdateInput, BlockDefinitionUncheckedUpdateInput>
+  }
+
+  /**
+   * BlockDefinition delete
+   */
+  export type BlockDefinitionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter which BlockDefinition to delete.
+     */
+    where: BlockDefinitionWhereUniqueInput
+  }
+
+  /**
+   * BlockDefinition deleteMany
+   */
+  export type BlockDefinitionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BlockDefinitions to delete
+     */
+    where?: BlockDefinitionWhereInput
+    /**
+     * Limit how many BlockDefinitions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BlockDefinition.fields
+   */
+  export type BlockDefinition$fieldsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionInclude<ExtArgs> | null
+    where?: BlockFieldDefinitionWhereInput
+    orderBy?: BlockFieldDefinitionOrderByWithRelationInput | BlockFieldDefinitionOrderByWithRelationInput[]
+    cursor?: BlockFieldDefinitionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BlockFieldDefinitionScalarFieldEnum | BlockFieldDefinitionScalarFieldEnum[]
+  }
+
+  /**
+   * BlockDefinition.owner
+   */
+  export type BlockDefinition$ownerArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * BlockDefinition without action
+   */
+  export type BlockDefinitionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockDefinition
+     */
+    select?: BlockDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockDefinition
+     */
+    omit?: BlockDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockDefinitionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BlockFieldDefinition
+   */
+
+  export type AggregateBlockFieldDefinition = {
+    _count: BlockFieldDefinitionCountAggregateOutputType | null
+    _avg: BlockFieldDefinitionAvgAggregateOutputType | null
+    _sum: BlockFieldDefinitionSumAggregateOutputType | null
+    _min: BlockFieldDefinitionMinAggregateOutputType | null
+    _max: BlockFieldDefinitionMaxAggregateOutputType | null
+  }
+
+  export type BlockFieldDefinitionAvgAggregateOutputType = {
+    order: number | null
+  }
+
+  export type BlockFieldDefinitionSumAggregateOutputType = {
+    order: number | null
+  }
+
+  export type BlockFieldDefinitionMinAggregateOutputType = {
+    id: string | null
+    blockId: string | null
+    order: number | null
+    key: string | null
+    label: string | null
+    fieldType: $Enums.FieldType | null
+    required: boolean | null
+  }
+
+  export type BlockFieldDefinitionMaxAggregateOutputType = {
+    id: string | null
+    blockId: string | null
+    order: number | null
+    key: string | null
+    label: string | null
+    fieldType: $Enums.FieldType | null
+    required: boolean | null
+  }
+
+  export type BlockFieldDefinitionCountAggregateOutputType = {
+    id: number
+    blockId: number
+    order: number
+    key: number
+    label: number
+    fieldType: number
+    required: number
+    _all: number
+  }
+
+
+  export type BlockFieldDefinitionAvgAggregateInputType = {
+    order?: true
+  }
+
+  export type BlockFieldDefinitionSumAggregateInputType = {
+    order?: true
+  }
+
+  export type BlockFieldDefinitionMinAggregateInputType = {
+    id?: true
+    blockId?: true
+    order?: true
+    key?: true
+    label?: true
+    fieldType?: true
+    required?: true
+  }
+
+  export type BlockFieldDefinitionMaxAggregateInputType = {
+    id?: true
+    blockId?: true
+    order?: true
+    key?: true
+    label?: true
+    fieldType?: true
+    required?: true
+  }
+
+  export type BlockFieldDefinitionCountAggregateInputType = {
+    id?: true
+    blockId?: true
+    order?: true
+    key?: true
+    label?: true
+    fieldType?: true
+    required?: true
+    _all?: true
+  }
+
+  export type BlockFieldDefinitionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BlockFieldDefinition to aggregate.
+     */
+    where?: BlockFieldDefinitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockFieldDefinitions to fetch.
+     */
+    orderBy?: BlockFieldDefinitionOrderByWithRelationInput | BlockFieldDefinitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BlockFieldDefinitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockFieldDefinitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockFieldDefinitions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BlockFieldDefinitions
+    **/
+    _count?: true | BlockFieldDefinitionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BlockFieldDefinitionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BlockFieldDefinitionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BlockFieldDefinitionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BlockFieldDefinitionMaxAggregateInputType
+  }
+
+  export type GetBlockFieldDefinitionAggregateType<T extends BlockFieldDefinitionAggregateArgs> = {
+        [P in keyof T & keyof AggregateBlockFieldDefinition]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBlockFieldDefinition[P]>
+      : GetScalarType<T[P], AggregateBlockFieldDefinition[P]>
+  }
+
+
+
+
+  export type BlockFieldDefinitionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BlockFieldDefinitionWhereInput
+    orderBy?: BlockFieldDefinitionOrderByWithAggregationInput | BlockFieldDefinitionOrderByWithAggregationInput[]
+    by: BlockFieldDefinitionScalarFieldEnum[] | BlockFieldDefinitionScalarFieldEnum
+    having?: BlockFieldDefinitionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BlockFieldDefinitionCountAggregateInputType | true
+    _avg?: BlockFieldDefinitionAvgAggregateInputType
+    _sum?: BlockFieldDefinitionSumAggregateInputType
+    _min?: BlockFieldDefinitionMinAggregateInputType
+    _max?: BlockFieldDefinitionMaxAggregateInputType
+  }
+
+  export type BlockFieldDefinitionGroupByOutputType = {
+    id: string
+    blockId: string
+    order: number
+    key: string
+    label: string | null
+    fieldType: $Enums.FieldType
+    required: boolean
+    _count: BlockFieldDefinitionCountAggregateOutputType | null
+    _avg: BlockFieldDefinitionAvgAggregateOutputType | null
+    _sum: BlockFieldDefinitionSumAggregateOutputType | null
+    _min: BlockFieldDefinitionMinAggregateOutputType | null
+    _max: BlockFieldDefinitionMaxAggregateOutputType | null
+  }
+
+  type GetBlockFieldDefinitionGroupByPayload<T extends BlockFieldDefinitionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BlockFieldDefinitionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BlockFieldDefinitionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BlockFieldDefinitionGroupByOutputType[P]>
+            : GetScalarType<T[P], BlockFieldDefinitionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BlockFieldDefinitionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    blockId?: boolean
+    order?: boolean
+    key?: boolean
+    label?: boolean
+    fieldType?: boolean
+    required?: boolean
+    block?: boolean | BlockDefinitionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["blockFieldDefinition"]>
+
+  export type BlockFieldDefinitionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    blockId?: boolean
+    order?: boolean
+    key?: boolean
+    label?: boolean
+    fieldType?: boolean
+    required?: boolean
+    block?: boolean | BlockDefinitionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["blockFieldDefinition"]>
+
+  export type BlockFieldDefinitionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    blockId?: boolean
+    order?: boolean
+    key?: boolean
+    label?: boolean
+    fieldType?: boolean
+    required?: boolean
+    block?: boolean | BlockDefinitionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["blockFieldDefinition"]>
+
+  export type BlockFieldDefinitionSelectScalar = {
+    id?: boolean
+    blockId?: boolean
+    order?: boolean
+    key?: boolean
+    label?: boolean
+    fieldType?: boolean
+    required?: boolean
+  }
+
+  export type BlockFieldDefinitionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "blockId" | "order" | "key" | "label" | "fieldType" | "required", ExtArgs["result"]["blockFieldDefinition"]>
+  export type BlockFieldDefinitionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    block?: boolean | BlockDefinitionDefaultArgs<ExtArgs>
+  }
+  export type BlockFieldDefinitionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    block?: boolean | BlockDefinitionDefaultArgs<ExtArgs>
+  }
+  export type BlockFieldDefinitionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    block?: boolean | BlockDefinitionDefaultArgs<ExtArgs>
+  }
+
+  export type $BlockFieldDefinitionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BlockFieldDefinition"
+    objects: {
+      block: Prisma.$BlockDefinitionPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      blockId: string
+      order: number
+      key: string
+      label: string | null
+      fieldType: $Enums.FieldType
+      required: boolean
+    }, ExtArgs["result"]["blockFieldDefinition"]>
+    composites: {}
+  }
+
+  type BlockFieldDefinitionGetPayload<S extends boolean | null | undefined | BlockFieldDefinitionDefaultArgs> = $Result.GetResult<Prisma.$BlockFieldDefinitionPayload, S>
+
+  type BlockFieldDefinitionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BlockFieldDefinitionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BlockFieldDefinitionCountAggregateInputType | true
+    }
+
+  export interface BlockFieldDefinitionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BlockFieldDefinition'], meta: { name: 'BlockFieldDefinition' } }
+    /**
+     * Find zero or one BlockFieldDefinition that matches the filter.
+     * @param {BlockFieldDefinitionFindUniqueArgs} args - Arguments to find a BlockFieldDefinition
+     * @example
+     * // Get one BlockFieldDefinition
+     * const blockFieldDefinition = await prisma.blockFieldDefinition.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BlockFieldDefinitionFindUniqueArgs>(args: SelectSubset<T, BlockFieldDefinitionFindUniqueArgs<ExtArgs>>): Prisma__BlockFieldDefinitionClient<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BlockFieldDefinition that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BlockFieldDefinitionFindUniqueOrThrowArgs} args - Arguments to find a BlockFieldDefinition
+     * @example
+     * // Get one BlockFieldDefinition
+     * const blockFieldDefinition = await prisma.blockFieldDefinition.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BlockFieldDefinitionFindUniqueOrThrowArgs>(args: SelectSubset<T, BlockFieldDefinitionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BlockFieldDefinitionClient<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BlockFieldDefinition that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockFieldDefinitionFindFirstArgs} args - Arguments to find a BlockFieldDefinition
+     * @example
+     * // Get one BlockFieldDefinition
+     * const blockFieldDefinition = await prisma.blockFieldDefinition.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BlockFieldDefinitionFindFirstArgs>(args?: SelectSubset<T, BlockFieldDefinitionFindFirstArgs<ExtArgs>>): Prisma__BlockFieldDefinitionClient<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BlockFieldDefinition that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockFieldDefinitionFindFirstOrThrowArgs} args - Arguments to find a BlockFieldDefinition
+     * @example
+     * // Get one BlockFieldDefinition
+     * const blockFieldDefinition = await prisma.blockFieldDefinition.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BlockFieldDefinitionFindFirstOrThrowArgs>(args?: SelectSubset<T, BlockFieldDefinitionFindFirstOrThrowArgs<ExtArgs>>): Prisma__BlockFieldDefinitionClient<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BlockFieldDefinitions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockFieldDefinitionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BlockFieldDefinitions
+     * const blockFieldDefinitions = await prisma.blockFieldDefinition.findMany()
+     * 
+     * // Get first 10 BlockFieldDefinitions
+     * const blockFieldDefinitions = await prisma.blockFieldDefinition.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const blockFieldDefinitionWithIdOnly = await prisma.blockFieldDefinition.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BlockFieldDefinitionFindManyArgs>(args?: SelectSubset<T, BlockFieldDefinitionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BlockFieldDefinition.
+     * @param {BlockFieldDefinitionCreateArgs} args - Arguments to create a BlockFieldDefinition.
+     * @example
+     * // Create one BlockFieldDefinition
+     * const BlockFieldDefinition = await prisma.blockFieldDefinition.create({
+     *   data: {
+     *     // ... data to create a BlockFieldDefinition
+     *   }
+     * })
+     * 
+     */
+    create<T extends BlockFieldDefinitionCreateArgs>(args: SelectSubset<T, BlockFieldDefinitionCreateArgs<ExtArgs>>): Prisma__BlockFieldDefinitionClient<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BlockFieldDefinitions.
+     * @param {BlockFieldDefinitionCreateManyArgs} args - Arguments to create many BlockFieldDefinitions.
+     * @example
+     * // Create many BlockFieldDefinitions
+     * const blockFieldDefinition = await prisma.blockFieldDefinition.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BlockFieldDefinitionCreateManyArgs>(args?: SelectSubset<T, BlockFieldDefinitionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BlockFieldDefinitions and returns the data saved in the database.
+     * @param {BlockFieldDefinitionCreateManyAndReturnArgs} args - Arguments to create many BlockFieldDefinitions.
+     * @example
+     * // Create many BlockFieldDefinitions
+     * const blockFieldDefinition = await prisma.blockFieldDefinition.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BlockFieldDefinitions and only return the `id`
+     * const blockFieldDefinitionWithIdOnly = await prisma.blockFieldDefinition.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BlockFieldDefinitionCreateManyAndReturnArgs>(args?: SelectSubset<T, BlockFieldDefinitionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BlockFieldDefinition.
+     * @param {BlockFieldDefinitionDeleteArgs} args - Arguments to delete one BlockFieldDefinition.
+     * @example
+     * // Delete one BlockFieldDefinition
+     * const BlockFieldDefinition = await prisma.blockFieldDefinition.delete({
+     *   where: {
+     *     // ... filter to delete one BlockFieldDefinition
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BlockFieldDefinitionDeleteArgs>(args: SelectSubset<T, BlockFieldDefinitionDeleteArgs<ExtArgs>>): Prisma__BlockFieldDefinitionClient<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BlockFieldDefinition.
+     * @param {BlockFieldDefinitionUpdateArgs} args - Arguments to update one BlockFieldDefinition.
+     * @example
+     * // Update one BlockFieldDefinition
+     * const blockFieldDefinition = await prisma.blockFieldDefinition.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BlockFieldDefinitionUpdateArgs>(args: SelectSubset<T, BlockFieldDefinitionUpdateArgs<ExtArgs>>): Prisma__BlockFieldDefinitionClient<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BlockFieldDefinitions.
+     * @param {BlockFieldDefinitionDeleteManyArgs} args - Arguments to filter BlockFieldDefinitions to delete.
+     * @example
+     * // Delete a few BlockFieldDefinitions
+     * const { count } = await prisma.blockFieldDefinition.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BlockFieldDefinitionDeleteManyArgs>(args?: SelectSubset<T, BlockFieldDefinitionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BlockFieldDefinitions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockFieldDefinitionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BlockFieldDefinitions
+     * const blockFieldDefinition = await prisma.blockFieldDefinition.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BlockFieldDefinitionUpdateManyArgs>(args: SelectSubset<T, BlockFieldDefinitionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BlockFieldDefinitions and returns the data updated in the database.
+     * @param {BlockFieldDefinitionUpdateManyAndReturnArgs} args - Arguments to update many BlockFieldDefinitions.
+     * @example
+     * // Update many BlockFieldDefinitions
+     * const blockFieldDefinition = await prisma.blockFieldDefinition.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BlockFieldDefinitions and only return the `id`
+     * const blockFieldDefinitionWithIdOnly = await prisma.blockFieldDefinition.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BlockFieldDefinitionUpdateManyAndReturnArgs>(args: SelectSubset<T, BlockFieldDefinitionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BlockFieldDefinition.
+     * @param {BlockFieldDefinitionUpsertArgs} args - Arguments to update or create a BlockFieldDefinition.
+     * @example
+     * // Update or create a BlockFieldDefinition
+     * const blockFieldDefinition = await prisma.blockFieldDefinition.upsert({
+     *   create: {
+     *     // ... data to create a BlockFieldDefinition
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BlockFieldDefinition we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BlockFieldDefinitionUpsertArgs>(args: SelectSubset<T, BlockFieldDefinitionUpsertArgs<ExtArgs>>): Prisma__BlockFieldDefinitionClient<$Result.GetResult<Prisma.$BlockFieldDefinitionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BlockFieldDefinitions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockFieldDefinitionCountArgs} args - Arguments to filter BlockFieldDefinitions to count.
+     * @example
+     * // Count the number of BlockFieldDefinitions
+     * const count = await prisma.blockFieldDefinition.count({
+     *   where: {
+     *     // ... the filter for the BlockFieldDefinitions we want to count
+     *   }
+     * })
+    **/
+    count<T extends BlockFieldDefinitionCountArgs>(
+      args?: Subset<T, BlockFieldDefinitionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BlockFieldDefinitionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BlockFieldDefinition.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockFieldDefinitionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BlockFieldDefinitionAggregateArgs>(args: Subset<T, BlockFieldDefinitionAggregateArgs>): Prisma.PrismaPromise<GetBlockFieldDefinitionAggregateType<T>>
+
+    /**
+     * Group by BlockFieldDefinition.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockFieldDefinitionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BlockFieldDefinitionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BlockFieldDefinitionGroupByArgs['orderBy'] }
+        : { orderBy?: BlockFieldDefinitionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BlockFieldDefinitionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBlockFieldDefinitionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BlockFieldDefinition model
+   */
+  readonly fields: BlockFieldDefinitionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BlockFieldDefinition.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BlockFieldDefinitionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    block<T extends BlockDefinitionDefaultArgs<ExtArgs> = {}>(args?: Subset<T, BlockDefinitionDefaultArgs<ExtArgs>>): Prisma__BlockDefinitionClient<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BlockFieldDefinition model
+   */
+  interface BlockFieldDefinitionFieldRefs {
+    readonly id: FieldRef<"BlockFieldDefinition", 'String'>
+    readonly blockId: FieldRef<"BlockFieldDefinition", 'String'>
+    readonly order: FieldRef<"BlockFieldDefinition", 'Int'>
+    readonly key: FieldRef<"BlockFieldDefinition", 'String'>
+    readonly label: FieldRef<"BlockFieldDefinition", 'String'>
+    readonly fieldType: FieldRef<"BlockFieldDefinition", 'FieldType'>
+    readonly required: FieldRef<"BlockFieldDefinition", 'Boolean'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BlockFieldDefinition findUnique
+   */
+  export type BlockFieldDefinitionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter, which BlockFieldDefinition to fetch.
+     */
+    where: BlockFieldDefinitionWhereUniqueInput
+  }
+
+  /**
+   * BlockFieldDefinition findUniqueOrThrow
+   */
+  export type BlockFieldDefinitionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter, which BlockFieldDefinition to fetch.
+     */
+    where: BlockFieldDefinitionWhereUniqueInput
+  }
+
+  /**
+   * BlockFieldDefinition findFirst
+   */
+  export type BlockFieldDefinitionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter, which BlockFieldDefinition to fetch.
+     */
+    where?: BlockFieldDefinitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockFieldDefinitions to fetch.
+     */
+    orderBy?: BlockFieldDefinitionOrderByWithRelationInput | BlockFieldDefinitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BlockFieldDefinitions.
+     */
+    cursor?: BlockFieldDefinitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockFieldDefinitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockFieldDefinitions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BlockFieldDefinitions.
+     */
+    distinct?: BlockFieldDefinitionScalarFieldEnum | BlockFieldDefinitionScalarFieldEnum[]
+  }
+
+  /**
+   * BlockFieldDefinition findFirstOrThrow
+   */
+  export type BlockFieldDefinitionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter, which BlockFieldDefinition to fetch.
+     */
+    where?: BlockFieldDefinitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockFieldDefinitions to fetch.
+     */
+    orderBy?: BlockFieldDefinitionOrderByWithRelationInput | BlockFieldDefinitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BlockFieldDefinitions.
+     */
+    cursor?: BlockFieldDefinitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockFieldDefinitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockFieldDefinitions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BlockFieldDefinitions.
+     */
+    distinct?: BlockFieldDefinitionScalarFieldEnum | BlockFieldDefinitionScalarFieldEnum[]
+  }
+
+  /**
+   * BlockFieldDefinition findMany
+   */
+  export type BlockFieldDefinitionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter, which BlockFieldDefinitions to fetch.
+     */
+    where?: BlockFieldDefinitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockFieldDefinitions to fetch.
+     */
+    orderBy?: BlockFieldDefinitionOrderByWithRelationInput | BlockFieldDefinitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BlockFieldDefinitions.
+     */
+    cursor?: BlockFieldDefinitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockFieldDefinitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockFieldDefinitions.
+     */
+    skip?: number
+    distinct?: BlockFieldDefinitionScalarFieldEnum | BlockFieldDefinitionScalarFieldEnum[]
+  }
+
+  /**
+   * BlockFieldDefinition create
+   */
+  export type BlockFieldDefinitionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BlockFieldDefinition.
+     */
+    data: XOR<BlockFieldDefinitionCreateInput, BlockFieldDefinitionUncheckedCreateInput>
+  }
+
+  /**
+   * BlockFieldDefinition createMany
+   */
+  export type BlockFieldDefinitionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BlockFieldDefinitions.
+     */
+    data: BlockFieldDefinitionCreateManyInput | BlockFieldDefinitionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BlockFieldDefinition createManyAndReturn
+   */
+  export type BlockFieldDefinitionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * The data used to create many BlockFieldDefinitions.
+     */
+    data: BlockFieldDefinitionCreateManyInput | BlockFieldDefinitionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BlockFieldDefinition update
+   */
+  export type BlockFieldDefinitionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BlockFieldDefinition.
+     */
+    data: XOR<BlockFieldDefinitionUpdateInput, BlockFieldDefinitionUncheckedUpdateInput>
+    /**
+     * Choose, which BlockFieldDefinition to update.
+     */
+    where: BlockFieldDefinitionWhereUniqueInput
+  }
+
+  /**
+   * BlockFieldDefinition updateMany
+   */
+  export type BlockFieldDefinitionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BlockFieldDefinitions.
+     */
+    data: XOR<BlockFieldDefinitionUpdateManyMutationInput, BlockFieldDefinitionUncheckedUpdateManyInput>
+    /**
+     * Filter which BlockFieldDefinitions to update
+     */
+    where?: BlockFieldDefinitionWhereInput
+    /**
+     * Limit how many BlockFieldDefinitions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BlockFieldDefinition updateManyAndReturn
+   */
+  export type BlockFieldDefinitionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * The data used to update BlockFieldDefinitions.
+     */
+    data: XOR<BlockFieldDefinitionUpdateManyMutationInput, BlockFieldDefinitionUncheckedUpdateManyInput>
+    /**
+     * Filter which BlockFieldDefinitions to update
+     */
+    where?: BlockFieldDefinitionWhereInput
+    /**
+     * Limit how many BlockFieldDefinitions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BlockFieldDefinition upsert
+   */
+  export type BlockFieldDefinitionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BlockFieldDefinition to update in case it exists.
+     */
+    where: BlockFieldDefinitionWhereUniqueInput
+    /**
+     * In case the BlockFieldDefinition found by the `where` argument doesn't exist, create a new BlockFieldDefinition with this data.
+     */
+    create: XOR<BlockFieldDefinitionCreateInput, BlockFieldDefinitionUncheckedCreateInput>
+    /**
+     * In case the BlockFieldDefinition was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BlockFieldDefinitionUpdateInput, BlockFieldDefinitionUncheckedUpdateInput>
+  }
+
+  /**
+   * BlockFieldDefinition delete
+   */
+  export type BlockFieldDefinitionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionInclude<ExtArgs> | null
+    /**
+     * Filter which BlockFieldDefinition to delete.
+     */
+    where: BlockFieldDefinitionWhereUniqueInput
+  }
+
+  /**
+   * BlockFieldDefinition deleteMany
+   */
+  export type BlockFieldDefinitionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BlockFieldDefinitions to delete
+     */
+    where?: BlockFieldDefinitionWhereInput
+    /**
+     * Limit how many BlockFieldDefinitions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BlockFieldDefinition without action
+   */
+  export type BlockFieldDefinitionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockFieldDefinition
+     */
+    select?: BlockFieldDefinitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockFieldDefinition
+     */
+    omit?: BlockFieldDefinitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BlockFieldDefinitionInclude<ExtArgs> | null
   }
 
 
@@ -5570,6 +11793,66 @@ export namespace Prisma {
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const TemplateScalarFieldEnum: {
+    id: 'id',
+    ownerId: 'ownerId',
+    name: 'name',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TemplateScalarFieldEnum = (typeof TemplateScalarFieldEnum)[keyof typeof TemplateScalarFieldEnum]
+
+
+  export const TemplateBlockScalarFieldEnum: {
+    id: 'id',
+    templateId: 'templateId',
+    order: 'order',
+    title: 'title',
+    sourceType: 'sourceType',
+    sourceBlockId: 'sourceBlockId'
+  };
+
+  export type TemplateBlockScalarFieldEnum = (typeof TemplateBlockScalarFieldEnum)[keyof typeof TemplateBlockScalarFieldEnum]
+
+
+  export const TemplateFieldScalarFieldEnum: {
+    id: 'id',
+    templateBlockId: 'templateBlockId',
+    order: 'order',
+    key: 'key',
+    label: 'label',
+    fieldType: 'fieldType',
+    required: 'required'
+  };
+
+  export type TemplateFieldScalarFieldEnum = (typeof TemplateFieldScalarFieldEnum)[keyof typeof TemplateFieldScalarFieldEnum]
+
+
+  export const BlockDefinitionScalarFieldEnum: {
+    id: 'id',
+    ownerId: 'ownerId',
+    name: 'name',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type BlockDefinitionScalarFieldEnum = (typeof BlockDefinitionScalarFieldEnum)[keyof typeof BlockDefinitionScalarFieldEnum]
+
+
+  export const BlockFieldDefinitionScalarFieldEnum: {
+    id: 'id',
+    blockId: 'blockId',
+    order: 'order',
+    key: 'key',
+    label: 'label',
+    fieldType: 'fieldType',
+    required: 'required'
+  };
+
+  export type BlockFieldDefinitionScalarFieldEnum = (typeof BlockFieldDefinitionScalarFieldEnum)[keyof typeof BlockFieldDefinitionScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -5640,6 +11923,41 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime[]'
    */
   export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'BlockSource'
+   */
+  export type EnumBlockSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BlockSource'>
+    
+
+
+  /**
+   * Reference to a field of type 'BlockSource[]'
+   */
+  export type ListEnumBlockSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BlockSource[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'FieldType'
+   */
+  export type EnumFieldTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FieldType'>
+    
+
+
+  /**
+   * Reference to a field of type 'FieldType[]'
+   */
+  export type ListEnumFieldTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FieldType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -5860,6 +12178,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"User"> | Date | string
     accounts?: AccountListRelationFilter
     sessions?: SessionListRelationFilter
+    templates?: TemplateListRelationFilter
+    blockDefinitions?: BlockDefinitionListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -5873,6 +12193,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     accounts?: AccountOrderByRelationAggregateInput
     sessions?: SessionOrderByRelationAggregateInput
+    templates?: TemplateOrderByRelationAggregateInput
+    blockDefinitions?: BlockDefinitionOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -5889,6 +12211,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"User"> | Date | string
     accounts?: AccountListRelationFilter
     sessions?: SessionListRelationFilter
+    templates?: TemplateListRelationFilter
+    blockDefinitions?: BlockDefinitionListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -5917,6 +12241,321 @@ export namespace Prisma {
     passwordHash?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+  }
+
+  export type TemplateWhereInput = {
+    AND?: TemplateWhereInput | TemplateWhereInput[]
+    OR?: TemplateWhereInput[]
+    NOT?: TemplateWhereInput | TemplateWhereInput[]
+    id?: StringFilter<"Template"> | string
+    ownerId?: StringFilter<"Template"> | string
+    name?: StringFilter<"Template"> | string
+    createdAt?: DateTimeFilter<"Template"> | Date | string
+    updatedAt?: DateTimeFilter<"Template"> | Date | string
+    blocks?: TemplateBlockListRelationFilter
+    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type TemplateOrderByWithRelationInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    blocks?: TemplateBlockOrderByRelationAggregateInput
+    owner?: UserOrderByWithRelationInput
+  }
+
+  export type TemplateWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TemplateWhereInput | TemplateWhereInput[]
+    OR?: TemplateWhereInput[]
+    NOT?: TemplateWhereInput | TemplateWhereInput[]
+    ownerId?: StringFilter<"Template"> | string
+    name?: StringFilter<"Template"> | string
+    createdAt?: DateTimeFilter<"Template"> | Date | string
+    updatedAt?: DateTimeFilter<"Template"> | Date | string
+    blocks?: TemplateBlockListRelationFilter
+    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type TemplateOrderByWithAggregationInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TemplateCountOrderByAggregateInput
+    _max?: TemplateMaxOrderByAggregateInput
+    _min?: TemplateMinOrderByAggregateInput
+  }
+
+  export type TemplateScalarWhereWithAggregatesInput = {
+    AND?: TemplateScalarWhereWithAggregatesInput | TemplateScalarWhereWithAggregatesInput[]
+    OR?: TemplateScalarWhereWithAggregatesInput[]
+    NOT?: TemplateScalarWhereWithAggregatesInput | TemplateScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Template"> | string
+    ownerId?: StringWithAggregatesFilter<"Template"> | string
+    name?: StringWithAggregatesFilter<"Template"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"Template"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Template"> | Date | string
+  }
+
+  export type TemplateBlockWhereInput = {
+    AND?: TemplateBlockWhereInput | TemplateBlockWhereInput[]
+    OR?: TemplateBlockWhereInput[]
+    NOT?: TemplateBlockWhereInput | TemplateBlockWhereInput[]
+    id?: StringFilter<"TemplateBlock"> | string
+    templateId?: StringFilter<"TemplateBlock"> | string
+    order?: IntFilter<"TemplateBlock"> | number
+    title?: StringFilter<"TemplateBlock"> | string
+    sourceType?: EnumBlockSourceFilter<"TemplateBlock"> | $Enums.BlockSource
+    sourceBlockId?: StringNullableFilter<"TemplateBlock"> | string | null
+    fields?: TemplateFieldListRelationFilter
+    template?: XOR<TemplateScalarRelationFilter, TemplateWhereInput>
+  }
+
+  export type TemplateBlockOrderByWithRelationInput = {
+    id?: SortOrder
+    templateId?: SortOrder
+    order?: SortOrder
+    title?: SortOrder
+    sourceType?: SortOrder
+    sourceBlockId?: SortOrderInput | SortOrder
+    fields?: TemplateFieldOrderByRelationAggregateInput
+    template?: TemplateOrderByWithRelationInput
+  }
+
+  export type TemplateBlockWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TemplateBlockWhereInput | TemplateBlockWhereInput[]
+    OR?: TemplateBlockWhereInput[]
+    NOT?: TemplateBlockWhereInput | TemplateBlockWhereInput[]
+    templateId?: StringFilter<"TemplateBlock"> | string
+    order?: IntFilter<"TemplateBlock"> | number
+    title?: StringFilter<"TemplateBlock"> | string
+    sourceType?: EnumBlockSourceFilter<"TemplateBlock"> | $Enums.BlockSource
+    sourceBlockId?: StringNullableFilter<"TemplateBlock"> | string | null
+    fields?: TemplateFieldListRelationFilter
+    template?: XOR<TemplateScalarRelationFilter, TemplateWhereInput>
+  }, "id">
+
+  export type TemplateBlockOrderByWithAggregationInput = {
+    id?: SortOrder
+    templateId?: SortOrder
+    order?: SortOrder
+    title?: SortOrder
+    sourceType?: SortOrder
+    sourceBlockId?: SortOrderInput | SortOrder
+    _count?: TemplateBlockCountOrderByAggregateInput
+    _avg?: TemplateBlockAvgOrderByAggregateInput
+    _max?: TemplateBlockMaxOrderByAggregateInput
+    _min?: TemplateBlockMinOrderByAggregateInput
+    _sum?: TemplateBlockSumOrderByAggregateInput
+  }
+
+  export type TemplateBlockScalarWhereWithAggregatesInput = {
+    AND?: TemplateBlockScalarWhereWithAggregatesInput | TemplateBlockScalarWhereWithAggregatesInput[]
+    OR?: TemplateBlockScalarWhereWithAggregatesInput[]
+    NOT?: TemplateBlockScalarWhereWithAggregatesInput | TemplateBlockScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TemplateBlock"> | string
+    templateId?: StringWithAggregatesFilter<"TemplateBlock"> | string
+    order?: IntWithAggregatesFilter<"TemplateBlock"> | number
+    title?: StringWithAggregatesFilter<"TemplateBlock"> | string
+    sourceType?: EnumBlockSourceWithAggregatesFilter<"TemplateBlock"> | $Enums.BlockSource
+    sourceBlockId?: StringNullableWithAggregatesFilter<"TemplateBlock"> | string | null
+  }
+
+  export type TemplateFieldWhereInput = {
+    AND?: TemplateFieldWhereInput | TemplateFieldWhereInput[]
+    OR?: TemplateFieldWhereInput[]
+    NOT?: TemplateFieldWhereInput | TemplateFieldWhereInput[]
+    id?: StringFilter<"TemplateField"> | string
+    templateBlockId?: StringFilter<"TemplateField"> | string
+    order?: IntFilter<"TemplateField"> | number
+    key?: StringFilter<"TemplateField"> | string
+    label?: StringNullableFilter<"TemplateField"> | string | null
+    fieldType?: EnumFieldTypeFilter<"TemplateField"> | $Enums.FieldType
+    required?: BoolFilter<"TemplateField"> | boolean
+    templateBlock?: XOR<TemplateBlockScalarRelationFilter, TemplateBlockWhereInput>
+  }
+
+  export type TemplateFieldOrderByWithRelationInput = {
+    id?: SortOrder
+    templateBlockId?: SortOrder
+    order?: SortOrder
+    key?: SortOrder
+    label?: SortOrderInput | SortOrder
+    fieldType?: SortOrder
+    required?: SortOrder
+    templateBlock?: TemplateBlockOrderByWithRelationInput
+  }
+
+  export type TemplateFieldWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TemplateFieldWhereInput | TemplateFieldWhereInput[]
+    OR?: TemplateFieldWhereInput[]
+    NOT?: TemplateFieldWhereInput | TemplateFieldWhereInput[]
+    templateBlockId?: StringFilter<"TemplateField"> | string
+    order?: IntFilter<"TemplateField"> | number
+    key?: StringFilter<"TemplateField"> | string
+    label?: StringNullableFilter<"TemplateField"> | string | null
+    fieldType?: EnumFieldTypeFilter<"TemplateField"> | $Enums.FieldType
+    required?: BoolFilter<"TemplateField"> | boolean
+    templateBlock?: XOR<TemplateBlockScalarRelationFilter, TemplateBlockWhereInput>
+  }, "id">
+
+  export type TemplateFieldOrderByWithAggregationInput = {
+    id?: SortOrder
+    templateBlockId?: SortOrder
+    order?: SortOrder
+    key?: SortOrder
+    label?: SortOrderInput | SortOrder
+    fieldType?: SortOrder
+    required?: SortOrder
+    _count?: TemplateFieldCountOrderByAggregateInput
+    _avg?: TemplateFieldAvgOrderByAggregateInput
+    _max?: TemplateFieldMaxOrderByAggregateInput
+    _min?: TemplateFieldMinOrderByAggregateInput
+    _sum?: TemplateFieldSumOrderByAggregateInput
+  }
+
+  export type TemplateFieldScalarWhereWithAggregatesInput = {
+    AND?: TemplateFieldScalarWhereWithAggregatesInput | TemplateFieldScalarWhereWithAggregatesInput[]
+    OR?: TemplateFieldScalarWhereWithAggregatesInput[]
+    NOT?: TemplateFieldScalarWhereWithAggregatesInput | TemplateFieldScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TemplateField"> | string
+    templateBlockId?: StringWithAggregatesFilter<"TemplateField"> | string
+    order?: IntWithAggregatesFilter<"TemplateField"> | number
+    key?: StringWithAggregatesFilter<"TemplateField"> | string
+    label?: StringNullableWithAggregatesFilter<"TemplateField"> | string | null
+    fieldType?: EnumFieldTypeWithAggregatesFilter<"TemplateField"> | $Enums.FieldType
+    required?: BoolWithAggregatesFilter<"TemplateField"> | boolean
+  }
+
+  export type BlockDefinitionWhereInput = {
+    AND?: BlockDefinitionWhereInput | BlockDefinitionWhereInput[]
+    OR?: BlockDefinitionWhereInput[]
+    NOT?: BlockDefinitionWhereInput | BlockDefinitionWhereInput[]
+    id?: StringFilter<"BlockDefinition"> | string
+    ownerId?: StringNullableFilter<"BlockDefinition"> | string | null
+    name?: StringFilter<"BlockDefinition"> | string
+    createdAt?: DateTimeFilter<"BlockDefinition"> | Date | string
+    updatedAt?: DateTimeFilter<"BlockDefinition"> | Date | string
+    fields?: BlockFieldDefinitionListRelationFilter
+    owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+  }
+
+  export type BlockDefinitionOrderByWithRelationInput = {
+    id?: SortOrder
+    ownerId?: SortOrderInput | SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    fields?: BlockFieldDefinitionOrderByRelationAggregateInput
+    owner?: UserOrderByWithRelationInput
+  }
+
+  export type BlockDefinitionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: BlockDefinitionWhereInput | BlockDefinitionWhereInput[]
+    OR?: BlockDefinitionWhereInput[]
+    NOT?: BlockDefinitionWhereInput | BlockDefinitionWhereInput[]
+    ownerId?: StringNullableFilter<"BlockDefinition"> | string | null
+    name?: StringFilter<"BlockDefinition"> | string
+    createdAt?: DateTimeFilter<"BlockDefinition"> | Date | string
+    updatedAt?: DateTimeFilter<"BlockDefinition"> | Date | string
+    fields?: BlockFieldDefinitionListRelationFilter
+    owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+  }, "id">
+
+  export type BlockDefinitionOrderByWithAggregationInput = {
+    id?: SortOrder
+    ownerId?: SortOrderInput | SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: BlockDefinitionCountOrderByAggregateInput
+    _max?: BlockDefinitionMaxOrderByAggregateInput
+    _min?: BlockDefinitionMinOrderByAggregateInput
+  }
+
+  export type BlockDefinitionScalarWhereWithAggregatesInput = {
+    AND?: BlockDefinitionScalarWhereWithAggregatesInput | BlockDefinitionScalarWhereWithAggregatesInput[]
+    OR?: BlockDefinitionScalarWhereWithAggregatesInput[]
+    NOT?: BlockDefinitionScalarWhereWithAggregatesInput | BlockDefinitionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"BlockDefinition"> | string
+    ownerId?: StringNullableWithAggregatesFilter<"BlockDefinition"> | string | null
+    name?: StringWithAggregatesFilter<"BlockDefinition"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"BlockDefinition"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"BlockDefinition"> | Date | string
+  }
+
+  export type BlockFieldDefinitionWhereInput = {
+    AND?: BlockFieldDefinitionWhereInput | BlockFieldDefinitionWhereInput[]
+    OR?: BlockFieldDefinitionWhereInput[]
+    NOT?: BlockFieldDefinitionWhereInput | BlockFieldDefinitionWhereInput[]
+    id?: StringFilter<"BlockFieldDefinition"> | string
+    blockId?: StringFilter<"BlockFieldDefinition"> | string
+    order?: IntFilter<"BlockFieldDefinition"> | number
+    key?: StringFilter<"BlockFieldDefinition"> | string
+    label?: StringNullableFilter<"BlockFieldDefinition"> | string | null
+    fieldType?: EnumFieldTypeFilter<"BlockFieldDefinition"> | $Enums.FieldType
+    required?: BoolFilter<"BlockFieldDefinition"> | boolean
+    block?: XOR<BlockDefinitionScalarRelationFilter, BlockDefinitionWhereInput>
+  }
+
+  export type BlockFieldDefinitionOrderByWithRelationInput = {
+    id?: SortOrder
+    blockId?: SortOrder
+    order?: SortOrder
+    key?: SortOrder
+    label?: SortOrderInput | SortOrder
+    fieldType?: SortOrder
+    required?: SortOrder
+    block?: BlockDefinitionOrderByWithRelationInput
+  }
+
+  export type BlockFieldDefinitionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: BlockFieldDefinitionWhereInput | BlockFieldDefinitionWhereInput[]
+    OR?: BlockFieldDefinitionWhereInput[]
+    NOT?: BlockFieldDefinitionWhereInput | BlockFieldDefinitionWhereInput[]
+    blockId?: StringFilter<"BlockFieldDefinition"> | string
+    order?: IntFilter<"BlockFieldDefinition"> | number
+    key?: StringFilter<"BlockFieldDefinition"> | string
+    label?: StringNullableFilter<"BlockFieldDefinition"> | string | null
+    fieldType?: EnumFieldTypeFilter<"BlockFieldDefinition"> | $Enums.FieldType
+    required?: BoolFilter<"BlockFieldDefinition"> | boolean
+    block?: XOR<BlockDefinitionScalarRelationFilter, BlockDefinitionWhereInput>
+  }, "id">
+
+  export type BlockFieldDefinitionOrderByWithAggregationInput = {
+    id?: SortOrder
+    blockId?: SortOrder
+    order?: SortOrder
+    key?: SortOrder
+    label?: SortOrderInput | SortOrder
+    fieldType?: SortOrder
+    required?: SortOrder
+    _count?: BlockFieldDefinitionCountOrderByAggregateInput
+    _avg?: BlockFieldDefinitionAvgOrderByAggregateInput
+    _max?: BlockFieldDefinitionMaxOrderByAggregateInput
+    _min?: BlockFieldDefinitionMinOrderByAggregateInput
+    _sum?: BlockFieldDefinitionSumOrderByAggregateInput
+  }
+
+  export type BlockFieldDefinitionScalarWhereWithAggregatesInput = {
+    AND?: BlockFieldDefinitionScalarWhereWithAggregatesInput | BlockFieldDefinitionScalarWhereWithAggregatesInput[]
+    OR?: BlockFieldDefinitionScalarWhereWithAggregatesInput[]
+    NOT?: BlockFieldDefinitionScalarWhereWithAggregatesInput | BlockFieldDefinitionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"BlockFieldDefinition"> | string
+    blockId?: StringWithAggregatesFilter<"BlockFieldDefinition"> | string
+    order?: IntWithAggregatesFilter<"BlockFieldDefinition"> | number
+    key?: StringWithAggregatesFilter<"BlockFieldDefinition"> | string
+    label?: StringNullableWithAggregatesFilter<"BlockFieldDefinition"> | string | null
+    fieldType?: EnumFieldTypeWithAggregatesFilter<"BlockFieldDefinition"> | $Enums.FieldType
+    required?: BoolWithAggregatesFilter<"BlockFieldDefinition"> | boolean
   }
 
   export type AccountCreateInput = {
@@ -6124,6 +12763,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    templates?: TemplateCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -6137,6 +12778,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUpdateInput = {
@@ -6150,6 +12793,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    templates?: TemplateUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -6163,6 +12808,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -6196,6 +12843,328 @@ export namespace Prisma {
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TemplateCreateInput = {
+    id?: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    blocks?: TemplateBlockCreateNestedManyWithoutTemplateInput
+    owner: UserCreateNestedOneWithoutTemplatesInput
+  }
+
+  export type TemplateUncheckedCreateInput = {
+    id?: string
+    ownerId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    blocks?: TemplateBlockUncheckedCreateNestedManyWithoutTemplateInput
+  }
+
+  export type TemplateUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    blocks?: TemplateBlockUpdateManyWithoutTemplateNestedInput
+    owner?: UserUpdateOneRequiredWithoutTemplatesNestedInput
+  }
+
+  export type TemplateUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    blocks?: TemplateBlockUncheckedUpdateManyWithoutTemplateNestedInput
+  }
+
+  export type TemplateCreateManyInput = {
+    id?: string
+    ownerId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TemplateUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TemplateUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TemplateBlockCreateInput = {
+    id?: string
+    order: number
+    title: string
+    sourceType: $Enums.BlockSource
+    sourceBlockId?: string | null
+    fields?: TemplateFieldCreateNestedManyWithoutTemplateBlockInput
+    template: TemplateCreateNestedOneWithoutBlocksInput
+  }
+
+  export type TemplateBlockUncheckedCreateInput = {
+    id?: string
+    templateId: string
+    order: number
+    title: string
+    sourceType: $Enums.BlockSource
+    sourceBlockId?: string | null
+    fields?: TemplateFieldUncheckedCreateNestedManyWithoutTemplateBlockInput
+  }
+
+  export type TemplateBlockUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    title?: StringFieldUpdateOperationsInput | string
+    sourceType?: EnumBlockSourceFieldUpdateOperationsInput | $Enums.BlockSource
+    sourceBlockId?: NullableStringFieldUpdateOperationsInput | string | null
+    fields?: TemplateFieldUpdateManyWithoutTemplateBlockNestedInput
+    template?: TemplateUpdateOneRequiredWithoutBlocksNestedInput
+  }
+
+  export type TemplateBlockUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateId?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    title?: StringFieldUpdateOperationsInput | string
+    sourceType?: EnumBlockSourceFieldUpdateOperationsInput | $Enums.BlockSource
+    sourceBlockId?: NullableStringFieldUpdateOperationsInput | string | null
+    fields?: TemplateFieldUncheckedUpdateManyWithoutTemplateBlockNestedInput
+  }
+
+  export type TemplateBlockCreateManyInput = {
+    id?: string
+    templateId: string
+    order: number
+    title: string
+    sourceType: $Enums.BlockSource
+    sourceBlockId?: string | null
+  }
+
+  export type TemplateBlockUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    title?: StringFieldUpdateOperationsInput | string
+    sourceType?: EnumBlockSourceFieldUpdateOperationsInput | $Enums.BlockSource
+    sourceBlockId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type TemplateBlockUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateId?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    title?: StringFieldUpdateOperationsInput | string
+    sourceType?: EnumBlockSourceFieldUpdateOperationsInput | $Enums.BlockSource
+    sourceBlockId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type TemplateFieldCreateInput = {
+    id?: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+    templateBlock: TemplateBlockCreateNestedOneWithoutFieldsInput
+  }
+
+  export type TemplateFieldUncheckedCreateInput = {
+    id?: string
+    templateBlockId: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+  }
+
+  export type TemplateFieldUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+    templateBlock?: TemplateBlockUpdateOneRequiredWithoutFieldsNestedInput
+  }
+
+  export type TemplateFieldUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateBlockId?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type TemplateFieldCreateManyInput = {
+    id?: string
+    templateBlockId: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+  }
+
+  export type TemplateFieldUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type TemplateFieldUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateBlockId?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BlockDefinitionCreateInput = {
+    id?: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    fields?: BlockFieldDefinitionCreateNestedManyWithoutBlockInput
+    owner?: UserCreateNestedOneWithoutBlockDefinitionsInput
+  }
+
+  export type BlockDefinitionUncheckedCreateInput = {
+    id?: string
+    ownerId?: string | null
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    fields?: BlockFieldDefinitionUncheckedCreateNestedManyWithoutBlockInput
+  }
+
+  export type BlockDefinitionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    fields?: BlockFieldDefinitionUpdateManyWithoutBlockNestedInput
+    owner?: UserUpdateOneWithoutBlockDefinitionsNestedInput
+  }
+
+  export type BlockDefinitionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    fields?: BlockFieldDefinitionUncheckedUpdateManyWithoutBlockNestedInput
+  }
+
+  export type BlockDefinitionCreateManyInput = {
+    id?: string
+    ownerId?: string | null
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BlockDefinitionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BlockDefinitionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BlockFieldDefinitionCreateInput = {
+    id?: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+    block: BlockDefinitionCreateNestedOneWithoutFieldsInput
+  }
+
+  export type BlockFieldDefinitionUncheckedCreateInput = {
+    id?: string
+    blockId: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+  }
+
+  export type BlockFieldDefinitionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+    block?: BlockDefinitionUpdateOneRequiredWithoutFieldsNestedInput
+  }
+
+  export type BlockFieldDefinitionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    blockId?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BlockFieldDefinitionCreateManyInput = {
+    id?: string
+    blockId: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+  }
+
+  export type BlockFieldDefinitionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BlockFieldDefinitionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    blockId?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -6451,11 +13420,31 @@ export namespace Prisma {
     none?: SessionWhereInput
   }
 
+  export type TemplateListRelationFilter = {
+    every?: TemplateWhereInput
+    some?: TemplateWhereInput
+    none?: TemplateWhereInput
+  }
+
+  export type BlockDefinitionListRelationFilter = {
+    every?: BlockDefinitionWhereInput
+    some?: BlockDefinitionWhereInput
+    none?: BlockDefinitionWhereInput
+  }
+
   export type AccountOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type SessionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TemplateOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BlockDefinitionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -6504,6 +13493,289 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type TemplateBlockListRelationFilter = {
+    every?: TemplateBlockWhereInput
+    some?: TemplateBlockWhereInput
+    none?: TemplateBlockWhereInput
+  }
+
+  export type TemplateBlockOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TemplateCountOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TemplateMaxOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TemplateMinOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type EnumBlockSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.BlockSource | EnumBlockSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.BlockSource[] | ListEnumBlockSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BlockSource[] | ListEnumBlockSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumBlockSourceFilter<$PrismaModel> | $Enums.BlockSource
+  }
+
+  export type TemplateFieldListRelationFilter = {
+    every?: TemplateFieldWhereInput
+    some?: TemplateFieldWhereInput
+    none?: TemplateFieldWhereInput
+  }
+
+  export type TemplateScalarRelationFilter = {
+    is?: TemplateWhereInput
+    isNot?: TemplateWhereInput
+  }
+
+  export type TemplateFieldOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TemplateBlockCountOrderByAggregateInput = {
+    id?: SortOrder
+    templateId?: SortOrder
+    order?: SortOrder
+    title?: SortOrder
+    sourceType?: SortOrder
+    sourceBlockId?: SortOrder
+  }
+
+  export type TemplateBlockAvgOrderByAggregateInput = {
+    order?: SortOrder
+  }
+
+  export type TemplateBlockMaxOrderByAggregateInput = {
+    id?: SortOrder
+    templateId?: SortOrder
+    order?: SortOrder
+    title?: SortOrder
+    sourceType?: SortOrder
+    sourceBlockId?: SortOrder
+  }
+
+  export type TemplateBlockMinOrderByAggregateInput = {
+    id?: SortOrder
+    templateId?: SortOrder
+    order?: SortOrder
+    title?: SortOrder
+    sourceType?: SortOrder
+    sourceBlockId?: SortOrder
+  }
+
+  export type TemplateBlockSumOrderByAggregateInput = {
+    order?: SortOrder
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type EnumBlockSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BlockSource | EnumBlockSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.BlockSource[] | ListEnumBlockSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BlockSource[] | ListEnumBlockSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumBlockSourceWithAggregatesFilter<$PrismaModel> | $Enums.BlockSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBlockSourceFilter<$PrismaModel>
+    _max?: NestedEnumBlockSourceFilter<$PrismaModel>
+  }
+
+  export type EnumFieldTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.FieldType | EnumFieldTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.FieldType[] | ListEnumFieldTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.FieldType[] | ListEnumFieldTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumFieldTypeFilter<$PrismaModel> | $Enums.FieldType
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type TemplateBlockScalarRelationFilter = {
+    is?: TemplateBlockWhereInput
+    isNot?: TemplateBlockWhereInput
+  }
+
+  export type TemplateFieldCountOrderByAggregateInput = {
+    id?: SortOrder
+    templateBlockId?: SortOrder
+    order?: SortOrder
+    key?: SortOrder
+    label?: SortOrder
+    fieldType?: SortOrder
+    required?: SortOrder
+  }
+
+  export type TemplateFieldAvgOrderByAggregateInput = {
+    order?: SortOrder
+  }
+
+  export type TemplateFieldMaxOrderByAggregateInput = {
+    id?: SortOrder
+    templateBlockId?: SortOrder
+    order?: SortOrder
+    key?: SortOrder
+    label?: SortOrder
+    fieldType?: SortOrder
+    required?: SortOrder
+  }
+
+  export type TemplateFieldMinOrderByAggregateInput = {
+    id?: SortOrder
+    templateBlockId?: SortOrder
+    order?: SortOrder
+    key?: SortOrder
+    label?: SortOrder
+    fieldType?: SortOrder
+    required?: SortOrder
+  }
+
+  export type TemplateFieldSumOrderByAggregateInput = {
+    order?: SortOrder
+  }
+
+  export type EnumFieldTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.FieldType | EnumFieldTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.FieldType[] | ListEnumFieldTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.FieldType[] | ListEnumFieldTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumFieldTypeWithAggregatesFilter<$PrismaModel> | $Enums.FieldType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumFieldTypeFilter<$PrismaModel>
+    _max?: NestedEnumFieldTypeFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type BlockFieldDefinitionListRelationFilter = {
+    every?: BlockFieldDefinitionWhereInput
+    some?: BlockFieldDefinitionWhereInput
+    none?: BlockFieldDefinitionWhereInput
+  }
+
+  export type UserNullableScalarRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
+  }
+
+  export type BlockFieldDefinitionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BlockDefinitionCountOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BlockDefinitionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BlockDefinitionMinOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BlockDefinitionScalarRelationFilter = {
+    is?: BlockDefinitionWhereInput
+    isNot?: BlockDefinitionWhereInput
+  }
+
+  export type BlockFieldDefinitionCountOrderByAggregateInput = {
+    id?: SortOrder
+    blockId?: SortOrder
+    order?: SortOrder
+    key?: SortOrder
+    label?: SortOrder
+    fieldType?: SortOrder
+    required?: SortOrder
+  }
+
+  export type BlockFieldDefinitionAvgOrderByAggregateInput = {
+    order?: SortOrder
+  }
+
+  export type BlockFieldDefinitionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    blockId?: SortOrder
+    order?: SortOrder
+    key?: SortOrder
+    label?: SortOrder
+    fieldType?: SortOrder
+    required?: SortOrder
+  }
+
+  export type BlockFieldDefinitionMinOrderByAggregateInput = {
+    id?: SortOrder
+    blockId?: SortOrder
+    order?: SortOrder
+    key?: SortOrder
+    label?: SortOrder
+    fieldType?: SortOrder
+    required?: SortOrder
+  }
+
+  export type BlockFieldDefinitionSumOrderByAggregateInput = {
+    order?: SortOrder
   }
 
   export type UserCreateNestedOneWithoutAccountsInput = {
@@ -6568,6 +13840,20 @@ export namespace Prisma {
     connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
   }
 
+  export type TemplateCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<TemplateCreateWithoutOwnerInput, TemplateUncheckedCreateWithoutOwnerInput> | TemplateCreateWithoutOwnerInput[] | TemplateUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: TemplateCreateOrConnectWithoutOwnerInput | TemplateCreateOrConnectWithoutOwnerInput[]
+    createMany?: TemplateCreateManyOwnerInputEnvelope
+    connect?: TemplateWhereUniqueInput | TemplateWhereUniqueInput[]
+  }
+
+  export type BlockDefinitionCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<BlockDefinitionCreateWithoutOwnerInput, BlockDefinitionUncheckedCreateWithoutOwnerInput> | BlockDefinitionCreateWithoutOwnerInput[] | BlockDefinitionUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: BlockDefinitionCreateOrConnectWithoutOwnerInput | BlockDefinitionCreateOrConnectWithoutOwnerInput[]
+    createMany?: BlockDefinitionCreateManyOwnerInputEnvelope
+    connect?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
+  }
+
   export type AccountUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<AccountCreateWithoutUserInput, AccountUncheckedCreateWithoutUserInput> | AccountCreateWithoutUserInput[] | AccountUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccountCreateOrConnectWithoutUserInput | AccountCreateOrConnectWithoutUserInput[]
@@ -6580,6 +13866,20 @@ export namespace Prisma {
     connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
     createMany?: SessionCreateManyUserInputEnvelope
     connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
+  }
+
+  export type TemplateUncheckedCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<TemplateCreateWithoutOwnerInput, TemplateUncheckedCreateWithoutOwnerInput> | TemplateCreateWithoutOwnerInput[] | TemplateUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: TemplateCreateOrConnectWithoutOwnerInput | TemplateCreateOrConnectWithoutOwnerInput[]
+    createMany?: TemplateCreateManyOwnerInputEnvelope
+    connect?: TemplateWhereUniqueInput | TemplateWhereUniqueInput[]
+  }
+
+  export type BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<BlockDefinitionCreateWithoutOwnerInput, BlockDefinitionUncheckedCreateWithoutOwnerInput> | BlockDefinitionCreateWithoutOwnerInput[] | BlockDefinitionUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: BlockDefinitionCreateOrConnectWithoutOwnerInput | BlockDefinitionCreateOrConnectWithoutOwnerInput[]
+    createMany?: BlockDefinitionCreateManyOwnerInputEnvelope
+    connect?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
   }
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -6614,6 +13914,34 @@ export namespace Prisma {
     deleteMany?: SessionScalarWhereInput | SessionScalarWhereInput[]
   }
 
+  export type TemplateUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<TemplateCreateWithoutOwnerInput, TemplateUncheckedCreateWithoutOwnerInput> | TemplateCreateWithoutOwnerInput[] | TemplateUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: TemplateCreateOrConnectWithoutOwnerInput | TemplateCreateOrConnectWithoutOwnerInput[]
+    upsert?: TemplateUpsertWithWhereUniqueWithoutOwnerInput | TemplateUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: TemplateCreateManyOwnerInputEnvelope
+    set?: TemplateWhereUniqueInput | TemplateWhereUniqueInput[]
+    disconnect?: TemplateWhereUniqueInput | TemplateWhereUniqueInput[]
+    delete?: TemplateWhereUniqueInput | TemplateWhereUniqueInput[]
+    connect?: TemplateWhereUniqueInput | TemplateWhereUniqueInput[]
+    update?: TemplateUpdateWithWhereUniqueWithoutOwnerInput | TemplateUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: TemplateUpdateManyWithWhereWithoutOwnerInput | TemplateUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: TemplateScalarWhereInput | TemplateScalarWhereInput[]
+  }
+
+  export type BlockDefinitionUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<BlockDefinitionCreateWithoutOwnerInput, BlockDefinitionUncheckedCreateWithoutOwnerInput> | BlockDefinitionCreateWithoutOwnerInput[] | BlockDefinitionUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: BlockDefinitionCreateOrConnectWithoutOwnerInput | BlockDefinitionCreateOrConnectWithoutOwnerInput[]
+    upsert?: BlockDefinitionUpsertWithWhereUniqueWithoutOwnerInput | BlockDefinitionUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: BlockDefinitionCreateManyOwnerInputEnvelope
+    set?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
+    disconnect?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
+    delete?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
+    connect?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
+    update?: BlockDefinitionUpdateWithWhereUniqueWithoutOwnerInput | BlockDefinitionUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: BlockDefinitionUpdateManyWithWhereWithoutOwnerInput | BlockDefinitionUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: BlockDefinitionScalarWhereInput | BlockDefinitionScalarWhereInput[]
+  }
+
   export type AccountUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<AccountCreateWithoutUserInput, AccountUncheckedCreateWithoutUserInput> | AccountCreateWithoutUserInput[] | AccountUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccountCreateOrConnectWithoutUserInput | AccountCreateOrConnectWithoutUserInput[]
@@ -6640,6 +13968,252 @@ export namespace Prisma {
     update?: SessionUpdateWithWhereUniqueWithoutUserInput | SessionUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: SessionUpdateManyWithWhereWithoutUserInput | SessionUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: SessionScalarWhereInput | SessionScalarWhereInput[]
+  }
+
+  export type TemplateUncheckedUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<TemplateCreateWithoutOwnerInput, TemplateUncheckedCreateWithoutOwnerInput> | TemplateCreateWithoutOwnerInput[] | TemplateUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: TemplateCreateOrConnectWithoutOwnerInput | TemplateCreateOrConnectWithoutOwnerInput[]
+    upsert?: TemplateUpsertWithWhereUniqueWithoutOwnerInput | TemplateUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: TemplateCreateManyOwnerInputEnvelope
+    set?: TemplateWhereUniqueInput | TemplateWhereUniqueInput[]
+    disconnect?: TemplateWhereUniqueInput | TemplateWhereUniqueInput[]
+    delete?: TemplateWhereUniqueInput | TemplateWhereUniqueInput[]
+    connect?: TemplateWhereUniqueInput | TemplateWhereUniqueInput[]
+    update?: TemplateUpdateWithWhereUniqueWithoutOwnerInput | TemplateUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: TemplateUpdateManyWithWhereWithoutOwnerInput | TemplateUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: TemplateScalarWhereInput | TemplateScalarWhereInput[]
+  }
+
+  export type BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<BlockDefinitionCreateWithoutOwnerInput, BlockDefinitionUncheckedCreateWithoutOwnerInput> | BlockDefinitionCreateWithoutOwnerInput[] | BlockDefinitionUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: BlockDefinitionCreateOrConnectWithoutOwnerInput | BlockDefinitionCreateOrConnectWithoutOwnerInput[]
+    upsert?: BlockDefinitionUpsertWithWhereUniqueWithoutOwnerInput | BlockDefinitionUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: BlockDefinitionCreateManyOwnerInputEnvelope
+    set?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
+    disconnect?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
+    delete?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
+    connect?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
+    update?: BlockDefinitionUpdateWithWhereUniqueWithoutOwnerInput | BlockDefinitionUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: BlockDefinitionUpdateManyWithWhereWithoutOwnerInput | BlockDefinitionUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: BlockDefinitionScalarWhereInput | BlockDefinitionScalarWhereInput[]
+  }
+
+  export type TemplateBlockCreateNestedManyWithoutTemplateInput = {
+    create?: XOR<TemplateBlockCreateWithoutTemplateInput, TemplateBlockUncheckedCreateWithoutTemplateInput> | TemplateBlockCreateWithoutTemplateInput[] | TemplateBlockUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: TemplateBlockCreateOrConnectWithoutTemplateInput | TemplateBlockCreateOrConnectWithoutTemplateInput[]
+    createMany?: TemplateBlockCreateManyTemplateInputEnvelope
+    connect?: TemplateBlockWhereUniqueInput | TemplateBlockWhereUniqueInput[]
+  }
+
+  export type UserCreateNestedOneWithoutTemplatesInput = {
+    create?: XOR<UserCreateWithoutTemplatesInput, UserUncheckedCreateWithoutTemplatesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTemplatesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type TemplateBlockUncheckedCreateNestedManyWithoutTemplateInput = {
+    create?: XOR<TemplateBlockCreateWithoutTemplateInput, TemplateBlockUncheckedCreateWithoutTemplateInput> | TemplateBlockCreateWithoutTemplateInput[] | TemplateBlockUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: TemplateBlockCreateOrConnectWithoutTemplateInput | TemplateBlockCreateOrConnectWithoutTemplateInput[]
+    createMany?: TemplateBlockCreateManyTemplateInputEnvelope
+    connect?: TemplateBlockWhereUniqueInput | TemplateBlockWhereUniqueInput[]
+  }
+
+  export type TemplateBlockUpdateManyWithoutTemplateNestedInput = {
+    create?: XOR<TemplateBlockCreateWithoutTemplateInput, TemplateBlockUncheckedCreateWithoutTemplateInput> | TemplateBlockCreateWithoutTemplateInput[] | TemplateBlockUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: TemplateBlockCreateOrConnectWithoutTemplateInput | TemplateBlockCreateOrConnectWithoutTemplateInput[]
+    upsert?: TemplateBlockUpsertWithWhereUniqueWithoutTemplateInput | TemplateBlockUpsertWithWhereUniqueWithoutTemplateInput[]
+    createMany?: TemplateBlockCreateManyTemplateInputEnvelope
+    set?: TemplateBlockWhereUniqueInput | TemplateBlockWhereUniqueInput[]
+    disconnect?: TemplateBlockWhereUniqueInput | TemplateBlockWhereUniqueInput[]
+    delete?: TemplateBlockWhereUniqueInput | TemplateBlockWhereUniqueInput[]
+    connect?: TemplateBlockWhereUniqueInput | TemplateBlockWhereUniqueInput[]
+    update?: TemplateBlockUpdateWithWhereUniqueWithoutTemplateInput | TemplateBlockUpdateWithWhereUniqueWithoutTemplateInput[]
+    updateMany?: TemplateBlockUpdateManyWithWhereWithoutTemplateInput | TemplateBlockUpdateManyWithWhereWithoutTemplateInput[]
+    deleteMany?: TemplateBlockScalarWhereInput | TemplateBlockScalarWhereInput[]
+  }
+
+  export type UserUpdateOneRequiredWithoutTemplatesNestedInput = {
+    create?: XOR<UserCreateWithoutTemplatesInput, UserUncheckedCreateWithoutTemplatesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTemplatesInput
+    upsert?: UserUpsertWithoutTemplatesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTemplatesInput, UserUpdateWithoutTemplatesInput>, UserUncheckedUpdateWithoutTemplatesInput>
+  }
+
+  export type TemplateBlockUncheckedUpdateManyWithoutTemplateNestedInput = {
+    create?: XOR<TemplateBlockCreateWithoutTemplateInput, TemplateBlockUncheckedCreateWithoutTemplateInput> | TemplateBlockCreateWithoutTemplateInput[] | TemplateBlockUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: TemplateBlockCreateOrConnectWithoutTemplateInput | TemplateBlockCreateOrConnectWithoutTemplateInput[]
+    upsert?: TemplateBlockUpsertWithWhereUniqueWithoutTemplateInput | TemplateBlockUpsertWithWhereUniqueWithoutTemplateInput[]
+    createMany?: TemplateBlockCreateManyTemplateInputEnvelope
+    set?: TemplateBlockWhereUniqueInput | TemplateBlockWhereUniqueInput[]
+    disconnect?: TemplateBlockWhereUniqueInput | TemplateBlockWhereUniqueInput[]
+    delete?: TemplateBlockWhereUniqueInput | TemplateBlockWhereUniqueInput[]
+    connect?: TemplateBlockWhereUniqueInput | TemplateBlockWhereUniqueInput[]
+    update?: TemplateBlockUpdateWithWhereUniqueWithoutTemplateInput | TemplateBlockUpdateWithWhereUniqueWithoutTemplateInput[]
+    updateMany?: TemplateBlockUpdateManyWithWhereWithoutTemplateInput | TemplateBlockUpdateManyWithWhereWithoutTemplateInput[]
+    deleteMany?: TemplateBlockScalarWhereInput | TemplateBlockScalarWhereInput[]
+  }
+
+  export type TemplateFieldCreateNestedManyWithoutTemplateBlockInput = {
+    create?: XOR<TemplateFieldCreateWithoutTemplateBlockInput, TemplateFieldUncheckedCreateWithoutTemplateBlockInput> | TemplateFieldCreateWithoutTemplateBlockInput[] | TemplateFieldUncheckedCreateWithoutTemplateBlockInput[]
+    connectOrCreate?: TemplateFieldCreateOrConnectWithoutTemplateBlockInput | TemplateFieldCreateOrConnectWithoutTemplateBlockInput[]
+    createMany?: TemplateFieldCreateManyTemplateBlockInputEnvelope
+    connect?: TemplateFieldWhereUniqueInput | TemplateFieldWhereUniqueInput[]
+  }
+
+  export type TemplateCreateNestedOneWithoutBlocksInput = {
+    create?: XOR<TemplateCreateWithoutBlocksInput, TemplateUncheckedCreateWithoutBlocksInput>
+    connectOrCreate?: TemplateCreateOrConnectWithoutBlocksInput
+    connect?: TemplateWhereUniqueInput
+  }
+
+  export type TemplateFieldUncheckedCreateNestedManyWithoutTemplateBlockInput = {
+    create?: XOR<TemplateFieldCreateWithoutTemplateBlockInput, TemplateFieldUncheckedCreateWithoutTemplateBlockInput> | TemplateFieldCreateWithoutTemplateBlockInput[] | TemplateFieldUncheckedCreateWithoutTemplateBlockInput[]
+    connectOrCreate?: TemplateFieldCreateOrConnectWithoutTemplateBlockInput | TemplateFieldCreateOrConnectWithoutTemplateBlockInput[]
+    createMany?: TemplateFieldCreateManyTemplateBlockInputEnvelope
+    connect?: TemplateFieldWhereUniqueInput | TemplateFieldWhereUniqueInput[]
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type EnumBlockSourceFieldUpdateOperationsInput = {
+    set?: $Enums.BlockSource
+  }
+
+  export type TemplateFieldUpdateManyWithoutTemplateBlockNestedInput = {
+    create?: XOR<TemplateFieldCreateWithoutTemplateBlockInput, TemplateFieldUncheckedCreateWithoutTemplateBlockInput> | TemplateFieldCreateWithoutTemplateBlockInput[] | TemplateFieldUncheckedCreateWithoutTemplateBlockInput[]
+    connectOrCreate?: TemplateFieldCreateOrConnectWithoutTemplateBlockInput | TemplateFieldCreateOrConnectWithoutTemplateBlockInput[]
+    upsert?: TemplateFieldUpsertWithWhereUniqueWithoutTemplateBlockInput | TemplateFieldUpsertWithWhereUniqueWithoutTemplateBlockInput[]
+    createMany?: TemplateFieldCreateManyTemplateBlockInputEnvelope
+    set?: TemplateFieldWhereUniqueInput | TemplateFieldWhereUniqueInput[]
+    disconnect?: TemplateFieldWhereUniqueInput | TemplateFieldWhereUniqueInput[]
+    delete?: TemplateFieldWhereUniqueInput | TemplateFieldWhereUniqueInput[]
+    connect?: TemplateFieldWhereUniqueInput | TemplateFieldWhereUniqueInput[]
+    update?: TemplateFieldUpdateWithWhereUniqueWithoutTemplateBlockInput | TemplateFieldUpdateWithWhereUniqueWithoutTemplateBlockInput[]
+    updateMany?: TemplateFieldUpdateManyWithWhereWithoutTemplateBlockInput | TemplateFieldUpdateManyWithWhereWithoutTemplateBlockInput[]
+    deleteMany?: TemplateFieldScalarWhereInput | TemplateFieldScalarWhereInput[]
+  }
+
+  export type TemplateUpdateOneRequiredWithoutBlocksNestedInput = {
+    create?: XOR<TemplateCreateWithoutBlocksInput, TemplateUncheckedCreateWithoutBlocksInput>
+    connectOrCreate?: TemplateCreateOrConnectWithoutBlocksInput
+    upsert?: TemplateUpsertWithoutBlocksInput
+    connect?: TemplateWhereUniqueInput
+    update?: XOR<XOR<TemplateUpdateToOneWithWhereWithoutBlocksInput, TemplateUpdateWithoutBlocksInput>, TemplateUncheckedUpdateWithoutBlocksInput>
+  }
+
+  export type TemplateFieldUncheckedUpdateManyWithoutTemplateBlockNestedInput = {
+    create?: XOR<TemplateFieldCreateWithoutTemplateBlockInput, TemplateFieldUncheckedCreateWithoutTemplateBlockInput> | TemplateFieldCreateWithoutTemplateBlockInput[] | TemplateFieldUncheckedCreateWithoutTemplateBlockInput[]
+    connectOrCreate?: TemplateFieldCreateOrConnectWithoutTemplateBlockInput | TemplateFieldCreateOrConnectWithoutTemplateBlockInput[]
+    upsert?: TemplateFieldUpsertWithWhereUniqueWithoutTemplateBlockInput | TemplateFieldUpsertWithWhereUniqueWithoutTemplateBlockInput[]
+    createMany?: TemplateFieldCreateManyTemplateBlockInputEnvelope
+    set?: TemplateFieldWhereUniqueInput | TemplateFieldWhereUniqueInput[]
+    disconnect?: TemplateFieldWhereUniqueInput | TemplateFieldWhereUniqueInput[]
+    delete?: TemplateFieldWhereUniqueInput | TemplateFieldWhereUniqueInput[]
+    connect?: TemplateFieldWhereUniqueInput | TemplateFieldWhereUniqueInput[]
+    update?: TemplateFieldUpdateWithWhereUniqueWithoutTemplateBlockInput | TemplateFieldUpdateWithWhereUniqueWithoutTemplateBlockInput[]
+    updateMany?: TemplateFieldUpdateManyWithWhereWithoutTemplateBlockInput | TemplateFieldUpdateManyWithWhereWithoutTemplateBlockInput[]
+    deleteMany?: TemplateFieldScalarWhereInput | TemplateFieldScalarWhereInput[]
+  }
+
+  export type TemplateBlockCreateNestedOneWithoutFieldsInput = {
+    create?: XOR<TemplateBlockCreateWithoutFieldsInput, TemplateBlockUncheckedCreateWithoutFieldsInput>
+    connectOrCreate?: TemplateBlockCreateOrConnectWithoutFieldsInput
+    connect?: TemplateBlockWhereUniqueInput
+  }
+
+  export type EnumFieldTypeFieldUpdateOperationsInput = {
+    set?: $Enums.FieldType
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type TemplateBlockUpdateOneRequiredWithoutFieldsNestedInput = {
+    create?: XOR<TemplateBlockCreateWithoutFieldsInput, TemplateBlockUncheckedCreateWithoutFieldsInput>
+    connectOrCreate?: TemplateBlockCreateOrConnectWithoutFieldsInput
+    upsert?: TemplateBlockUpsertWithoutFieldsInput
+    connect?: TemplateBlockWhereUniqueInput
+    update?: XOR<XOR<TemplateBlockUpdateToOneWithWhereWithoutFieldsInput, TemplateBlockUpdateWithoutFieldsInput>, TemplateBlockUncheckedUpdateWithoutFieldsInput>
+  }
+
+  export type BlockFieldDefinitionCreateNestedManyWithoutBlockInput = {
+    create?: XOR<BlockFieldDefinitionCreateWithoutBlockInput, BlockFieldDefinitionUncheckedCreateWithoutBlockInput> | BlockFieldDefinitionCreateWithoutBlockInput[] | BlockFieldDefinitionUncheckedCreateWithoutBlockInput[]
+    connectOrCreate?: BlockFieldDefinitionCreateOrConnectWithoutBlockInput | BlockFieldDefinitionCreateOrConnectWithoutBlockInput[]
+    createMany?: BlockFieldDefinitionCreateManyBlockInputEnvelope
+    connect?: BlockFieldDefinitionWhereUniqueInput | BlockFieldDefinitionWhereUniqueInput[]
+  }
+
+  export type UserCreateNestedOneWithoutBlockDefinitionsInput = {
+    create?: XOR<UserCreateWithoutBlockDefinitionsInput, UserUncheckedCreateWithoutBlockDefinitionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBlockDefinitionsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type BlockFieldDefinitionUncheckedCreateNestedManyWithoutBlockInput = {
+    create?: XOR<BlockFieldDefinitionCreateWithoutBlockInput, BlockFieldDefinitionUncheckedCreateWithoutBlockInput> | BlockFieldDefinitionCreateWithoutBlockInput[] | BlockFieldDefinitionUncheckedCreateWithoutBlockInput[]
+    connectOrCreate?: BlockFieldDefinitionCreateOrConnectWithoutBlockInput | BlockFieldDefinitionCreateOrConnectWithoutBlockInput[]
+    createMany?: BlockFieldDefinitionCreateManyBlockInputEnvelope
+    connect?: BlockFieldDefinitionWhereUniqueInput | BlockFieldDefinitionWhereUniqueInput[]
+  }
+
+  export type BlockFieldDefinitionUpdateManyWithoutBlockNestedInput = {
+    create?: XOR<BlockFieldDefinitionCreateWithoutBlockInput, BlockFieldDefinitionUncheckedCreateWithoutBlockInput> | BlockFieldDefinitionCreateWithoutBlockInput[] | BlockFieldDefinitionUncheckedCreateWithoutBlockInput[]
+    connectOrCreate?: BlockFieldDefinitionCreateOrConnectWithoutBlockInput | BlockFieldDefinitionCreateOrConnectWithoutBlockInput[]
+    upsert?: BlockFieldDefinitionUpsertWithWhereUniqueWithoutBlockInput | BlockFieldDefinitionUpsertWithWhereUniqueWithoutBlockInput[]
+    createMany?: BlockFieldDefinitionCreateManyBlockInputEnvelope
+    set?: BlockFieldDefinitionWhereUniqueInput | BlockFieldDefinitionWhereUniqueInput[]
+    disconnect?: BlockFieldDefinitionWhereUniqueInput | BlockFieldDefinitionWhereUniqueInput[]
+    delete?: BlockFieldDefinitionWhereUniqueInput | BlockFieldDefinitionWhereUniqueInput[]
+    connect?: BlockFieldDefinitionWhereUniqueInput | BlockFieldDefinitionWhereUniqueInput[]
+    update?: BlockFieldDefinitionUpdateWithWhereUniqueWithoutBlockInput | BlockFieldDefinitionUpdateWithWhereUniqueWithoutBlockInput[]
+    updateMany?: BlockFieldDefinitionUpdateManyWithWhereWithoutBlockInput | BlockFieldDefinitionUpdateManyWithWhereWithoutBlockInput[]
+    deleteMany?: BlockFieldDefinitionScalarWhereInput | BlockFieldDefinitionScalarWhereInput[]
+  }
+
+  export type UserUpdateOneWithoutBlockDefinitionsNestedInput = {
+    create?: XOR<UserCreateWithoutBlockDefinitionsInput, UserUncheckedCreateWithoutBlockDefinitionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBlockDefinitionsInput
+    upsert?: UserUpsertWithoutBlockDefinitionsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutBlockDefinitionsInput, UserUpdateWithoutBlockDefinitionsInput>, UserUncheckedUpdateWithoutBlockDefinitionsInput>
+  }
+
+  export type BlockFieldDefinitionUncheckedUpdateManyWithoutBlockNestedInput = {
+    create?: XOR<BlockFieldDefinitionCreateWithoutBlockInput, BlockFieldDefinitionUncheckedCreateWithoutBlockInput> | BlockFieldDefinitionCreateWithoutBlockInput[] | BlockFieldDefinitionUncheckedCreateWithoutBlockInput[]
+    connectOrCreate?: BlockFieldDefinitionCreateOrConnectWithoutBlockInput | BlockFieldDefinitionCreateOrConnectWithoutBlockInput[]
+    upsert?: BlockFieldDefinitionUpsertWithWhereUniqueWithoutBlockInput | BlockFieldDefinitionUpsertWithWhereUniqueWithoutBlockInput[]
+    createMany?: BlockFieldDefinitionCreateManyBlockInputEnvelope
+    set?: BlockFieldDefinitionWhereUniqueInput | BlockFieldDefinitionWhereUniqueInput[]
+    disconnect?: BlockFieldDefinitionWhereUniqueInput | BlockFieldDefinitionWhereUniqueInput[]
+    delete?: BlockFieldDefinitionWhereUniqueInput | BlockFieldDefinitionWhereUniqueInput[]
+    connect?: BlockFieldDefinitionWhereUniqueInput | BlockFieldDefinitionWhereUniqueInput[]
+    update?: BlockFieldDefinitionUpdateWithWhereUniqueWithoutBlockInput | BlockFieldDefinitionUpdateWithWhereUniqueWithoutBlockInput[]
+    updateMany?: BlockFieldDefinitionUpdateManyWithWhereWithoutBlockInput | BlockFieldDefinitionUpdateManyWithWhereWithoutBlockInput[]
+    deleteMany?: BlockFieldDefinitionScalarWhereInput | BlockFieldDefinitionScalarWhereInput[]
+  }
+
+  export type BlockDefinitionCreateNestedOneWithoutFieldsInput = {
+    create?: XOR<BlockDefinitionCreateWithoutFieldsInput, BlockDefinitionUncheckedCreateWithoutFieldsInput>
+    connectOrCreate?: BlockDefinitionCreateOrConnectWithoutFieldsInput
+    connect?: BlockDefinitionWhereUniqueInput
+  }
+
+  export type BlockDefinitionUpdateOneRequiredWithoutFieldsNestedInput = {
+    create?: XOR<BlockDefinitionCreateWithoutFieldsInput, BlockDefinitionUncheckedCreateWithoutFieldsInput>
+    connectOrCreate?: BlockDefinitionCreateOrConnectWithoutFieldsInput
+    upsert?: BlockDefinitionUpsertWithoutFieldsInput
+    connect?: BlockDefinitionWhereUniqueInput
+    update?: XOR<XOR<BlockDefinitionUpdateToOneWithWhereWithoutFieldsInput, BlockDefinitionUpdateWithoutFieldsInput>, BlockDefinitionUncheckedUpdateWithoutFieldsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -6803,6 +14377,80 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
+  export type NestedEnumBlockSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.BlockSource | EnumBlockSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.BlockSource[] | ListEnumBlockSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BlockSource[] | ListEnumBlockSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumBlockSourceFilter<$PrismaModel> | $Enums.BlockSource
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedEnumBlockSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BlockSource | EnumBlockSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.BlockSource[] | ListEnumBlockSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BlockSource[] | ListEnumBlockSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumBlockSourceWithAggregatesFilter<$PrismaModel> | $Enums.BlockSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBlockSourceFilter<$PrismaModel>
+    _max?: NestedEnumBlockSourceFilter<$PrismaModel>
+  }
+
+  export type NestedEnumFieldTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.FieldType | EnumFieldTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.FieldType[] | ListEnumFieldTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.FieldType[] | ListEnumFieldTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumFieldTypeFilter<$PrismaModel> | $Enums.FieldType
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedEnumFieldTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.FieldType | EnumFieldTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.FieldType[] | ListEnumFieldTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.FieldType[] | ListEnumFieldTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumFieldTypeWithAggregatesFilter<$PrismaModel> | $Enums.FieldType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumFieldTypeFilter<$PrismaModel>
+    _max?: NestedEnumFieldTypeFilter<$PrismaModel>
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type UserCreateWithoutAccountsInput = {
     id?: string
     name?: string | null
@@ -6813,6 +14461,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     sessions?: SessionCreateNestedManyWithoutUserInput
+    templates?: TemplateCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutAccountsInput = {
@@ -6825,6 +14475,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutAccountsInput = {
@@ -6853,6 +14505,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    templates?: TemplateUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -6865,6 +14519,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserCreateWithoutSessionsInput = {
@@ -6877,6 +14533,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
+    templates?: TemplateCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -6889,6 +14547,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -6917,6 +14577,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
+    templates?: TemplateUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -6929,6 +14591,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type AccountCreateWithoutUserInput = {
@@ -6988,6 +14652,58 @@ export namespace Prisma {
 
   export type SessionCreateManyUserInputEnvelope = {
     data: SessionCreateManyUserInput | SessionCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TemplateCreateWithoutOwnerInput = {
+    id?: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    blocks?: TemplateBlockCreateNestedManyWithoutTemplateInput
+  }
+
+  export type TemplateUncheckedCreateWithoutOwnerInput = {
+    id?: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    blocks?: TemplateBlockUncheckedCreateNestedManyWithoutTemplateInput
+  }
+
+  export type TemplateCreateOrConnectWithoutOwnerInput = {
+    where: TemplateWhereUniqueInput
+    create: XOR<TemplateCreateWithoutOwnerInput, TemplateUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type TemplateCreateManyOwnerInputEnvelope = {
+    data: TemplateCreateManyOwnerInput | TemplateCreateManyOwnerInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BlockDefinitionCreateWithoutOwnerInput = {
+    id?: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    fields?: BlockFieldDefinitionCreateNestedManyWithoutBlockInput
+  }
+
+  export type BlockDefinitionUncheckedCreateWithoutOwnerInput = {
+    id?: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    fields?: BlockFieldDefinitionUncheckedCreateNestedManyWithoutBlockInput
+  }
+
+  export type BlockDefinitionCreateOrConnectWithoutOwnerInput = {
+    where: BlockDefinitionWhereUniqueInput
+    create: XOR<BlockDefinitionCreateWithoutOwnerInput, BlockDefinitionUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type BlockDefinitionCreateManyOwnerInputEnvelope = {
+    data: BlockDefinitionCreateManyOwnerInput | BlockDefinitionCreateManyOwnerInput[]
     skipDuplicates?: boolean
   }
 
@@ -7051,6 +14767,522 @@ export namespace Prisma {
     expires?: DateTimeFilter<"Session"> | Date | string
   }
 
+  export type TemplateUpsertWithWhereUniqueWithoutOwnerInput = {
+    where: TemplateWhereUniqueInput
+    update: XOR<TemplateUpdateWithoutOwnerInput, TemplateUncheckedUpdateWithoutOwnerInput>
+    create: XOR<TemplateCreateWithoutOwnerInput, TemplateUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type TemplateUpdateWithWhereUniqueWithoutOwnerInput = {
+    where: TemplateWhereUniqueInput
+    data: XOR<TemplateUpdateWithoutOwnerInput, TemplateUncheckedUpdateWithoutOwnerInput>
+  }
+
+  export type TemplateUpdateManyWithWhereWithoutOwnerInput = {
+    where: TemplateScalarWhereInput
+    data: XOR<TemplateUpdateManyMutationInput, TemplateUncheckedUpdateManyWithoutOwnerInput>
+  }
+
+  export type TemplateScalarWhereInput = {
+    AND?: TemplateScalarWhereInput | TemplateScalarWhereInput[]
+    OR?: TemplateScalarWhereInput[]
+    NOT?: TemplateScalarWhereInput | TemplateScalarWhereInput[]
+    id?: StringFilter<"Template"> | string
+    ownerId?: StringFilter<"Template"> | string
+    name?: StringFilter<"Template"> | string
+    createdAt?: DateTimeFilter<"Template"> | Date | string
+    updatedAt?: DateTimeFilter<"Template"> | Date | string
+  }
+
+  export type BlockDefinitionUpsertWithWhereUniqueWithoutOwnerInput = {
+    where: BlockDefinitionWhereUniqueInput
+    update: XOR<BlockDefinitionUpdateWithoutOwnerInput, BlockDefinitionUncheckedUpdateWithoutOwnerInput>
+    create: XOR<BlockDefinitionCreateWithoutOwnerInput, BlockDefinitionUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type BlockDefinitionUpdateWithWhereUniqueWithoutOwnerInput = {
+    where: BlockDefinitionWhereUniqueInput
+    data: XOR<BlockDefinitionUpdateWithoutOwnerInput, BlockDefinitionUncheckedUpdateWithoutOwnerInput>
+  }
+
+  export type BlockDefinitionUpdateManyWithWhereWithoutOwnerInput = {
+    where: BlockDefinitionScalarWhereInput
+    data: XOR<BlockDefinitionUpdateManyMutationInput, BlockDefinitionUncheckedUpdateManyWithoutOwnerInput>
+  }
+
+  export type BlockDefinitionScalarWhereInput = {
+    AND?: BlockDefinitionScalarWhereInput | BlockDefinitionScalarWhereInput[]
+    OR?: BlockDefinitionScalarWhereInput[]
+    NOT?: BlockDefinitionScalarWhereInput | BlockDefinitionScalarWhereInput[]
+    id?: StringFilter<"BlockDefinition"> | string
+    ownerId?: StringNullableFilter<"BlockDefinition"> | string | null
+    name?: StringFilter<"BlockDefinition"> | string
+    createdAt?: DateTimeFilter<"BlockDefinition"> | Date | string
+    updatedAt?: DateTimeFilter<"BlockDefinition"> | Date | string
+  }
+
+  export type TemplateBlockCreateWithoutTemplateInput = {
+    id?: string
+    order: number
+    title: string
+    sourceType: $Enums.BlockSource
+    sourceBlockId?: string | null
+    fields?: TemplateFieldCreateNestedManyWithoutTemplateBlockInput
+  }
+
+  export type TemplateBlockUncheckedCreateWithoutTemplateInput = {
+    id?: string
+    order: number
+    title: string
+    sourceType: $Enums.BlockSource
+    sourceBlockId?: string | null
+    fields?: TemplateFieldUncheckedCreateNestedManyWithoutTemplateBlockInput
+  }
+
+  export type TemplateBlockCreateOrConnectWithoutTemplateInput = {
+    where: TemplateBlockWhereUniqueInput
+    create: XOR<TemplateBlockCreateWithoutTemplateInput, TemplateBlockUncheckedCreateWithoutTemplateInput>
+  }
+
+  export type TemplateBlockCreateManyTemplateInputEnvelope = {
+    data: TemplateBlockCreateManyTemplateInput | TemplateBlockCreateManyTemplateInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserCreateWithoutTemplatesInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserUncheckedCreateWithoutTemplatesInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserCreateOrConnectWithoutTemplatesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTemplatesInput, UserUncheckedCreateWithoutTemplatesInput>
+  }
+
+  export type TemplateBlockUpsertWithWhereUniqueWithoutTemplateInput = {
+    where: TemplateBlockWhereUniqueInput
+    update: XOR<TemplateBlockUpdateWithoutTemplateInput, TemplateBlockUncheckedUpdateWithoutTemplateInput>
+    create: XOR<TemplateBlockCreateWithoutTemplateInput, TemplateBlockUncheckedCreateWithoutTemplateInput>
+  }
+
+  export type TemplateBlockUpdateWithWhereUniqueWithoutTemplateInput = {
+    where: TemplateBlockWhereUniqueInput
+    data: XOR<TemplateBlockUpdateWithoutTemplateInput, TemplateBlockUncheckedUpdateWithoutTemplateInput>
+  }
+
+  export type TemplateBlockUpdateManyWithWhereWithoutTemplateInput = {
+    where: TemplateBlockScalarWhereInput
+    data: XOR<TemplateBlockUpdateManyMutationInput, TemplateBlockUncheckedUpdateManyWithoutTemplateInput>
+  }
+
+  export type TemplateBlockScalarWhereInput = {
+    AND?: TemplateBlockScalarWhereInput | TemplateBlockScalarWhereInput[]
+    OR?: TemplateBlockScalarWhereInput[]
+    NOT?: TemplateBlockScalarWhereInput | TemplateBlockScalarWhereInput[]
+    id?: StringFilter<"TemplateBlock"> | string
+    templateId?: StringFilter<"TemplateBlock"> | string
+    order?: IntFilter<"TemplateBlock"> | number
+    title?: StringFilter<"TemplateBlock"> | string
+    sourceType?: EnumBlockSourceFilter<"TemplateBlock"> | $Enums.BlockSource
+    sourceBlockId?: StringNullableFilter<"TemplateBlock"> | string | null
+  }
+
+  export type UserUpsertWithoutTemplatesInput = {
+    update: XOR<UserUpdateWithoutTemplatesInput, UserUncheckedUpdateWithoutTemplatesInput>
+    create: XOR<UserCreateWithoutTemplatesInput, UserUncheckedCreateWithoutTemplatesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutTemplatesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutTemplatesInput, UserUncheckedUpdateWithoutTemplatesInput>
+  }
+
+  export type UserUpdateWithoutTemplatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutTemplatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type TemplateFieldCreateWithoutTemplateBlockInput = {
+    id?: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+  }
+
+  export type TemplateFieldUncheckedCreateWithoutTemplateBlockInput = {
+    id?: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+  }
+
+  export type TemplateFieldCreateOrConnectWithoutTemplateBlockInput = {
+    where: TemplateFieldWhereUniqueInput
+    create: XOR<TemplateFieldCreateWithoutTemplateBlockInput, TemplateFieldUncheckedCreateWithoutTemplateBlockInput>
+  }
+
+  export type TemplateFieldCreateManyTemplateBlockInputEnvelope = {
+    data: TemplateFieldCreateManyTemplateBlockInput | TemplateFieldCreateManyTemplateBlockInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TemplateCreateWithoutBlocksInput = {
+    id?: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    owner: UserCreateNestedOneWithoutTemplatesInput
+  }
+
+  export type TemplateUncheckedCreateWithoutBlocksInput = {
+    id?: string
+    ownerId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TemplateCreateOrConnectWithoutBlocksInput = {
+    where: TemplateWhereUniqueInput
+    create: XOR<TemplateCreateWithoutBlocksInput, TemplateUncheckedCreateWithoutBlocksInput>
+  }
+
+  export type TemplateFieldUpsertWithWhereUniqueWithoutTemplateBlockInput = {
+    where: TemplateFieldWhereUniqueInput
+    update: XOR<TemplateFieldUpdateWithoutTemplateBlockInput, TemplateFieldUncheckedUpdateWithoutTemplateBlockInput>
+    create: XOR<TemplateFieldCreateWithoutTemplateBlockInput, TemplateFieldUncheckedCreateWithoutTemplateBlockInput>
+  }
+
+  export type TemplateFieldUpdateWithWhereUniqueWithoutTemplateBlockInput = {
+    where: TemplateFieldWhereUniqueInput
+    data: XOR<TemplateFieldUpdateWithoutTemplateBlockInput, TemplateFieldUncheckedUpdateWithoutTemplateBlockInput>
+  }
+
+  export type TemplateFieldUpdateManyWithWhereWithoutTemplateBlockInput = {
+    where: TemplateFieldScalarWhereInput
+    data: XOR<TemplateFieldUpdateManyMutationInput, TemplateFieldUncheckedUpdateManyWithoutTemplateBlockInput>
+  }
+
+  export type TemplateFieldScalarWhereInput = {
+    AND?: TemplateFieldScalarWhereInput | TemplateFieldScalarWhereInput[]
+    OR?: TemplateFieldScalarWhereInput[]
+    NOT?: TemplateFieldScalarWhereInput | TemplateFieldScalarWhereInput[]
+    id?: StringFilter<"TemplateField"> | string
+    templateBlockId?: StringFilter<"TemplateField"> | string
+    order?: IntFilter<"TemplateField"> | number
+    key?: StringFilter<"TemplateField"> | string
+    label?: StringNullableFilter<"TemplateField"> | string | null
+    fieldType?: EnumFieldTypeFilter<"TemplateField"> | $Enums.FieldType
+    required?: BoolFilter<"TemplateField"> | boolean
+  }
+
+  export type TemplateUpsertWithoutBlocksInput = {
+    update: XOR<TemplateUpdateWithoutBlocksInput, TemplateUncheckedUpdateWithoutBlocksInput>
+    create: XOR<TemplateCreateWithoutBlocksInput, TemplateUncheckedCreateWithoutBlocksInput>
+    where?: TemplateWhereInput
+  }
+
+  export type TemplateUpdateToOneWithWhereWithoutBlocksInput = {
+    where?: TemplateWhereInput
+    data: XOR<TemplateUpdateWithoutBlocksInput, TemplateUncheckedUpdateWithoutBlocksInput>
+  }
+
+  export type TemplateUpdateWithoutBlocksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    owner?: UserUpdateOneRequiredWithoutTemplatesNestedInput
+  }
+
+  export type TemplateUncheckedUpdateWithoutBlocksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TemplateBlockCreateWithoutFieldsInput = {
+    id?: string
+    order: number
+    title: string
+    sourceType: $Enums.BlockSource
+    sourceBlockId?: string | null
+    template: TemplateCreateNestedOneWithoutBlocksInput
+  }
+
+  export type TemplateBlockUncheckedCreateWithoutFieldsInput = {
+    id?: string
+    templateId: string
+    order: number
+    title: string
+    sourceType: $Enums.BlockSource
+    sourceBlockId?: string | null
+  }
+
+  export type TemplateBlockCreateOrConnectWithoutFieldsInput = {
+    where: TemplateBlockWhereUniqueInput
+    create: XOR<TemplateBlockCreateWithoutFieldsInput, TemplateBlockUncheckedCreateWithoutFieldsInput>
+  }
+
+  export type TemplateBlockUpsertWithoutFieldsInput = {
+    update: XOR<TemplateBlockUpdateWithoutFieldsInput, TemplateBlockUncheckedUpdateWithoutFieldsInput>
+    create: XOR<TemplateBlockCreateWithoutFieldsInput, TemplateBlockUncheckedCreateWithoutFieldsInput>
+    where?: TemplateBlockWhereInput
+  }
+
+  export type TemplateBlockUpdateToOneWithWhereWithoutFieldsInput = {
+    where?: TemplateBlockWhereInput
+    data: XOR<TemplateBlockUpdateWithoutFieldsInput, TemplateBlockUncheckedUpdateWithoutFieldsInput>
+  }
+
+  export type TemplateBlockUpdateWithoutFieldsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    title?: StringFieldUpdateOperationsInput | string
+    sourceType?: EnumBlockSourceFieldUpdateOperationsInput | $Enums.BlockSource
+    sourceBlockId?: NullableStringFieldUpdateOperationsInput | string | null
+    template?: TemplateUpdateOneRequiredWithoutBlocksNestedInput
+  }
+
+  export type TemplateBlockUncheckedUpdateWithoutFieldsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateId?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    title?: StringFieldUpdateOperationsInput | string
+    sourceType?: EnumBlockSourceFieldUpdateOperationsInput | $Enums.BlockSource
+    sourceBlockId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type BlockFieldDefinitionCreateWithoutBlockInput = {
+    id?: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+  }
+
+  export type BlockFieldDefinitionUncheckedCreateWithoutBlockInput = {
+    id?: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+  }
+
+  export type BlockFieldDefinitionCreateOrConnectWithoutBlockInput = {
+    where: BlockFieldDefinitionWhereUniqueInput
+    create: XOR<BlockFieldDefinitionCreateWithoutBlockInput, BlockFieldDefinitionUncheckedCreateWithoutBlockInput>
+  }
+
+  export type BlockFieldDefinitionCreateManyBlockInputEnvelope = {
+    data: BlockFieldDefinitionCreateManyBlockInput | BlockFieldDefinitionCreateManyBlockInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserCreateWithoutBlockDefinitionsInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    templates?: TemplateCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserUncheckedCreateWithoutBlockDefinitionsInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserCreateOrConnectWithoutBlockDefinitionsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutBlockDefinitionsInput, UserUncheckedCreateWithoutBlockDefinitionsInput>
+  }
+
+  export type BlockFieldDefinitionUpsertWithWhereUniqueWithoutBlockInput = {
+    where: BlockFieldDefinitionWhereUniqueInput
+    update: XOR<BlockFieldDefinitionUpdateWithoutBlockInput, BlockFieldDefinitionUncheckedUpdateWithoutBlockInput>
+    create: XOR<BlockFieldDefinitionCreateWithoutBlockInput, BlockFieldDefinitionUncheckedCreateWithoutBlockInput>
+  }
+
+  export type BlockFieldDefinitionUpdateWithWhereUniqueWithoutBlockInput = {
+    where: BlockFieldDefinitionWhereUniqueInput
+    data: XOR<BlockFieldDefinitionUpdateWithoutBlockInput, BlockFieldDefinitionUncheckedUpdateWithoutBlockInput>
+  }
+
+  export type BlockFieldDefinitionUpdateManyWithWhereWithoutBlockInput = {
+    where: BlockFieldDefinitionScalarWhereInput
+    data: XOR<BlockFieldDefinitionUpdateManyMutationInput, BlockFieldDefinitionUncheckedUpdateManyWithoutBlockInput>
+  }
+
+  export type BlockFieldDefinitionScalarWhereInput = {
+    AND?: BlockFieldDefinitionScalarWhereInput | BlockFieldDefinitionScalarWhereInput[]
+    OR?: BlockFieldDefinitionScalarWhereInput[]
+    NOT?: BlockFieldDefinitionScalarWhereInput | BlockFieldDefinitionScalarWhereInput[]
+    id?: StringFilter<"BlockFieldDefinition"> | string
+    blockId?: StringFilter<"BlockFieldDefinition"> | string
+    order?: IntFilter<"BlockFieldDefinition"> | number
+    key?: StringFilter<"BlockFieldDefinition"> | string
+    label?: StringNullableFilter<"BlockFieldDefinition"> | string | null
+    fieldType?: EnumFieldTypeFilter<"BlockFieldDefinition"> | $Enums.FieldType
+    required?: BoolFilter<"BlockFieldDefinition"> | boolean
+  }
+
+  export type UserUpsertWithoutBlockDefinitionsInput = {
+    update: XOR<UserUpdateWithoutBlockDefinitionsInput, UserUncheckedUpdateWithoutBlockDefinitionsInput>
+    create: XOR<UserCreateWithoutBlockDefinitionsInput, UserUncheckedCreateWithoutBlockDefinitionsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutBlockDefinitionsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutBlockDefinitionsInput, UserUncheckedUpdateWithoutBlockDefinitionsInput>
+  }
+
+  export type UserUpdateWithoutBlockDefinitionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    templates?: TemplateUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutBlockDefinitionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type BlockDefinitionCreateWithoutFieldsInput = {
+    id?: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    owner?: UserCreateNestedOneWithoutBlockDefinitionsInput
+  }
+
+  export type BlockDefinitionUncheckedCreateWithoutFieldsInput = {
+    id?: string
+    ownerId?: string | null
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BlockDefinitionCreateOrConnectWithoutFieldsInput = {
+    where: BlockDefinitionWhereUniqueInput
+    create: XOR<BlockDefinitionCreateWithoutFieldsInput, BlockDefinitionUncheckedCreateWithoutFieldsInput>
+  }
+
+  export type BlockDefinitionUpsertWithoutFieldsInput = {
+    update: XOR<BlockDefinitionUpdateWithoutFieldsInput, BlockDefinitionUncheckedUpdateWithoutFieldsInput>
+    create: XOR<BlockDefinitionCreateWithoutFieldsInput, BlockDefinitionUncheckedCreateWithoutFieldsInput>
+    where?: BlockDefinitionWhereInput
+  }
+
+  export type BlockDefinitionUpdateToOneWithWhereWithoutFieldsInput = {
+    where?: BlockDefinitionWhereInput
+    data: XOR<BlockDefinitionUpdateWithoutFieldsInput, BlockDefinitionUncheckedUpdateWithoutFieldsInput>
+  }
+
+  export type BlockDefinitionUpdateWithoutFieldsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    owner?: UserUpdateOneWithoutBlockDefinitionsNestedInput
+  }
+
+  export type BlockDefinitionUncheckedUpdateWithoutFieldsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type AccountCreateManyUserInput = {
     id?: string
     type: string
@@ -7069,6 +15301,20 @@ export namespace Prisma {
     id?: string
     sessionToken: string
     expires: Date | string
+  }
+
+  export type TemplateCreateManyOwnerInput = {
+    id?: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BlockDefinitionCreateManyOwnerInput = {
+    id?: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type AccountUpdateWithoutUserInput = {
@@ -7129,6 +15375,158 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     sessionToken?: StringFieldUpdateOperationsInput | string
     expires?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TemplateUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    blocks?: TemplateBlockUpdateManyWithoutTemplateNestedInput
+  }
+
+  export type TemplateUncheckedUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    blocks?: TemplateBlockUncheckedUpdateManyWithoutTemplateNestedInput
+  }
+
+  export type TemplateUncheckedUpdateManyWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BlockDefinitionUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    fields?: BlockFieldDefinitionUpdateManyWithoutBlockNestedInput
+  }
+
+  export type BlockDefinitionUncheckedUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    fields?: BlockFieldDefinitionUncheckedUpdateManyWithoutBlockNestedInput
+  }
+
+  export type BlockDefinitionUncheckedUpdateManyWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TemplateBlockCreateManyTemplateInput = {
+    id?: string
+    order: number
+    title: string
+    sourceType: $Enums.BlockSource
+    sourceBlockId?: string | null
+  }
+
+  export type TemplateBlockUpdateWithoutTemplateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    title?: StringFieldUpdateOperationsInput | string
+    sourceType?: EnumBlockSourceFieldUpdateOperationsInput | $Enums.BlockSource
+    sourceBlockId?: NullableStringFieldUpdateOperationsInput | string | null
+    fields?: TemplateFieldUpdateManyWithoutTemplateBlockNestedInput
+  }
+
+  export type TemplateBlockUncheckedUpdateWithoutTemplateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    title?: StringFieldUpdateOperationsInput | string
+    sourceType?: EnumBlockSourceFieldUpdateOperationsInput | $Enums.BlockSource
+    sourceBlockId?: NullableStringFieldUpdateOperationsInput | string | null
+    fields?: TemplateFieldUncheckedUpdateManyWithoutTemplateBlockNestedInput
+  }
+
+  export type TemplateBlockUncheckedUpdateManyWithoutTemplateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    title?: StringFieldUpdateOperationsInput | string
+    sourceType?: EnumBlockSourceFieldUpdateOperationsInput | $Enums.BlockSource
+    sourceBlockId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type TemplateFieldCreateManyTemplateBlockInput = {
+    id?: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+  }
+
+  export type TemplateFieldUpdateWithoutTemplateBlockInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type TemplateFieldUncheckedUpdateWithoutTemplateBlockInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type TemplateFieldUncheckedUpdateManyWithoutTemplateBlockInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BlockFieldDefinitionCreateManyBlockInput = {
+    id?: string
+    order: number
+    key: string
+    label?: string | null
+    fieldType?: $Enums.FieldType
+    required?: boolean
+  }
+
+  export type BlockFieldDefinitionUpdateWithoutBlockInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BlockFieldDefinitionUncheckedUpdateWithoutBlockInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BlockFieldDefinitionUncheckedUpdateManyWithoutBlockInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    order?: IntFieldUpdateOperationsInput | number
+    key?: StringFieldUpdateOperationsInput | string
+    label?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
+    required?: BoolFieldUpdateOperationsInput | boolean
   }
 
 

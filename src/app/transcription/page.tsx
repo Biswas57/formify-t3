@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
 import TranscriptionClient from "./TranscriptionClient";
@@ -13,5 +14,9 @@ export default async function TranscriptionPage() {
         redirect("/login?callbackUrl=/transcription");
     }
 
-    return <TranscriptionClient user={session.user} />;
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#FBFBFB]" />}>
+            <TranscriptionClient user={session.user} />
+        </Suspense>
+    );
 }
