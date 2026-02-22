@@ -9,7 +9,7 @@ export default async function TemplatesPage() {
 
     return (
         <div className="flex-1 overflow-y-auto">
-            <div className="max-w-5xl mx-auto px-6 py-8 md:pt-8 pt-16">
+            <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-8">
                 <TemplateList
                     initialTemplates={templates}
                     exampleTemplates={EXAMPLE_TEMPLATES}

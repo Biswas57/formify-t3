@@ -37,7 +37,7 @@ export default function ProfileClient({ user }: Props) {
 
     return (
         <div className="flex-1 overflow-y-auto">
-            <div className="max-w-2xl mx-auto px-6 py-8 md:pt-8 pt-16">
+            <div className="max-w-2xl mx-auto px-4 md:px-6 py-6 md:py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-slate-900">Profile</h1>
@@ -45,15 +45,15 @@ export default function ProfileClient({ user }: Props) {
                 </div>
 
                 {/* Avatar + name card */}
-                <div className="bg-white border border-slate-200 rounded-xl p-6 mb-5 flex items-center gap-5">
+                <div className="bg-white border border-slate-200 rounded-xl p-5 md:p-6 mb-5 flex items-center gap-4 md:gap-5">
                     {user.image ? (
                         <img
                             src={user.image}
                             alt={user.name ?? "User"}
-                            className="w-16 h-16 rounded-full object-cover flex-shrink-0"
+                            className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover flex-shrink-0"
                         />
                     ) : (
-                        <div className="w-16 h-16 rounded-full bg-[#2149A1] flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
+                        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#2149A1] flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
                             {initials}
                         </div>
                     )}
@@ -83,28 +83,28 @@ export default function ProfileClient({ user }: Props) {
 
                 {/* Details */}
                 <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 mb-5">
-                    <div className="flex items-center gap-4 px-6 py-4">
+                    <div className="flex items-center gap-4 px-5 md:px-6 py-4">
                         <User className="w-4 h-4 text-[#868C94] flex-shrink-0" />
                         <div>
                             <p className="text-xs text-[#868C94] mb-0.5">Full name</p>
                             <p className="text-sm text-slate-800">{user.name ?? "—"}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 px-6 py-4">
+                    <div className="flex items-center gap-4 px-5 md:px-6 py-4">
                         <Mail className="w-4 h-4 text-[#868C94] flex-shrink-0" />
                         <div>
                             <p className="text-xs text-[#868C94] mb-0.5">Email</p>
                             <p className="text-sm text-slate-800">{user.email}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 px-6 py-4">
+                    <div className="flex items-center gap-4 px-5 md:px-6 py-4">
                         <Calendar className="w-4 h-4 text-[#868C94] flex-shrink-0" />
                         <div>
                             <p className="text-xs text-[#868C94] mb-0.5">Member since</p>
                             <p className="text-sm text-slate-800">{formatDate(user.createdAt)}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 px-6 py-4">
+                    <div className="flex items-center gap-4 px-5 md:px-6 py-4">
                         <FileText className="w-4 h-4 text-[#868C94] flex-shrink-0" />
                         <div>
                             <p className="text-xs text-[#868C94] mb-0.5">Templates created</p>
@@ -115,13 +115,13 @@ export default function ProfileClient({ user }: Props) {
 
                 {/* Actions */}
                 <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
-                    <div className="px-6 py-4">
+                    <div className="px-5 md:px-6 py-4">
                         <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3">
                             Account
                         </p>
                         <button
                             onClick={() => void signOut({ callbackUrl: "/" })}
-                            className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-red-600 transition-colors group"
+                            className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-red-600 transition-colors group min-h-[44px]"
                         >
                             <LogOut className="w-4 h-4 group-hover:text-red-500 transition-colors" />
                             Sign out

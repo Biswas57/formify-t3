@@ -9,8 +9,6 @@ import {
     Pencil, Check, AlertCircle, RefreshCw, Loader2,
     Download, Mail, X
 } from "lucide-react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import { formatFieldLabel } from "@/lib/format-field-label";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -323,30 +321,50 @@ export default function TranscriptionClient({ user }: { user: User }) {
         if (!formContainerRef.current) return;
 
         try {
+            // Dynamically import heavy PDF libraries only when needed
+            const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+                import("jspdf"),
+                import("html2canvas-pro"),
+            ]);
+
             // Clone the form container to avoid modifying the original
             const clonedContainer = formContainerRef.current.cloneNode(true) as HTMLElement;
 
-            // Replace oklch colors with hex equivalents for html2canvas compatibility
-            const replaceOklchColors = (element: HTMLElement) => {
-                const computedStyle = window.getComputedStyle(element);
+            // Inline all computed styles to avoid html2canvas parsing modern color functions from stylesheets
+            const inlineAllStyles = (element: HTMLElement, sourceElement: HTMLElement) => {
+                const computedStyle = window.getComputedStyle(sourceElement);
 
-                // Get all computed colors and replace oklch with their computed RGB values
-                const colorProps: Array<'color' | 'backgroundColor' | 'borderColor'> = ['color', 'backgroundColor', 'borderColor'];
-                colorProps.forEach(prop => {
+                // Copy all computed styles as inline styles (including RGB-converted colors)
+                // This forces html2canvas to use inline styles instead of parsing CSS
+                const importantStyles = [
+                    'color', 'backgroundColor', 'borderColor', 'borderStyle', 'borderWidth',
+                    'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+                    'borderTopStyle', 'borderRightStyle', 'borderBottomStyle', 'borderLeftStyle',
+                    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
+                    'borderRadius', 'padding', 'margin', 'width', 'height',
+                    'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'textAlign',
+                    'display', 'position', 'top', 'left', 'right', 'bottom',
+                    'boxShadow', 'opacity', 'transform'
+                ];
+
+                importantStyles.forEach(prop => {
                     const value = computedStyle.getPropertyValue(prop);
-                    if (value?.includes('oklch')) {
-                        // Apply the computed color directly
-                        element.style[prop] = value;
+                    if (value && value !== '' && value !== 'none') {
+                        element.style.setProperty(prop, value, 'important');
                     }
                 });
 
                 // Recursively process children
-                Array.from(element.children).forEach(child => {
-                    replaceOklchColors(child as HTMLElement);
+                const sourceChildren = Array.from(sourceElement.children) as HTMLElement[];
+                const clonedChildren = Array.from(element.children) as HTMLElement[];
+                clonedChildren.forEach((child, index) => {
+                    if (sourceChildren[index]) {
+                        inlineAllStyles(child, sourceChildren[index]);
+                    }
                 });
             };
 
-            replaceOklchColors(clonedContainer);
+            inlineAllStyles(clonedContainer, formContainerRef.current);
 
             // Temporarily add to DOM for rendering
             clonedContainer.style.position = 'absolute';
@@ -425,7 +443,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     </div>
                 `).join('');
 
-            const response = await fetch('/api/send-form-email', {
+            const response = await fetch('/api/email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -684,7 +702,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                                     isEditing &&
                                                     setEditedValues((prev) => ({ ...prev, [field]: e.target.value }))
                                                 }
-                                                placeholder={isRecording ? "Listening…" : "—"}
+                                                placeholder={isRecording ? "" : "—"}
                                                 className={`w-full text-sm px-3 py-2.5 rounded-lg border outline-none transition-all duration-200
                           ${isEditing
                                                         ? "border-[#2149A1] bg-white text-slate-900 focus:ring-2 focus:ring-[#2149A1]/20 cursor-text"
