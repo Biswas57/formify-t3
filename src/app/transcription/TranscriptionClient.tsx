@@ -323,12 +323,53 @@ export default function TranscriptionClient({ user }: { user: User }) {
         if (!formContainerRef.current) return;
 
         try {
+            // Clone the form container to avoid modifying the original
+            const clonedContainer = formContainerRef.current.cloneNode(true) as HTMLElement;
+
+            // Replace oklch colors with hex equivalents for html2canvas compatibility
+            const replaceOklchColors = (element: HTMLElement) => {
+                const computedStyle = window.getComputedStyle(element);
+
+                // Get all computed colors and replace oklch with their computed RGB values
+                const colorProps: Array<'color' | 'backgroundColor' | 'borderColor'> = ['color', 'backgroundColor', 'borderColor'];
+                colorProps.forEach(prop => {
+                    const value = computedStyle.getPropertyValue(prop);
+                    if (value?.includes('oklch')) {
+                        // Apply the computed color directly
+                        element.style[prop] = value;
+                    }
+                });
+
+                // Recursively process children
+                Array.from(element.children).forEach(child => {
+                    replaceOklchColors(child as HTMLElement);
+                });
+            };
+
+            replaceOklchColors(clonedContainer);
+
+            // Temporarily add to DOM for rendering
+            clonedContainer.style.position = 'absolute';
+            clonedContainer.style.left = '-9999px';
+            document.body.appendChild(clonedContainer);
+
             // Create a clean version of the form for PDF
-            const canvas = await html2canvas(formContainerRef.current, {
+            const canvas = await html2canvas(clonedContainer, {
                 scale: 2,
                 backgroundColor: '#ffffff',
                 logging: false,
+                onclone: (clonedDoc) => {
+                    // Force inline styles for better compatibility
+                    const clonedElement = clonedDoc.body.querySelector('[style*="position: absolute"]')!;
+                    if (clonedElement) {
+                        (clonedElement as HTMLElement).style.position = 'relative';
+                        (clonedElement as HTMLElement).style.left = '0';
+                    }
+                }
             });
+
+            // Remove the temporary clone
+            document.body.removeChild(clonedContainer);
 
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF({
