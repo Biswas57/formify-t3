@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { FileText, Plus, LogOut, User, ChevronDown, Mic, Menu, X } from "lucide-react";
+import { api } from "@/trpc/react";
+import PlanBadge from "@/app/_components/PlanBadge";
 
 interface HeaderUser {
     name?: string | null;
@@ -22,6 +24,8 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const { data: entitlements } = api.entitlements.me.useQuery();
 
     const isActive = (href: string) => {
         if (href === "/dashboard/formbank") {
@@ -135,6 +139,11 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                                     {user.name ?? "User"}
                                 </p>
                                 <p className="text-xs text-[#868C94] truncate">{user.email}</p>
+                                {entitlements?.planSlug === "pro" && (
+                                    <div className="mt-1.5">
+                                        <PlanBadge tier="pro" size="sm" showIcon={false} />
+                                    </div>
+                                )}
                             </div>
                             <Link
                                 href="/dashboard/profile"
@@ -196,10 +205,15 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                             {initials}
                         </div>
                     )}
-                    <div className="min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 truncate">
-                            {user.name ?? "User"}
-                        </p>
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-sm font-semibold text-slate-900 truncate">
+                                {user.name ?? "User"}
+                            </p>
+                            {entitlements?.planSlug === "pro" && (
+                                <PlanBadge tier="pro" size="sm" showIcon={false} />
+                            )}
+                        </div>
                         <p className="text-xs text-[#868C94] truncate">{user.email}</p>
                     </div>
                 </div>

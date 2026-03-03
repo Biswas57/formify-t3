@@ -58,6 +58,26 @@ export type BlockDefinition = $Result.DefaultSelection<Prisma.$BlockDefinitionPa
  * 
  */
 export type BlockFieldDefinition = $Result.DefaultSelection<Prisma.$BlockFieldDefinitionPayload>
+/**
+ * Model Plan
+ * 
+ */
+export type Plan = $Result.DefaultSelection<Prisma.$PlanPayload>
+/**
+ * Model UserPlan
+ * 
+ */
+export type UserPlan = $Result.DefaultSelection<Prisma.$UserPlanPayload>
+/**
+ * Model CustomBlock
+ * 
+ */
+export type CustomBlock = $Result.DefaultSelection<Prisma.$CustomBlockPayload>
+/**
+ * Model TranscriptionUsage
+ * 
+ */
+export type TranscriptionUsage = $Result.DefaultSelection<Prisma.$TranscriptionUsagePayload>
 
 /**
  * Enums
@@ -84,6 +104,19 @@ export const FieldType: {
 
 export type FieldType = (typeof FieldType)[keyof typeof FieldType]
 
+
+export const SubscriptionStatus: {
+  ACTIVE: 'ACTIVE',
+  CANCELED: 'CANCELED',
+  PAST_DUE: 'PAST_DUE',
+  TRIALING: 'TRIALING',
+  INCOMPLETE: 'INCOMPLETE',
+  INCOMPLETE_EXPIRED: 'INCOMPLETE_EXPIRED',
+  UNPAID: 'UNPAID'
+};
+
+export type SubscriptionStatus = (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus]
+
 }
 
 export type BlockSource = $Enums.BlockSource
@@ -93,6 +126,10 @@ export const BlockSource: typeof $Enums.BlockSource
 export type FieldType = $Enums.FieldType
 
 export const FieldType: typeof $Enums.FieldType
+
+export type SubscriptionStatus = $Enums.SubscriptionStatus
+
+export const SubscriptionStatus: typeof $Enums.SubscriptionStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -301,6 +338,46 @@ export class PrismaClient<
     * ```
     */
   get blockFieldDefinition(): Prisma.BlockFieldDefinitionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.plan`: Exposes CRUD operations for the **Plan** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Plans
+    * const plans = await prisma.plan.findMany()
+    * ```
+    */
+  get plan(): Prisma.PlanDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.userPlan`: Exposes CRUD operations for the **UserPlan** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UserPlans
+    * const userPlans = await prisma.userPlan.findMany()
+    * ```
+    */
+  get userPlan(): Prisma.UserPlanDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.customBlock`: Exposes CRUD operations for the **CustomBlock** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CustomBlocks
+    * const customBlocks = await prisma.customBlock.findMany()
+    * ```
+    */
+  get customBlock(): Prisma.CustomBlockDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.transcriptionUsage`: Exposes CRUD operations for the **TranscriptionUsage** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TranscriptionUsages
+    * const transcriptionUsages = await prisma.transcriptionUsage.findMany()
+    * ```
+    */
+  get transcriptionUsage(): Prisma.TranscriptionUsageDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -750,7 +827,11 @@ export namespace Prisma {
     TemplateBlock: 'TemplateBlock',
     TemplateField: 'TemplateField',
     BlockDefinition: 'BlockDefinition',
-    BlockFieldDefinition: 'BlockFieldDefinition'
+    BlockFieldDefinition: 'BlockFieldDefinition',
+    Plan: 'Plan',
+    UserPlan: 'UserPlan',
+    CustomBlock: 'CustomBlock',
+    TranscriptionUsage: 'TranscriptionUsage'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -769,7 +850,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "account" | "session" | "verificationToken" | "user" | "template" | "templateBlock" | "templateField" | "blockDefinition" | "blockFieldDefinition"
+      modelProps: "account" | "session" | "verificationToken" | "user" | "template" | "templateBlock" | "templateField" | "blockDefinition" | "blockFieldDefinition" | "plan" | "userPlan" | "customBlock" | "transcriptionUsage"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1439,6 +1520,302 @@ export namespace Prisma {
           }
         }
       }
+      Plan: {
+        payload: Prisma.$PlanPayload<ExtArgs>
+        fields: Prisma.PlanFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PlanFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlanPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PlanFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlanPayload>
+          }
+          findFirst: {
+            args: Prisma.PlanFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlanPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PlanFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlanPayload>
+          }
+          findMany: {
+            args: Prisma.PlanFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlanPayload>[]
+          }
+          create: {
+            args: Prisma.PlanCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlanPayload>
+          }
+          createMany: {
+            args: Prisma.PlanCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PlanCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlanPayload>[]
+          }
+          delete: {
+            args: Prisma.PlanDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlanPayload>
+          }
+          update: {
+            args: Prisma.PlanUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlanPayload>
+          }
+          deleteMany: {
+            args: Prisma.PlanDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PlanUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PlanUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlanPayload>[]
+          }
+          upsert: {
+            args: Prisma.PlanUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlanPayload>
+          }
+          aggregate: {
+            args: Prisma.PlanAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePlan>
+          }
+          groupBy: {
+            args: Prisma.PlanGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PlanGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PlanCountArgs<ExtArgs>
+            result: $Utils.Optional<PlanCountAggregateOutputType> | number
+          }
+        }
+      }
+      UserPlan: {
+        payload: Prisma.$UserPlanPayload<ExtArgs>
+        fields: Prisma.UserPlanFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserPlanFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPlanPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserPlanFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPlanPayload>
+          }
+          findFirst: {
+            args: Prisma.UserPlanFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPlanPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserPlanFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPlanPayload>
+          }
+          findMany: {
+            args: Prisma.UserPlanFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPlanPayload>[]
+          }
+          create: {
+            args: Prisma.UserPlanCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPlanPayload>
+          }
+          createMany: {
+            args: Prisma.UserPlanCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserPlanCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPlanPayload>[]
+          }
+          delete: {
+            args: Prisma.UserPlanDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPlanPayload>
+          }
+          update: {
+            args: Prisma.UserPlanUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPlanPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserPlanDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserPlanUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserPlanUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPlanPayload>[]
+          }
+          upsert: {
+            args: Prisma.UserPlanUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPlanPayload>
+          }
+          aggregate: {
+            args: Prisma.UserPlanAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUserPlan>
+          }
+          groupBy: {
+            args: Prisma.UserPlanGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserPlanGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserPlanCountArgs<ExtArgs>
+            result: $Utils.Optional<UserPlanCountAggregateOutputType> | number
+          }
+        }
+      }
+      CustomBlock: {
+        payload: Prisma.$CustomBlockPayload<ExtArgs>
+        fields: Prisma.CustomBlockFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CustomBlockFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CustomBlockFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
+          }
+          findFirst: {
+            args: Prisma.CustomBlockFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CustomBlockFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
+          }
+          findMany: {
+            args: Prisma.CustomBlockFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>[]
+          }
+          create: {
+            args: Prisma.CustomBlockCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
+          }
+          createMany: {
+            args: Prisma.CustomBlockCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CustomBlockCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>[]
+          }
+          delete: {
+            args: Prisma.CustomBlockDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
+          }
+          update: {
+            args: Prisma.CustomBlockUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
+          }
+          deleteMany: {
+            args: Prisma.CustomBlockDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CustomBlockUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CustomBlockUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>[]
+          }
+          upsert: {
+            args: Prisma.CustomBlockUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
+          }
+          aggregate: {
+            args: Prisma.CustomBlockAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCustomBlock>
+          }
+          groupBy: {
+            args: Prisma.CustomBlockGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CustomBlockGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CustomBlockCountArgs<ExtArgs>
+            result: $Utils.Optional<CustomBlockCountAggregateOutputType> | number
+          }
+        }
+      }
+      TranscriptionUsage: {
+        payload: Prisma.$TranscriptionUsagePayload<ExtArgs>
+        fields: Prisma.TranscriptionUsageFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TranscriptionUsageFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptionUsagePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TranscriptionUsageFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptionUsagePayload>
+          }
+          findFirst: {
+            args: Prisma.TranscriptionUsageFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptionUsagePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TranscriptionUsageFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptionUsagePayload>
+          }
+          findMany: {
+            args: Prisma.TranscriptionUsageFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptionUsagePayload>[]
+          }
+          create: {
+            args: Prisma.TranscriptionUsageCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptionUsagePayload>
+          }
+          createMany: {
+            args: Prisma.TranscriptionUsageCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TranscriptionUsageCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptionUsagePayload>[]
+          }
+          delete: {
+            args: Prisma.TranscriptionUsageDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptionUsagePayload>
+          }
+          update: {
+            args: Prisma.TranscriptionUsageUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptionUsagePayload>
+          }
+          deleteMany: {
+            args: Prisma.TranscriptionUsageDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TranscriptionUsageUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TranscriptionUsageUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptionUsagePayload>[]
+          }
+          upsert: {
+            args: Prisma.TranscriptionUsageUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TranscriptionUsagePayload>
+          }
+          aggregate: {
+            args: Prisma.TranscriptionUsageAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTranscriptionUsage>
+          }
+          groupBy: {
+            args: Prisma.TranscriptionUsageGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TranscriptionUsageGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TranscriptionUsageCountArgs<ExtArgs>
+            result: $Utils.Optional<TranscriptionUsageCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1544,6 +1921,10 @@ export namespace Prisma {
     templateField?: TemplateFieldOmit
     blockDefinition?: BlockDefinitionOmit
     blockFieldDefinition?: BlockFieldDefinitionOmit
+    plan?: PlanOmit
+    userPlan?: UserPlanOmit
+    customBlock?: CustomBlockOmit
+    transcriptionUsage?: TranscriptionUsageOmit
   }
 
   /* Types for Logging */
@@ -1628,6 +2009,8 @@ export namespace Prisma {
     sessions: number
     templates: number
     blockDefinitions: number
+    customBlocks: number
+    transcriptionUsages: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -1635,6 +2018,8 @@ export namespace Prisma {
     sessions?: boolean | UserCountOutputTypeCountSessionsArgs
     templates?: boolean | UserCountOutputTypeCountTemplatesArgs
     blockDefinitions?: boolean | UserCountOutputTypeCountBlockDefinitionsArgs
+    customBlocks?: boolean | UserCountOutputTypeCountCustomBlocksArgs
+    transcriptionUsages?: boolean | UserCountOutputTypeCountTranscriptionUsagesArgs
   }
 
   // Custom InputTypes
@@ -1674,6 +2059,20 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountBlockDefinitionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BlockDefinitionWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountCustomBlocksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CustomBlockWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountTranscriptionUsagesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TranscriptionUsageWhereInput
   }
 
 
@@ -1767,6 +2166,37 @@ export namespace Prisma {
    */
   export type BlockDefinitionCountOutputTypeCountFieldsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BlockFieldDefinitionWhereInput
+  }
+
+
+  /**
+   * Count Type PlanCountOutputType
+   */
+
+  export type PlanCountOutputType = {
+    userPlans: number
+  }
+
+  export type PlanCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    userPlans?: boolean | PlanCountOutputTypeCountUserPlansArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PlanCountOutputType without action
+   */
+  export type PlanCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlanCountOutputType
+     */
+    select?: PlanCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PlanCountOutputType without action
+   */
+  export type PlanCountOutputTypeCountUserPlansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserPlanWhereInput
   }
 
 
@@ -4988,6 +5418,7 @@ export namespace Prisma {
     emailVerified: Date | null
     image: string | null
     passwordHash: string | null
+    stripeCustomerId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -4999,6 +5430,7 @@ export namespace Prisma {
     emailVerified: Date | null
     image: string | null
     passwordHash: string | null
+    stripeCustomerId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5010,6 +5442,7 @@ export namespace Prisma {
     emailVerified: number
     image: number
     passwordHash: number
+    stripeCustomerId: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -5023,6 +5456,7 @@ export namespace Prisma {
     emailVerified?: true
     image?: true
     passwordHash?: true
+    stripeCustomerId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5034,6 +5468,7 @@ export namespace Prisma {
     emailVerified?: true
     image?: true
     passwordHash?: true
+    stripeCustomerId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5045,6 +5480,7 @@ export namespace Prisma {
     emailVerified?: true
     image?: true
     passwordHash?: true
+    stripeCustomerId?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -5129,6 +5565,7 @@ export namespace Prisma {
     emailVerified: Date | null
     image: string | null
     passwordHash: string | null
+    stripeCustomerId: string | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -5157,12 +5594,16 @@ export namespace Prisma {
     emailVerified?: boolean
     image?: boolean
     passwordHash?: boolean
+    stripeCustomerId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     accounts?: boolean | User$accountsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     templates?: boolean | User$templatesArgs<ExtArgs>
     blockDefinitions?: boolean | User$blockDefinitionsArgs<ExtArgs>
+    customBlocks?: boolean | User$customBlocksArgs<ExtArgs>
+    transcriptionUsages?: boolean | User$transcriptionUsagesArgs<ExtArgs>
+    userPlan?: boolean | User$userPlanArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -5173,6 +5614,7 @@ export namespace Prisma {
     emailVerified?: boolean
     image?: boolean
     passwordHash?: boolean
+    stripeCustomerId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -5184,6 +5626,7 @@ export namespace Prisma {
     emailVerified?: boolean
     image?: boolean
     passwordHash?: boolean
+    stripeCustomerId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -5195,16 +5638,20 @@ export namespace Prisma {
     emailVerified?: boolean
     image?: boolean
     passwordHash?: boolean
+    stripeCustomerId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "emailVerified" | "image" | "passwordHash" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "emailVerified" | "image" | "passwordHash" | "stripeCustomerId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     accounts?: boolean | User$accountsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     templates?: boolean | User$templatesArgs<ExtArgs>
     blockDefinitions?: boolean | User$blockDefinitionsArgs<ExtArgs>
+    customBlocks?: boolean | User$customBlocksArgs<ExtArgs>
+    transcriptionUsages?: boolean | User$transcriptionUsagesArgs<ExtArgs>
+    userPlan?: boolean | User$userPlanArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -5217,6 +5664,9 @@ export namespace Prisma {
       sessions: Prisma.$SessionPayload<ExtArgs>[]
       templates: Prisma.$TemplatePayload<ExtArgs>[]
       blockDefinitions: Prisma.$BlockDefinitionPayload<ExtArgs>[]
+      customBlocks: Prisma.$CustomBlockPayload<ExtArgs>[]
+      transcriptionUsages: Prisma.$TranscriptionUsagePayload<ExtArgs>[]
+      userPlan: Prisma.$UserPlanPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5225,6 +5675,7 @@ export namespace Prisma {
       emailVerified: Date | null
       image: string | null
       passwordHash: string | null
+      stripeCustomerId: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -5625,6 +6076,9 @@ export namespace Prisma {
     sessions<T extends User$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     templates<T extends User$templatesArgs<ExtArgs> = {}>(args?: Subset<T, User$templatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     blockDefinitions<T extends User$blockDefinitionsArgs<ExtArgs> = {}>(args?: Subset<T, User$blockDefinitionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    customBlocks<T extends User$customBlocksArgs<ExtArgs> = {}>(args?: Subset<T, User$customBlocksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    transcriptionUsages<T extends User$transcriptionUsagesArgs<ExtArgs> = {}>(args?: Subset<T, User$transcriptionUsagesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    userPlan<T extends User$userPlanArgs<ExtArgs> = {}>(args?: Subset<T, User$userPlanArgs<ExtArgs>>): Prisma__UserPlanClient<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5660,6 +6114,7 @@ export namespace Prisma {
     readonly emailVerified: FieldRef<"User", 'DateTime'>
     readonly image: FieldRef<"User", 'String'>
     readonly passwordHash: FieldRef<"User", 'String'>
+    readonly stripeCustomerId: FieldRef<"User", 'String'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -6143,6 +6598,73 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: BlockDefinitionScalarFieldEnum | BlockDefinitionScalarFieldEnum[]
+  }
+
+  /**
+   * User.customBlocks
+   */
+  export type User$customBlocksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockInclude<ExtArgs> | null
+    where?: CustomBlockWhereInput
+    orderBy?: CustomBlockOrderByWithRelationInput | CustomBlockOrderByWithRelationInput[]
+    cursor?: CustomBlockWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CustomBlockScalarFieldEnum | CustomBlockScalarFieldEnum[]
+  }
+
+  /**
+   * User.transcriptionUsages
+   */
+  export type User$transcriptionUsagesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageInclude<ExtArgs> | null
+    where?: TranscriptionUsageWhereInput
+    orderBy?: TranscriptionUsageOrderByWithRelationInput | TranscriptionUsageOrderByWithRelationInput[]
+    cursor?: TranscriptionUsageWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TranscriptionUsageScalarFieldEnum | TranscriptionUsageScalarFieldEnum[]
+  }
+
+  /**
+   * User.userPlan
+   */
+  export type User$userPlanArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+    where?: UserPlanWhereInput
   }
 
   /**
@@ -11731,6 +12253,4422 @@ export namespace Prisma {
 
 
   /**
+   * Model Plan
+   */
+
+  export type AggregatePlan = {
+    _count: PlanCountAggregateOutputType | null
+    _min: PlanMinAggregateOutputType | null
+    _max: PlanMaxAggregateOutputType | null
+  }
+
+  export type PlanMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    slug: string | null
+    stripePriceId: string | null
+    featuresJson: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlanMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    slug: string | null
+    stripePriceId: string | null
+    featuresJson: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlanCountAggregateOutputType = {
+    id: number
+    name: number
+    slug: number
+    stripePriceId: number
+    featuresJson: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PlanMinAggregateInputType = {
+    id?: true
+    name?: true
+    slug?: true
+    stripePriceId?: true
+    featuresJson?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlanMaxAggregateInputType = {
+    id?: true
+    name?: true
+    slug?: true
+    stripePriceId?: true
+    featuresJson?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlanCountAggregateInputType = {
+    id?: true
+    name?: true
+    slug?: true
+    stripePriceId?: true
+    featuresJson?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PlanAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Plan to aggregate.
+     */
+    where?: PlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Plans to fetch.
+     */
+    orderBy?: PlanOrderByWithRelationInput | PlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Plans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Plans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Plans
+    **/
+    _count?: true | PlanCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PlanMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PlanMaxAggregateInputType
+  }
+
+  export type GetPlanAggregateType<T extends PlanAggregateArgs> = {
+        [P in keyof T & keyof AggregatePlan]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePlan[P]>
+      : GetScalarType<T[P], AggregatePlan[P]>
+  }
+
+
+
+
+  export type PlanGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlanWhereInput
+    orderBy?: PlanOrderByWithAggregationInput | PlanOrderByWithAggregationInput[]
+    by: PlanScalarFieldEnum[] | PlanScalarFieldEnum
+    having?: PlanScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PlanCountAggregateInputType | true
+    _min?: PlanMinAggregateInputType
+    _max?: PlanMaxAggregateInputType
+  }
+
+  export type PlanGroupByOutputType = {
+    id: string
+    name: string
+    slug: string
+    stripePriceId: string | null
+    featuresJson: string
+    createdAt: Date
+    updatedAt: Date
+    _count: PlanCountAggregateOutputType | null
+    _min: PlanMinAggregateOutputType | null
+    _max: PlanMaxAggregateOutputType | null
+  }
+
+  type GetPlanGroupByPayload<T extends PlanGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PlanGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PlanGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PlanGroupByOutputType[P]>
+            : GetScalarType<T[P], PlanGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PlanSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    stripePriceId?: boolean
+    featuresJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    userPlans?: boolean | Plan$userPlansArgs<ExtArgs>
+    _count?: boolean | PlanCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["plan"]>
+
+  export type PlanSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    stripePriceId?: boolean
+    featuresJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["plan"]>
+
+  export type PlanSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    stripePriceId?: boolean
+    featuresJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["plan"]>
+
+  export type PlanSelectScalar = {
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    stripePriceId?: boolean
+    featuresJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PlanOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "stripePriceId" | "featuresJson" | "createdAt" | "updatedAt", ExtArgs["result"]["plan"]>
+  export type PlanInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    userPlans?: boolean | Plan$userPlansArgs<ExtArgs>
+    _count?: boolean | PlanCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type PlanIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type PlanIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $PlanPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Plan"
+    objects: {
+      userPlans: Prisma.$UserPlanPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      slug: string
+      stripePriceId: string | null
+      featuresJson: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["plan"]>
+    composites: {}
+  }
+
+  type PlanGetPayload<S extends boolean | null | undefined | PlanDefaultArgs> = $Result.GetResult<Prisma.$PlanPayload, S>
+
+  type PlanCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PlanFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PlanCountAggregateInputType | true
+    }
+
+  export interface PlanDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Plan'], meta: { name: 'Plan' } }
+    /**
+     * Find zero or one Plan that matches the filter.
+     * @param {PlanFindUniqueArgs} args - Arguments to find a Plan
+     * @example
+     * // Get one Plan
+     * const plan = await prisma.plan.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PlanFindUniqueArgs>(args: SelectSubset<T, PlanFindUniqueArgs<ExtArgs>>): Prisma__PlanClient<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Plan that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PlanFindUniqueOrThrowArgs} args - Arguments to find a Plan
+     * @example
+     * // Get one Plan
+     * const plan = await prisma.plan.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PlanFindUniqueOrThrowArgs>(args: SelectSubset<T, PlanFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PlanClient<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Plan that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlanFindFirstArgs} args - Arguments to find a Plan
+     * @example
+     * // Get one Plan
+     * const plan = await prisma.plan.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PlanFindFirstArgs>(args?: SelectSubset<T, PlanFindFirstArgs<ExtArgs>>): Prisma__PlanClient<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Plan that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlanFindFirstOrThrowArgs} args - Arguments to find a Plan
+     * @example
+     * // Get one Plan
+     * const plan = await prisma.plan.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PlanFindFirstOrThrowArgs>(args?: SelectSubset<T, PlanFindFirstOrThrowArgs<ExtArgs>>): Prisma__PlanClient<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Plans that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlanFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Plans
+     * const plans = await prisma.plan.findMany()
+     * 
+     * // Get first 10 Plans
+     * const plans = await prisma.plan.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const planWithIdOnly = await prisma.plan.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PlanFindManyArgs>(args?: SelectSubset<T, PlanFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Plan.
+     * @param {PlanCreateArgs} args - Arguments to create a Plan.
+     * @example
+     * // Create one Plan
+     * const Plan = await prisma.plan.create({
+     *   data: {
+     *     // ... data to create a Plan
+     *   }
+     * })
+     * 
+     */
+    create<T extends PlanCreateArgs>(args: SelectSubset<T, PlanCreateArgs<ExtArgs>>): Prisma__PlanClient<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Plans.
+     * @param {PlanCreateManyArgs} args - Arguments to create many Plans.
+     * @example
+     * // Create many Plans
+     * const plan = await prisma.plan.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PlanCreateManyArgs>(args?: SelectSubset<T, PlanCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Plans and returns the data saved in the database.
+     * @param {PlanCreateManyAndReturnArgs} args - Arguments to create many Plans.
+     * @example
+     * // Create many Plans
+     * const plan = await prisma.plan.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Plans and only return the `id`
+     * const planWithIdOnly = await prisma.plan.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PlanCreateManyAndReturnArgs>(args?: SelectSubset<T, PlanCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Plan.
+     * @param {PlanDeleteArgs} args - Arguments to delete one Plan.
+     * @example
+     * // Delete one Plan
+     * const Plan = await prisma.plan.delete({
+     *   where: {
+     *     // ... filter to delete one Plan
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PlanDeleteArgs>(args: SelectSubset<T, PlanDeleteArgs<ExtArgs>>): Prisma__PlanClient<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Plan.
+     * @param {PlanUpdateArgs} args - Arguments to update one Plan.
+     * @example
+     * // Update one Plan
+     * const plan = await prisma.plan.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PlanUpdateArgs>(args: SelectSubset<T, PlanUpdateArgs<ExtArgs>>): Prisma__PlanClient<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Plans.
+     * @param {PlanDeleteManyArgs} args - Arguments to filter Plans to delete.
+     * @example
+     * // Delete a few Plans
+     * const { count } = await prisma.plan.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PlanDeleteManyArgs>(args?: SelectSubset<T, PlanDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Plans.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlanUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Plans
+     * const plan = await prisma.plan.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PlanUpdateManyArgs>(args: SelectSubset<T, PlanUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Plans and returns the data updated in the database.
+     * @param {PlanUpdateManyAndReturnArgs} args - Arguments to update many Plans.
+     * @example
+     * // Update many Plans
+     * const plan = await prisma.plan.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Plans and only return the `id`
+     * const planWithIdOnly = await prisma.plan.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PlanUpdateManyAndReturnArgs>(args: SelectSubset<T, PlanUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Plan.
+     * @param {PlanUpsertArgs} args - Arguments to update or create a Plan.
+     * @example
+     * // Update or create a Plan
+     * const plan = await prisma.plan.upsert({
+     *   create: {
+     *     // ... data to create a Plan
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Plan we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PlanUpsertArgs>(args: SelectSubset<T, PlanUpsertArgs<ExtArgs>>): Prisma__PlanClient<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Plans.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlanCountArgs} args - Arguments to filter Plans to count.
+     * @example
+     * // Count the number of Plans
+     * const count = await prisma.plan.count({
+     *   where: {
+     *     // ... the filter for the Plans we want to count
+     *   }
+     * })
+    **/
+    count<T extends PlanCountArgs>(
+      args?: Subset<T, PlanCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PlanCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Plan.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlanAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PlanAggregateArgs>(args: Subset<T, PlanAggregateArgs>): Prisma.PrismaPromise<GetPlanAggregateType<T>>
+
+    /**
+     * Group by Plan.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlanGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PlanGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PlanGroupByArgs['orderBy'] }
+        : { orderBy?: PlanGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PlanGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPlanGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Plan model
+   */
+  readonly fields: PlanFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Plan.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PlanClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    userPlans<T extends Plan$userPlansArgs<ExtArgs> = {}>(args?: Subset<T, Plan$userPlansArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Plan model
+   */
+  interface PlanFieldRefs {
+    readonly id: FieldRef<"Plan", 'String'>
+    readonly name: FieldRef<"Plan", 'String'>
+    readonly slug: FieldRef<"Plan", 'String'>
+    readonly stripePriceId: FieldRef<"Plan", 'String'>
+    readonly featuresJson: FieldRef<"Plan", 'String'>
+    readonly createdAt: FieldRef<"Plan", 'DateTime'>
+    readonly updatedAt: FieldRef<"Plan", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Plan findUnique
+   */
+  export type PlanFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlanInclude<ExtArgs> | null
+    /**
+     * Filter, which Plan to fetch.
+     */
+    where: PlanWhereUniqueInput
+  }
+
+  /**
+   * Plan findUniqueOrThrow
+   */
+  export type PlanFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlanInclude<ExtArgs> | null
+    /**
+     * Filter, which Plan to fetch.
+     */
+    where: PlanWhereUniqueInput
+  }
+
+  /**
+   * Plan findFirst
+   */
+  export type PlanFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlanInclude<ExtArgs> | null
+    /**
+     * Filter, which Plan to fetch.
+     */
+    where?: PlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Plans to fetch.
+     */
+    orderBy?: PlanOrderByWithRelationInput | PlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Plans.
+     */
+    cursor?: PlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Plans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Plans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Plans.
+     */
+    distinct?: PlanScalarFieldEnum | PlanScalarFieldEnum[]
+  }
+
+  /**
+   * Plan findFirstOrThrow
+   */
+  export type PlanFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlanInclude<ExtArgs> | null
+    /**
+     * Filter, which Plan to fetch.
+     */
+    where?: PlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Plans to fetch.
+     */
+    orderBy?: PlanOrderByWithRelationInput | PlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Plans.
+     */
+    cursor?: PlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Plans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Plans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Plans.
+     */
+    distinct?: PlanScalarFieldEnum | PlanScalarFieldEnum[]
+  }
+
+  /**
+   * Plan findMany
+   */
+  export type PlanFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlanInclude<ExtArgs> | null
+    /**
+     * Filter, which Plans to fetch.
+     */
+    where?: PlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Plans to fetch.
+     */
+    orderBy?: PlanOrderByWithRelationInput | PlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Plans.
+     */
+    cursor?: PlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Plans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Plans.
+     */
+    skip?: number
+    distinct?: PlanScalarFieldEnum | PlanScalarFieldEnum[]
+  }
+
+  /**
+   * Plan create
+   */
+  export type PlanCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlanInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Plan.
+     */
+    data: XOR<PlanCreateInput, PlanUncheckedCreateInput>
+  }
+
+  /**
+   * Plan createMany
+   */
+  export type PlanCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Plans.
+     */
+    data: PlanCreateManyInput | PlanCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Plan createManyAndReturn
+   */
+  export type PlanCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * The data used to create many Plans.
+     */
+    data: PlanCreateManyInput | PlanCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Plan update
+   */
+  export type PlanUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlanInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Plan.
+     */
+    data: XOR<PlanUpdateInput, PlanUncheckedUpdateInput>
+    /**
+     * Choose, which Plan to update.
+     */
+    where: PlanWhereUniqueInput
+  }
+
+  /**
+   * Plan updateMany
+   */
+  export type PlanUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Plans.
+     */
+    data: XOR<PlanUpdateManyMutationInput, PlanUncheckedUpdateManyInput>
+    /**
+     * Filter which Plans to update
+     */
+    where?: PlanWhereInput
+    /**
+     * Limit how many Plans to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Plan updateManyAndReturn
+   */
+  export type PlanUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * The data used to update Plans.
+     */
+    data: XOR<PlanUpdateManyMutationInput, PlanUncheckedUpdateManyInput>
+    /**
+     * Filter which Plans to update
+     */
+    where?: PlanWhereInput
+    /**
+     * Limit how many Plans to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Plan upsert
+   */
+  export type PlanUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlanInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Plan to update in case it exists.
+     */
+    where: PlanWhereUniqueInput
+    /**
+     * In case the Plan found by the `where` argument doesn't exist, create a new Plan with this data.
+     */
+    create: XOR<PlanCreateInput, PlanUncheckedCreateInput>
+    /**
+     * In case the Plan was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PlanUpdateInput, PlanUncheckedUpdateInput>
+  }
+
+  /**
+   * Plan delete
+   */
+  export type PlanDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlanInclude<ExtArgs> | null
+    /**
+     * Filter which Plan to delete.
+     */
+    where: PlanWhereUniqueInput
+  }
+
+  /**
+   * Plan deleteMany
+   */
+  export type PlanDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Plans to delete
+     */
+    where?: PlanWhereInput
+    /**
+     * Limit how many Plans to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Plan.userPlans
+   */
+  export type Plan$userPlansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+    where?: UserPlanWhereInput
+    orderBy?: UserPlanOrderByWithRelationInput | UserPlanOrderByWithRelationInput[]
+    cursor?: UserPlanWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserPlanScalarFieldEnum | UserPlanScalarFieldEnum[]
+  }
+
+  /**
+   * Plan without action
+   */
+  export type PlanDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Plan
+     */
+    select?: PlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Plan
+     */
+    omit?: PlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlanInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model UserPlan
+   */
+
+  export type AggregateUserPlan = {
+    _count: UserPlanCountAggregateOutputType | null
+    _min: UserPlanMinAggregateOutputType | null
+    _max: UserPlanMaxAggregateOutputType | null
+  }
+
+  export type UserPlanMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    planId: string | null
+    status: $Enums.SubscriptionStatus | null
+    stripeSubscriptionId: string | null
+    currentPeriodStart: Date | null
+    currentPeriodEnd: Date | null
+    cancelAtPeriodEnd: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserPlanMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    planId: string | null
+    status: $Enums.SubscriptionStatus | null
+    stripeSubscriptionId: string | null
+    currentPeriodStart: Date | null
+    currentPeriodEnd: Date | null
+    cancelAtPeriodEnd: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserPlanCountAggregateOutputType = {
+    id: number
+    userId: number
+    planId: number
+    status: number
+    stripeSubscriptionId: number
+    currentPeriodStart: number
+    currentPeriodEnd: number
+    cancelAtPeriodEnd: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type UserPlanMinAggregateInputType = {
+    id?: true
+    userId?: true
+    planId?: true
+    status?: true
+    stripeSubscriptionId?: true
+    currentPeriodStart?: true
+    currentPeriodEnd?: true
+    cancelAtPeriodEnd?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserPlanMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    planId?: true
+    status?: true
+    stripeSubscriptionId?: true
+    currentPeriodStart?: true
+    currentPeriodEnd?: true
+    cancelAtPeriodEnd?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserPlanCountAggregateInputType = {
+    id?: true
+    userId?: true
+    planId?: true
+    status?: true
+    stripeSubscriptionId?: true
+    currentPeriodStart?: true
+    currentPeriodEnd?: true
+    cancelAtPeriodEnd?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type UserPlanAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserPlan to aggregate.
+     */
+    where?: UserPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPlans to fetch.
+     */
+    orderBy?: UserPlanOrderByWithRelationInput | UserPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPlans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UserPlans
+    **/
+    _count?: true | UserPlanCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserPlanMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserPlanMaxAggregateInputType
+  }
+
+  export type GetUserPlanAggregateType<T extends UserPlanAggregateArgs> = {
+        [P in keyof T & keyof AggregateUserPlan]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUserPlan[P]>
+      : GetScalarType<T[P], AggregateUserPlan[P]>
+  }
+
+
+
+
+  export type UserPlanGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserPlanWhereInput
+    orderBy?: UserPlanOrderByWithAggregationInput | UserPlanOrderByWithAggregationInput[]
+    by: UserPlanScalarFieldEnum[] | UserPlanScalarFieldEnum
+    having?: UserPlanScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserPlanCountAggregateInputType | true
+    _min?: UserPlanMinAggregateInputType
+    _max?: UserPlanMaxAggregateInputType
+  }
+
+  export type UserPlanGroupByOutputType = {
+    id: string
+    userId: string
+    planId: string
+    status: $Enums.SubscriptionStatus
+    stripeSubscriptionId: string | null
+    currentPeriodStart: Date | null
+    currentPeriodEnd: Date | null
+    cancelAtPeriodEnd: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: UserPlanCountAggregateOutputType | null
+    _min: UserPlanMinAggregateOutputType | null
+    _max: UserPlanMaxAggregateOutputType | null
+  }
+
+  type GetUserPlanGroupByPayload<T extends UserPlanGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserPlanGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserPlanGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserPlanGroupByOutputType[P]>
+            : GetScalarType<T[P], UserPlanGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserPlanSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    planId?: boolean
+    status?: boolean
+    stripeSubscriptionId?: boolean
+    currentPeriodStart?: boolean
+    currentPeriodEnd?: boolean
+    cancelAtPeriodEnd?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    plan?: boolean | PlanDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userPlan"]>
+
+  export type UserPlanSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    planId?: boolean
+    status?: boolean
+    stripeSubscriptionId?: boolean
+    currentPeriodStart?: boolean
+    currentPeriodEnd?: boolean
+    cancelAtPeriodEnd?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    plan?: boolean | PlanDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userPlan"]>
+
+  export type UserPlanSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    planId?: boolean
+    status?: boolean
+    stripeSubscriptionId?: boolean
+    currentPeriodStart?: boolean
+    currentPeriodEnd?: boolean
+    cancelAtPeriodEnd?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    plan?: boolean | PlanDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userPlan"]>
+
+  export type UserPlanSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    planId?: boolean
+    status?: boolean
+    stripeSubscriptionId?: boolean
+    currentPeriodStart?: boolean
+    currentPeriodEnd?: boolean
+    cancelAtPeriodEnd?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type UserPlanOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "planId" | "status" | "stripeSubscriptionId" | "currentPeriodStart" | "currentPeriodEnd" | "cancelAtPeriodEnd" | "createdAt" | "updatedAt", ExtArgs["result"]["userPlan"]>
+  export type UserPlanInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    plan?: boolean | PlanDefaultArgs<ExtArgs>
+  }
+  export type UserPlanIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    plan?: boolean | PlanDefaultArgs<ExtArgs>
+  }
+  export type UserPlanIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    plan?: boolean | PlanDefaultArgs<ExtArgs>
+  }
+
+  export type $UserPlanPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UserPlan"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+      plan: Prisma.$PlanPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      planId: string
+      status: $Enums.SubscriptionStatus
+      stripeSubscriptionId: string | null
+      currentPeriodStart: Date | null
+      currentPeriodEnd: Date | null
+      cancelAtPeriodEnd: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["userPlan"]>
+    composites: {}
+  }
+
+  type UserPlanGetPayload<S extends boolean | null | undefined | UserPlanDefaultArgs> = $Result.GetResult<Prisma.$UserPlanPayload, S>
+
+  type UserPlanCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserPlanFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserPlanCountAggregateInputType | true
+    }
+
+  export interface UserPlanDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserPlan'], meta: { name: 'UserPlan' } }
+    /**
+     * Find zero or one UserPlan that matches the filter.
+     * @param {UserPlanFindUniqueArgs} args - Arguments to find a UserPlan
+     * @example
+     * // Get one UserPlan
+     * const userPlan = await prisma.userPlan.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserPlanFindUniqueArgs>(args: SelectSubset<T, UserPlanFindUniqueArgs<ExtArgs>>): Prisma__UserPlanClient<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one UserPlan that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserPlanFindUniqueOrThrowArgs} args - Arguments to find a UserPlan
+     * @example
+     * // Get one UserPlan
+     * const userPlan = await prisma.userPlan.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserPlanFindUniqueOrThrowArgs>(args: SelectSubset<T, UserPlanFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserPlanClient<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserPlan that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPlanFindFirstArgs} args - Arguments to find a UserPlan
+     * @example
+     * // Get one UserPlan
+     * const userPlan = await prisma.userPlan.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserPlanFindFirstArgs>(args?: SelectSubset<T, UserPlanFindFirstArgs<ExtArgs>>): Prisma__UserPlanClient<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserPlan that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPlanFindFirstOrThrowArgs} args - Arguments to find a UserPlan
+     * @example
+     * // Get one UserPlan
+     * const userPlan = await prisma.userPlan.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserPlanFindFirstOrThrowArgs>(args?: SelectSubset<T, UserPlanFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserPlanClient<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more UserPlans that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPlanFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UserPlans
+     * const userPlans = await prisma.userPlan.findMany()
+     * 
+     * // Get first 10 UserPlans
+     * const userPlans = await prisma.userPlan.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userPlanWithIdOnly = await prisma.userPlan.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserPlanFindManyArgs>(args?: SelectSubset<T, UserPlanFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a UserPlan.
+     * @param {UserPlanCreateArgs} args - Arguments to create a UserPlan.
+     * @example
+     * // Create one UserPlan
+     * const UserPlan = await prisma.userPlan.create({
+     *   data: {
+     *     // ... data to create a UserPlan
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserPlanCreateArgs>(args: SelectSubset<T, UserPlanCreateArgs<ExtArgs>>): Prisma__UserPlanClient<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many UserPlans.
+     * @param {UserPlanCreateManyArgs} args - Arguments to create many UserPlans.
+     * @example
+     * // Create many UserPlans
+     * const userPlan = await prisma.userPlan.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserPlanCreateManyArgs>(args?: SelectSubset<T, UserPlanCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many UserPlans and returns the data saved in the database.
+     * @param {UserPlanCreateManyAndReturnArgs} args - Arguments to create many UserPlans.
+     * @example
+     * // Create many UserPlans
+     * const userPlan = await prisma.userPlan.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many UserPlans and only return the `id`
+     * const userPlanWithIdOnly = await prisma.userPlan.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserPlanCreateManyAndReturnArgs>(args?: SelectSubset<T, UserPlanCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a UserPlan.
+     * @param {UserPlanDeleteArgs} args - Arguments to delete one UserPlan.
+     * @example
+     * // Delete one UserPlan
+     * const UserPlan = await prisma.userPlan.delete({
+     *   where: {
+     *     // ... filter to delete one UserPlan
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserPlanDeleteArgs>(args: SelectSubset<T, UserPlanDeleteArgs<ExtArgs>>): Prisma__UserPlanClient<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one UserPlan.
+     * @param {UserPlanUpdateArgs} args - Arguments to update one UserPlan.
+     * @example
+     * // Update one UserPlan
+     * const userPlan = await prisma.userPlan.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserPlanUpdateArgs>(args: SelectSubset<T, UserPlanUpdateArgs<ExtArgs>>): Prisma__UserPlanClient<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more UserPlans.
+     * @param {UserPlanDeleteManyArgs} args - Arguments to filter UserPlans to delete.
+     * @example
+     * // Delete a few UserPlans
+     * const { count } = await prisma.userPlan.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserPlanDeleteManyArgs>(args?: SelectSubset<T, UserPlanDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserPlans.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPlanUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UserPlans
+     * const userPlan = await prisma.userPlan.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserPlanUpdateManyArgs>(args: SelectSubset<T, UserPlanUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserPlans and returns the data updated in the database.
+     * @param {UserPlanUpdateManyAndReturnArgs} args - Arguments to update many UserPlans.
+     * @example
+     * // Update many UserPlans
+     * const userPlan = await prisma.userPlan.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more UserPlans and only return the `id`
+     * const userPlanWithIdOnly = await prisma.userPlan.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserPlanUpdateManyAndReturnArgs>(args: SelectSubset<T, UserPlanUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one UserPlan.
+     * @param {UserPlanUpsertArgs} args - Arguments to update or create a UserPlan.
+     * @example
+     * // Update or create a UserPlan
+     * const userPlan = await prisma.userPlan.upsert({
+     *   create: {
+     *     // ... data to create a UserPlan
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UserPlan we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserPlanUpsertArgs>(args: SelectSubset<T, UserPlanUpsertArgs<ExtArgs>>): Prisma__UserPlanClient<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of UserPlans.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPlanCountArgs} args - Arguments to filter UserPlans to count.
+     * @example
+     * // Count the number of UserPlans
+     * const count = await prisma.userPlan.count({
+     *   where: {
+     *     // ... the filter for the UserPlans we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserPlanCountArgs>(
+      args?: Subset<T, UserPlanCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserPlanCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UserPlan.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPlanAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserPlanAggregateArgs>(args: Subset<T, UserPlanAggregateArgs>): Prisma.PrismaPromise<GetUserPlanAggregateType<T>>
+
+    /**
+     * Group by UserPlan.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPlanGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserPlanGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserPlanGroupByArgs['orderBy'] }
+        : { orderBy?: UserPlanGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserPlanGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserPlanGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UserPlan model
+   */
+  readonly fields: UserPlanFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UserPlan.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserPlanClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    plan<T extends PlanDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PlanDefaultArgs<ExtArgs>>): Prisma__PlanClient<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UserPlan model
+   */
+  interface UserPlanFieldRefs {
+    readonly id: FieldRef<"UserPlan", 'String'>
+    readonly userId: FieldRef<"UserPlan", 'String'>
+    readonly planId: FieldRef<"UserPlan", 'String'>
+    readonly status: FieldRef<"UserPlan", 'SubscriptionStatus'>
+    readonly stripeSubscriptionId: FieldRef<"UserPlan", 'String'>
+    readonly currentPeriodStart: FieldRef<"UserPlan", 'DateTime'>
+    readonly currentPeriodEnd: FieldRef<"UserPlan", 'DateTime'>
+    readonly cancelAtPeriodEnd: FieldRef<"UserPlan", 'Boolean'>
+    readonly createdAt: FieldRef<"UserPlan", 'DateTime'>
+    readonly updatedAt: FieldRef<"UserPlan", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UserPlan findUnique
+   */
+  export type UserPlanFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPlan to fetch.
+     */
+    where: UserPlanWhereUniqueInput
+  }
+
+  /**
+   * UserPlan findUniqueOrThrow
+   */
+  export type UserPlanFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPlan to fetch.
+     */
+    where: UserPlanWhereUniqueInput
+  }
+
+  /**
+   * UserPlan findFirst
+   */
+  export type UserPlanFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPlan to fetch.
+     */
+    where?: UserPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPlans to fetch.
+     */
+    orderBy?: UserPlanOrderByWithRelationInput | UserPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserPlans.
+     */
+    cursor?: UserPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPlans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserPlans.
+     */
+    distinct?: UserPlanScalarFieldEnum | UserPlanScalarFieldEnum[]
+  }
+
+  /**
+   * UserPlan findFirstOrThrow
+   */
+  export type UserPlanFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPlan to fetch.
+     */
+    where?: UserPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPlans to fetch.
+     */
+    orderBy?: UserPlanOrderByWithRelationInput | UserPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserPlans.
+     */
+    cursor?: UserPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPlans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserPlans.
+     */
+    distinct?: UserPlanScalarFieldEnum | UserPlanScalarFieldEnum[]
+  }
+
+  /**
+   * UserPlan findMany
+   */
+  export type UserPlanFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPlans to fetch.
+     */
+    where?: UserPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPlans to fetch.
+     */
+    orderBy?: UserPlanOrderByWithRelationInput | UserPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UserPlans.
+     */
+    cursor?: UserPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPlans.
+     */
+    skip?: number
+    distinct?: UserPlanScalarFieldEnum | UserPlanScalarFieldEnum[]
+  }
+
+  /**
+   * UserPlan create
+   */
+  export type UserPlanCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+    /**
+     * The data needed to create a UserPlan.
+     */
+    data: XOR<UserPlanCreateInput, UserPlanUncheckedCreateInput>
+  }
+
+  /**
+   * UserPlan createMany
+   */
+  export type UserPlanCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UserPlans.
+     */
+    data: UserPlanCreateManyInput | UserPlanCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * UserPlan createManyAndReturn
+   */
+  export type UserPlanCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * The data used to create many UserPlans.
+     */
+    data: UserPlanCreateManyInput | UserPlanCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserPlan update
+   */
+  export type UserPlanUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+    /**
+     * The data needed to update a UserPlan.
+     */
+    data: XOR<UserPlanUpdateInput, UserPlanUncheckedUpdateInput>
+    /**
+     * Choose, which UserPlan to update.
+     */
+    where: UserPlanWhereUniqueInput
+  }
+
+  /**
+   * UserPlan updateMany
+   */
+  export type UserPlanUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UserPlans.
+     */
+    data: XOR<UserPlanUpdateManyMutationInput, UserPlanUncheckedUpdateManyInput>
+    /**
+     * Filter which UserPlans to update
+     */
+    where?: UserPlanWhereInput
+    /**
+     * Limit how many UserPlans to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserPlan updateManyAndReturn
+   */
+  export type UserPlanUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * The data used to update UserPlans.
+     */
+    data: XOR<UserPlanUpdateManyMutationInput, UserPlanUncheckedUpdateManyInput>
+    /**
+     * Filter which UserPlans to update
+     */
+    where?: UserPlanWhereInput
+    /**
+     * Limit how many UserPlans to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserPlan upsert
+   */
+  export type UserPlanUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+    /**
+     * The filter to search for the UserPlan to update in case it exists.
+     */
+    where: UserPlanWhereUniqueInput
+    /**
+     * In case the UserPlan found by the `where` argument doesn't exist, create a new UserPlan with this data.
+     */
+    create: XOR<UserPlanCreateInput, UserPlanUncheckedCreateInput>
+    /**
+     * In case the UserPlan was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserPlanUpdateInput, UserPlanUncheckedUpdateInput>
+  }
+
+  /**
+   * UserPlan delete
+   */
+  export type UserPlanDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+    /**
+     * Filter which UserPlan to delete.
+     */
+    where: UserPlanWhereUniqueInput
+  }
+
+  /**
+   * UserPlan deleteMany
+   */
+  export type UserPlanDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserPlans to delete
+     */
+    where?: UserPlanWhereInput
+    /**
+     * Limit how many UserPlans to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserPlan without action
+   */
+  export type UserPlanDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPlan
+     */
+    select?: UserPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPlan
+     */
+    omit?: UserPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPlanInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CustomBlock
+   */
+
+  export type AggregateCustomBlock = {
+    _count: CustomBlockCountAggregateOutputType | null
+    _min: CustomBlockMinAggregateOutputType | null
+    _max: CustomBlockMaxAggregateOutputType | null
+  }
+
+  export type CustomBlockMinAggregateOutputType = {
+    id: string | null
+    ownerId: string | null
+    title: string | null
+    description: string | null
+    fieldsJson: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CustomBlockMaxAggregateOutputType = {
+    id: string | null
+    ownerId: string | null
+    title: string | null
+    description: string | null
+    fieldsJson: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CustomBlockCountAggregateOutputType = {
+    id: number
+    ownerId: number
+    title: number
+    description: number
+    fieldsJson: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CustomBlockMinAggregateInputType = {
+    id?: true
+    ownerId?: true
+    title?: true
+    description?: true
+    fieldsJson?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CustomBlockMaxAggregateInputType = {
+    id?: true
+    ownerId?: true
+    title?: true
+    description?: true
+    fieldsJson?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CustomBlockCountAggregateInputType = {
+    id?: true
+    ownerId?: true
+    title?: true
+    description?: true
+    fieldsJson?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CustomBlockAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CustomBlock to aggregate.
+     */
+    where?: CustomBlockWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CustomBlocks to fetch.
+     */
+    orderBy?: CustomBlockOrderByWithRelationInput | CustomBlockOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CustomBlockWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CustomBlocks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CustomBlocks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CustomBlocks
+    **/
+    _count?: true | CustomBlockCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CustomBlockMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CustomBlockMaxAggregateInputType
+  }
+
+  export type GetCustomBlockAggregateType<T extends CustomBlockAggregateArgs> = {
+        [P in keyof T & keyof AggregateCustomBlock]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCustomBlock[P]>
+      : GetScalarType<T[P], AggregateCustomBlock[P]>
+  }
+
+
+
+
+  export type CustomBlockGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CustomBlockWhereInput
+    orderBy?: CustomBlockOrderByWithAggregationInput | CustomBlockOrderByWithAggregationInput[]
+    by: CustomBlockScalarFieldEnum[] | CustomBlockScalarFieldEnum
+    having?: CustomBlockScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CustomBlockCountAggregateInputType | true
+    _min?: CustomBlockMinAggregateInputType
+    _max?: CustomBlockMaxAggregateInputType
+  }
+
+  export type CustomBlockGroupByOutputType = {
+    id: string
+    ownerId: string
+    title: string
+    description: string | null
+    fieldsJson: string
+    createdAt: Date
+    updatedAt: Date
+    _count: CustomBlockCountAggregateOutputType | null
+    _min: CustomBlockMinAggregateOutputType | null
+    _max: CustomBlockMaxAggregateOutputType | null
+  }
+
+  type GetCustomBlockGroupByPayload<T extends CustomBlockGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CustomBlockGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CustomBlockGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CustomBlockGroupByOutputType[P]>
+            : GetScalarType<T[P], CustomBlockGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CustomBlockSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    title?: boolean
+    description?: boolean
+    fieldsJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["customBlock"]>
+
+  export type CustomBlockSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    title?: boolean
+    description?: boolean
+    fieldsJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["customBlock"]>
+
+  export type CustomBlockSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    title?: boolean
+    description?: boolean
+    fieldsJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["customBlock"]>
+
+  export type CustomBlockSelectScalar = {
+    id?: boolean
+    ownerId?: boolean
+    title?: boolean
+    description?: boolean
+    fieldsJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CustomBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ownerId" | "title" | "description" | "fieldsJson" | "createdAt" | "updatedAt", ExtArgs["result"]["customBlock"]>
+  export type CustomBlockInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type CustomBlockIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type CustomBlockIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $CustomBlockPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CustomBlock"
+    objects: {
+      owner: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      ownerId: string
+      title: string
+      description: string | null
+      fieldsJson: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["customBlock"]>
+    composites: {}
+  }
+
+  type CustomBlockGetPayload<S extends boolean | null | undefined | CustomBlockDefaultArgs> = $Result.GetResult<Prisma.$CustomBlockPayload, S>
+
+  type CustomBlockCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CustomBlockFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CustomBlockCountAggregateInputType | true
+    }
+
+  export interface CustomBlockDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CustomBlock'], meta: { name: 'CustomBlock' } }
+    /**
+     * Find zero or one CustomBlock that matches the filter.
+     * @param {CustomBlockFindUniqueArgs} args - Arguments to find a CustomBlock
+     * @example
+     * // Get one CustomBlock
+     * const customBlock = await prisma.customBlock.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CustomBlockFindUniqueArgs>(args: SelectSubset<T, CustomBlockFindUniqueArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CustomBlock that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CustomBlockFindUniqueOrThrowArgs} args - Arguments to find a CustomBlock
+     * @example
+     * // Get one CustomBlock
+     * const customBlock = await prisma.customBlock.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CustomBlockFindUniqueOrThrowArgs>(args: SelectSubset<T, CustomBlockFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CustomBlock that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomBlockFindFirstArgs} args - Arguments to find a CustomBlock
+     * @example
+     * // Get one CustomBlock
+     * const customBlock = await prisma.customBlock.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CustomBlockFindFirstArgs>(args?: SelectSubset<T, CustomBlockFindFirstArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CustomBlock that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomBlockFindFirstOrThrowArgs} args - Arguments to find a CustomBlock
+     * @example
+     * // Get one CustomBlock
+     * const customBlock = await prisma.customBlock.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CustomBlockFindFirstOrThrowArgs>(args?: SelectSubset<T, CustomBlockFindFirstOrThrowArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CustomBlocks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomBlockFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CustomBlocks
+     * const customBlocks = await prisma.customBlock.findMany()
+     * 
+     * // Get first 10 CustomBlocks
+     * const customBlocks = await prisma.customBlock.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const customBlockWithIdOnly = await prisma.customBlock.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CustomBlockFindManyArgs>(args?: SelectSubset<T, CustomBlockFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CustomBlock.
+     * @param {CustomBlockCreateArgs} args - Arguments to create a CustomBlock.
+     * @example
+     * // Create one CustomBlock
+     * const CustomBlock = await prisma.customBlock.create({
+     *   data: {
+     *     // ... data to create a CustomBlock
+     *   }
+     * })
+     * 
+     */
+    create<T extends CustomBlockCreateArgs>(args: SelectSubset<T, CustomBlockCreateArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CustomBlocks.
+     * @param {CustomBlockCreateManyArgs} args - Arguments to create many CustomBlocks.
+     * @example
+     * // Create many CustomBlocks
+     * const customBlock = await prisma.customBlock.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CustomBlockCreateManyArgs>(args?: SelectSubset<T, CustomBlockCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CustomBlocks and returns the data saved in the database.
+     * @param {CustomBlockCreateManyAndReturnArgs} args - Arguments to create many CustomBlocks.
+     * @example
+     * // Create many CustomBlocks
+     * const customBlock = await prisma.customBlock.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CustomBlocks and only return the `id`
+     * const customBlockWithIdOnly = await prisma.customBlock.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CustomBlockCreateManyAndReturnArgs>(args?: SelectSubset<T, CustomBlockCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CustomBlock.
+     * @param {CustomBlockDeleteArgs} args - Arguments to delete one CustomBlock.
+     * @example
+     * // Delete one CustomBlock
+     * const CustomBlock = await prisma.customBlock.delete({
+     *   where: {
+     *     // ... filter to delete one CustomBlock
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CustomBlockDeleteArgs>(args: SelectSubset<T, CustomBlockDeleteArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CustomBlock.
+     * @param {CustomBlockUpdateArgs} args - Arguments to update one CustomBlock.
+     * @example
+     * // Update one CustomBlock
+     * const customBlock = await prisma.customBlock.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CustomBlockUpdateArgs>(args: SelectSubset<T, CustomBlockUpdateArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CustomBlocks.
+     * @param {CustomBlockDeleteManyArgs} args - Arguments to filter CustomBlocks to delete.
+     * @example
+     * // Delete a few CustomBlocks
+     * const { count } = await prisma.customBlock.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CustomBlockDeleteManyArgs>(args?: SelectSubset<T, CustomBlockDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CustomBlocks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomBlockUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CustomBlocks
+     * const customBlock = await prisma.customBlock.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CustomBlockUpdateManyArgs>(args: SelectSubset<T, CustomBlockUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CustomBlocks and returns the data updated in the database.
+     * @param {CustomBlockUpdateManyAndReturnArgs} args - Arguments to update many CustomBlocks.
+     * @example
+     * // Update many CustomBlocks
+     * const customBlock = await prisma.customBlock.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CustomBlocks and only return the `id`
+     * const customBlockWithIdOnly = await prisma.customBlock.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CustomBlockUpdateManyAndReturnArgs>(args: SelectSubset<T, CustomBlockUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CustomBlock.
+     * @param {CustomBlockUpsertArgs} args - Arguments to update or create a CustomBlock.
+     * @example
+     * // Update or create a CustomBlock
+     * const customBlock = await prisma.customBlock.upsert({
+     *   create: {
+     *     // ... data to create a CustomBlock
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CustomBlock we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CustomBlockUpsertArgs>(args: SelectSubset<T, CustomBlockUpsertArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CustomBlocks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomBlockCountArgs} args - Arguments to filter CustomBlocks to count.
+     * @example
+     * // Count the number of CustomBlocks
+     * const count = await prisma.customBlock.count({
+     *   where: {
+     *     // ... the filter for the CustomBlocks we want to count
+     *   }
+     * })
+    **/
+    count<T extends CustomBlockCountArgs>(
+      args?: Subset<T, CustomBlockCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CustomBlockCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CustomBlock.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomBlockAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CustomBlockAggregateArgs>(args: Subset<T, CustomBlockAggregateArgs>): Prisma.PrismaPromise<GetCustomBlockAggregateType<T>>
+
+    /**
+     * Group by CustomBlock.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomBlockGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CustomBlockGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CustomBlockGroupByArgs['orderBy'] }
+        : { orderBy?: CustomBlockGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CustomBlockGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCustomBlockGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CustomBlock model
+   */
+  readonly fields: CustomBlockFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CustomBlock.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CustomBlockClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    owner<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CustomBlock model
+   */
+  interface CustomBlockFieldRefs {
+    readonly id: FieldRef<"CustomBlock", 'String'>
+    readonly ownerId: FieldRef<"CustomBlock", 'String'>
+    readonly title: FieldRef<"CustomBlock", 'String'>
+    readonly description: FieldRef<"CustomBlock", 'String'>
+    readonly fieldsJson: FieldRef<"CustomBlock", 'String'>
+    readonly createdAt: FieldRef<"CustomBlock", 'DateTime'>
+    readonly updatedAt: FieldRef<"CustomBlock", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CustomBlock findUnique
+   */
+  export type CustomBlockFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockInclude<ExtArgs> | null
+    /**
+     * Filter, which CustomBlock to fetch.
+     */
+    where: CustomBlockWhereUniqueInput
+  }
+
+  /**
+   * CustomBlock findUniqueOrThrow
+   */
+  export type CustomBlockFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockInclude<ExtArgs> | null
+    /**
+     * Filter, which CustomBlock to fetch.
+     */
+    where: CustomBlockWhereUniqueInput
+  }
+
+  /**
+   * CustomBlock findFirst
+   */
+  export type CustomBlockFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockInclude<ExtArgs> | null
+    /**
+     * Filter, which CustomBlock to fetch.
+     */
+    where?: CustomBlockWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CustomBlocks to fetch.
+     */
+    orderBy?: CustomBlockOrderByWithRelationInput | CustomBlockOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CustomBlocks.
+     */
+    cursor?: CustomBlockWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CustomBlocks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CustomBlocks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CustomBlocks.
+     */
+    distinct?: CustomBlockScalarFieldEnum | CustomBlockScalarFieldEnum[]
+  }
+
+  /**
+   * CustomBlock findFirstOrThrow
+   */
+  export type CustomBlockFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockInclude<ExtArgs> | null
+    /**
+     * Filter, which CustomBlock to fetch.
+     */
+    where?: CustomBlockWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CustomBlocks to fetch.
+     */
+    orderBy?: CustomBlockOrderByWithRelationInput | CustomBlockOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CustomBlocks.
+     */
+    cursor?: CustomBlockWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CustomBlocks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CustomBlocks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CustomBlocks.
+     */
+    distinct?: CustomBlockScalarFieldEnum | CustomBlockScalarFieldEnum[]
+  }
+
+  /**
+   * CustomBlock findMany
+   */
+  export type CustomBlockFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockInclude<ExtArgs> | null
+    /**
+     * Filter, which CustomBlocks to fetch.
+     */
+    where?: CustomBlockWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CustomBlocks to fetch.
+     */
+    orderBy?: CustomBlockOrderByWithRelationInput | CustomBlockOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CustomBlocks.
+     */
+    cursor?: CustomBlockWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CustomBlocks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CustomBlocks.
+     */
+    skip?: number
+    distinct?: CustomBlockScalarFieldEnum | CustomBlockScalarFieldEnum[]
+  }
+
+  /**
+   * CustomBlock create
+   */
+  export type CustomBlockCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CustomBlock.
+     */
+    data: XOR<CustomBlockCreateInput, CustomBlockUncheckedCreateInput>
+  }
+
+  /**
+   * CustomBlock createMany
+   */
+  export type CustomBlockCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CustomBlocks.
+     */
+    data: CustomBlockCreateManyInput | CustomBlockCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CustomBlock createManyAndReturn
+   */
+  export type CustomBlockCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * The data used to create many CustomBlocks.
+     */
+    data: CustomBlockCreateManyInput | CustomBlockCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CustomBlock update
+   */
+  export type CustomBlockUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CustomBlock.
+     */
+    data: XOR<CustomBlockUpdateInput, CustomBlockUncheckedUpdateInput>
+    /**
+     * Choose, which CustomBlock to update.
+     */
+    where: CustomBlockWhereUniqueInput
+  }
+
+  /**
+   * CustomBlock updateMany
+   */
+  export type CustomBlockUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CustomBlocks.
+     */
+    data: XOR<CustomBlockUpdateManyMutationInput, CustomBlockUncheckedUpdateManyInput>
+    /**
+     * Filter which CustomBlocks to update
+     */
+    where?: CustomBlockWhereInput
+    /**
+     * Limit how many CustomBlocks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CustomBlock updateManyAndReturn
+   */
+  export type CustomBlockUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * The data used to update CustomBlocks.
+     */
+    data: XOR<CustomBlockUpdateManyMutationInput, CustomBlockUncheckedUpdateManyInput>
+    /**
+     * Filter which CustomBlocks to update
+     */
+    where?: CustomBlockWhereInput
+    /**
+     * Limit how many CustomBlocks to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CustomBlock upsert
+   */
+  export type CustomBlockUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CustomBlock to update in case it exists.
+     */
+    where: CustomBlockWhereUniqueInput
+    /**
+     * In case the CustomBlock found by the `where` argument doesn't exist, create a new CustomBlock with this data.
+     */
+    create: XOR<CustomBlockCreateInput, CustomBlockUncheckedCreateInput>
+    /**
+     * In case the CustomBlock was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CustomBlockUpdateInput, CustomBlockUncheckedUpdateInput>
+  }
+
+  /**
+   * CustomBlock delete
+   */
+  export type CustomBlockDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockInclude<ExtArgs> | null
+    /**
+     * Filter which CustomBlock to delete.
+     */
+    where: CustomBlockWhereUniqueInput
+  }
+
+  /**
+   * CustomBlock deleteMany
+   */
+  export type CustomBlockDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CustomBlocks to delete
+     */
+    where?: CustomBlockWhereInput
+    /**
+     * Limit how many CustomBlocks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CustomBlock without action
+   */
+  export type CustomBlockDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustomBlock
+     */
+    select?: CustomBlockSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustomBlock
+     */
+    omit?: CustomBlockOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustomBlockInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TranscriptionUsage
+   */
+
+  export type AggregateTranscriptionUsage = {
+    _count: TranscriptionUsageCountAggregateOutputType | null
+    _avg: TranscriptionUsageAvgAggregateOutputType | null
+    _sum: TranscriptionUsageSumAggregateOutputType | null
+    _min: TranscriptionUsageMinAggregateOutputType | null
+    _max: TranscriptionUsageMaxAggregateOutputType | null
+  }
+
+  export type TranscriptionUsageAvgAggregateOutputType = {
+    count: number | null
+  }
+
+  export type TranscriptionUsageSumAggregateOutputType = {
+    count: number | null
+  }
+
+  export type TranscriptionUsageMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    date: string | null
+    count: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TranscriptionUsageMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    date: string | null
+    count: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TranscriptionUsageCountAggregateOutputType = {
+    id: number
+    userId: number
+    date: number
+    count: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TranscriptionUsageAvgAggregateInputType = {
+    count?: true
+  }
+
+  export type TranscriptionUsageSumAggregateInputType = {
+    count?: true
+  }
+
+  export type TranscriptionUsageMinAggregateInputType = {
+    id?: true
+    userId?: true
+    date?: true
+    count?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TranscriptionUsageMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    date?: true
+    count?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TranscriptionUsageCountAggregateInputType = {
+    id?: true
+    userId?: true
+    date?: true
+    count?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TranscriptionUsageAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TranscriptionUsage to aggregate.
+     */
+    where?: TranscriptionUsageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TranscriptionUsages to fetch.
+     */
+    orderBy?: TranscriptionUsageOrderByWithRelationInput | TranscriptionUsageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TranscriptionUsageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TranscriptionUsages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TranscriptionUsages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TranscriptionUsages
+    **/
+    _count?: true | TranscriptionUsageCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TranscriptionUsageAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TranscriptionUsageSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TranscriptionUsageMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TranscriptionUsageMaxAggregateInputType
+  }
+
+  export type GetTranscriptionUsageAggregateType<T extends TranscriptionUsageAggregateArgs> = {
+        [P in keyof T & keyof AggregateTranscriptionUsage]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTranscriptionUsage[P]>
+      : GetScalarType<T[P], AggregateTranscriptionUsage[P]>
+  }
+
+
+
+
+  export type TranscriptionUsageGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TranscriptionUsageWhereInput
+    orderBy?: TranscriptionUsageOrderByWithAggregationInput | TranscriptionUsageOrderByWithAggregationInput[]
+    by: TranscriptionUsageScalarFieldEnum[] | TranscriptionUsageScalarFieldEnum
+    having?: TranscriptionUsageScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TranscriptionUsageCountAggregateInputType | true
+    _avg?: TranscriptionUsageAvgAggregateInputType
+    _sum?: TranscriptionUsageSumAggregateInputType
+    _min?: TranscriptionUsageMinAggregateInputType
+    _max?: TranscriptionUsageMaxAggregateInputType
+  }
+
+  export type TranscriptionUsageGroupByOutputType = {
+    id: string
+    userId: string
+    date: string
+    count: number
+    createdAt: Date
+    updatedAt: Date
+    _count: TranscriptionUsageCountAggregateOutputType | null
+    _avg: TranscriptionUsageAvgAggregateOutputType | null
+    _sum: TranscriptionUsageSumAggregateOutputType | null
+    _min: TranscriptionUsageMinAggregateOutputType | null
+    _max: TranscriptionUsageMaxAggregateOutputType | null
+  }
+
+  type GetTranscriptionUsageGroupByPayload<T extends TranscriptionUsageGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TranscriptionUsageGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TranscriptionUsageGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TranscriptionUsageGroupByOutputType[P]>
+            : GetScalarType<T[P], TranscriptionUsageGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TranscriptionUsageSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    date?: boolean
+    count?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["transcriptionUsage"]>
+
+  export type TranscriptionUsageSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    date?: boolean
+    count?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["transcriptionUsage"]>
+
+  export type TranscriptionUsageSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    date?: boolean
+    count?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["transcriptionUsage"]>
+
+  export type TranscriptionUsageSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    date?: boolean
+    count?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TranscriptionUsageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "date" | "count" | "createdAt" | "updatedAt", ExtArgs["result"]["transcriptionUsage"]>
+  export type TranscriptionUsageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type TranscriptionUsageIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type TranscriptionUsageIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $TranscriptionUsagePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TranscriptionUsage"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      date: string
+      count: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["transcriptionUsage"]>
+    composites: {}
+  }
+
+  type TranscriptionUsageGetPayload<S extends boolean | null | undefined | TranscriptionUsageDefaultArgs> = $Result.GetResult<Prisma.$TranscriptionUsagePayload, S>
+
+  type TranscriptionUsageCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TranscriptionUsageFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TranscriptionUsageCountAggregateInputType | true
+    }
+
+  export interface TranscriptionUsageDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TranscriptionUsage'], meta: { name: 'TranscriptionUsage' } }
+    /**
+     * Find zero or one TranscriptionUsage that matches the filter.
+     * @param {TranscriptionUsageFindUniqueArgs} args - Arguments to find a TranscriptionUsage
+     * @example
+     * // Get one TranscriptionUsage
+     * const transcriptionUsage = await prisma.transcriptionUsage.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TranscriptionUsageFindUniqueArgs>(args: SelectSubset<T, TranscriptionUsageFindUniqueArgs<ExtArgs>>): Prisma__TranscriptionUsageClient<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TranscriptionUsage that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TranscriptionUsageFindUniqueOrThrowArgs} args - Arguments to find a TranscriptionUsage
+     * @example
+     * // Get one TranscriptionUsage
+     * const transcriptionUsage = await prisma.transcriptionUsage.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TranscriptionUsageFindUniqueOrThrowArgs>(args: SelectSubset<T, TranscriptionUsageFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TranscriptionUsageClient<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TranscriptionUsage that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TranscriptionUsageFindFirstArgs} args - Arguments to find a TranscriptionUsage
+     * @example
+     * // Get one TranscriptionUsage
+     * const transcriptionUsage = await prisma.transcriptionUsage.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TranscriptionUsageFindFirstArgs>(args?: SelectSubset<T, TranscriptionUsageFindFirstArgs<ExtArgs>>): Prisma__TranscriptionUsageClient<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TranscriptionUsage that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TranscriptionUsageFindFirstOrThrowArgs} args - Arguments to find a TranscriptionUsage
+     * @example
+     * // Get one TranscriptionUsage
+     * const transcriptionUsage = await prisma.transcriptionUsage.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TranscriptionUsageFindFirstOrThrowArgs>(args?: SelectSubset<T, TranscriptionUsageFindFirstOrThrowArgs<ExtArgs>>): Prisma__TranscriptionUsageClient<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TranscriptionUsages that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TranscriptionUsageFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TranscriptionUsages
+     * const transcriptionUsages = await prisma.transcriptionUsage.findMany()
+     * 
+     * // Get first 10 TranscriptionUsages
+     * const transcriptionUsages = await prisma.transcriptionUsage.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const transcriptionUsageWithIdOnly = await prisma.transcriptionUsage.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TranscriptionUsageFindManyArgs>(args?: SelectSubset<T, TranscriptionUsageFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TranscriptionUsage.
+     * @param {TranscriptionUsageCreateArgs} args - Arguments to create a TranscriptionUsage.
+     * @example
+     * // Create one TranscriptionUsage
+     * const TranscriptionUsage = await prisma.transcriptionUsage.create({
+     *   data: {
+     *     // ... data to create a TranscriptionUsage
+     *   }
+     * })
+     * 
+     */
+    create<T extends TranscriptionUsageCreateArgs>(args: SelectSubset<T, TranscriptionUsageCreateArgs<ExtArgs>>): Prisma__TranscriptionUsageClient<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TranscriptionUsages.
+     * @param {TranscriptionUsageCreateManyArgs} args - Arguments to create many TranscriptionUsages.
+     * @example
+     * // Create many TranscriptionUsages
+     * const transcriptionUsage = await prisma.transcriptionUsage.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TranscriptionUsageCreateManyArgs>(args?: SelectSubset<T, TranscriptionUsageCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TranscriptionUsages and returns the data saved in the database.
+     * @param {TranscriptionUsageCreateManyAndReturnArgs} args - Arguments to create many TranscriptionUsages.
+     * @example
+     * // Create many TranscriptionUsages
+     * const transcriptionUsage = await prisma.transcriptionUsage.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TranscriptionUsages and only return the `id`
+     * const transcriptionUsageWithIdOnly = await prisma.transcriptionUsage.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TranscriptionUsageCreateManyAndReturnArgs>(args?: SelectSubset<T, TranscriptionUsageCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TranscriptionUsage.
+     * @param {TranscriptionUsageDeleteArgs} args - Arguments to delete one TranscriptionUsage.
+     * @example
+     * // Delete one TranscriptionUsage
+     * const TranscriptionUsage = await prisma.transcriptionUsage.delete({
+     *   where: {
+     *     // ... filter to delete one TranscriptionUsage
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TranscriptionUsageDeleteArgs>(args: SelectSubset<T, TranscriptionUsageDeleteArgs<ExtArgs>>): Prisma__TranscriptionUsageClient<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TranscriptionUsage.
+     * @param {TranscriptionUsageUpdateArgs} args - Arguments to update one TranscriptionUsage.
+     * @example
+     * // Update one TranscriptionUsage
+     * const transcriptionUsage = await prisma.transcriptionUsage.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TranscriptionUsageUpdateArgs>(args: SelectSubset<T, TranscriptionUsageUpdateArgs<ExtArgs>>): Prisma__TranscriptionUsageClient<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TranscriptionUsages.
+     * @param {TranscriptionUsageDeleteManyArgs} args - Arguments to filter TranscriptionUsages to delete.
+     * @example
+     * // Delete a few TranscriptionUsages
+     * const { count } = await prisma.transcriptionUsage.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TranscriptionUsageDeleteManyArgs>(args?: SelectSubset<T, TranscriptionUsageDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TranscriptionUsages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TranscriptionUsageUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TranscriptionUsages
+     * const transcriptionUsage = await prisma.transcriptionUsage.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TranscriptionUsageUpdateManyArgs>(args: SelectSubset<T, TranscriptionUsageUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TranscriptionUsages and returns the data updated in the database.
+     * @param {TranscriptionUsageUpdateManyAndReturnArgs} args - Arguments to update many TranscriptionUsages.
+     * @example
+     * // Update many TranscriptionUsages
+     * const transcriptionUsage = await prisma.transcriptionUsage.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TranscriptionUsages and only return the `id`
+     * const transcriptionUsageWithIdOnly = await prisma.transcriptionUsage.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TranscriptionUsageUpdateManyAndReturnArgs>(args: SelectSubset<T, TranscriptionUsageUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TranscriptionUsage.
+     * @param {TranscriptionUsageUpsertArgs} args - Arguments to update or create a TranscriptionUsage.
+     * @example
+     * // Update or create a TranscriptionUsage
+     * const transcriptionUsage = await prisma.transcriptionUsage.upsert({
+     *   create: {
+     *     // ... data to create a TranscriptionUsage
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TranscriptionUsage we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TranscriptionUsageUpsertArgs>(args: SelectSubset<T, TranscriptionUsageUpsertArgs<ExtArgs>>): Prisma__TranscriptionUsageClient<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TranscriptionUsages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TranscriptionUsageCountArgs} args - Arguments to filter TranscriptionUsages to count.
+     * @example
+     * // Count the number of TranscriptionUsages
+     * const count = await prisma.transcriptionUsage.count({
+     *   where: {
+     *     // ... the filter for the TranscriptionUsages we want to count
+     *   }
+     * })
+    **/
+    count<T extends TranscriptionUsageCountArgs>(
+      args?: Subset<T, TranscriptionUsageCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TranscriptionUsageCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TranscriptionUsage.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TranscriptionUsageAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TranscriptionUsageAggregateArgs>(args: Subset<T, TranscriptionUsageAggregateArgs>): Prisma.PrismaPromise<GetTranscriptionUsageAggregateType<T>>
+
+    /**
+     * Group by TranscriptionUsage.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TranscriptionUsageGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TranscriptionUsageGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TranscriptionUsageGroupByArgs['orderBy'] }
+        : { orderBy?: TranscriptionUsageGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TranscriptionUsageGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTranscriptionUsageGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TranscriptionUsage model
+   */
+  readonly fields: TranscriptionUsageFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TranscriptionUsage.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TranscriptionUsageClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TranscriptionUsage model
+   */
+  interface TranscriptionUsageFieldRefs {
+    readonly id: FieldRef<"TranscriptionUsage", 'String'>
+    readonly userId: FieldRef<"TranscriptionUsage", 'String'>
+    readonly date: FieldRef<"TranscriptionUsage", 'String'>
+    readonly count: FieldRef<"TranscriptionUsage", 'Int'>
+    readonly createdAt: FieldRef<"TranscriptionUsage", 'DateTime'>
+    readonly updatedAt: FieldRef<"TranscriptionUsage", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TranscriptionUsage findUnique
+   */
+  export type TranscriptionUsageFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageInclude<ExtArgs> | null
+    /**
+     * Filter, which TranscriptionUsage to fetch.
+     */
+    where: TranscriptionUsageWhereUniqueInput
+  }
+
+  /**
+   * TranscriptionUsage findUniqueOrThrow
+   */
+  export type TranscriptionUsageFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageInclude<ExtArgs> | null
+    /**
+     * Filter, which TranscriptionUsage to fetch.
+     */
+    where: TranscriptionUsageWhereUniqueInput
+  }
+
+  /**
+   * TranscriptionUsage findFirst
+   */
+  export type TranscriptionUsageFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageInclude<ExtArgs> | null
+    /**
+     * Filter, which TranscriptionUsage to fetch.
+     */
+    where?: TranscriptionUsageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TranscriptionUsages to fetch.
+     */
+    orderBy?: TranscriptionUsageOrderByWithRelationInput | TranscriptionUsageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TranscriptionUsages.
+     */
+    cursor?: TranscriptionUsageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TranscriptionUsages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TranscriptionUsages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TranscriptionUsages.
+     */
+    distinct?: TranscriptionUsageScalarFieldEnum | TranscriptionUsageScalarFieldEnum[]
+  }
+
+  /**
+   * TranscriptionUsage findFirstOrThrow
+   */
+  export type TranscriptionUsageFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageInclude<ExtArgs> | null
+    /**
+     * Filter, which TranscriptionUsage to fetch.
+     */
+    where?: TranscriptionUsageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TranscriptionUsages to fetch.
+     */
+    orderBy?: TranscriptionUsageOrderByWithRelationInput | TranscriptionUsageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TranscriptionUsages.
+     */
+    cursor?: TranscriptionUsageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TranscriptionUsages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TranscriptionUsages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TranscriptionUsages.
+     */
+    distinct?: TranscriptionUsageScalarFieldEnum | TranscriptionUsageScalarFieldEnum[]
+  }
+
+  /**
+   * TranscriptionUsage findMany
+   */
+  export type TranscriptionUsageFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageInclude<ExtArgs> | null
+    /**
+     * Filter, which TranscriptionUsages to fetch.
+     */
+    where?: TranscriptionUsageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TranscriptionUsages to fetch.
+     */
+    orderBy?: TranscriptionUsageOrderByWithRelationInput | TranscriptionUsageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TranscriptionUsages.
+     */
+    cursor?: TranscriptionUsageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TranscriptionUsages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TranscriptionUsages.
+     */
+    skip?: number
+    distinct?: TranscriptionUsageScalarFieldEnum | TranscriptionUsageScalarFieldEnum[]
+  }
+
+  /**
+   * TranscriptionUsage create
+   */
+  export type TranscriptionUsageCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TranscriptionUsage.
+     */
+    data: XOR<TranscriptionUsageCreateInput, TranscriptionUsageUncheckedCreateInput>
+  }
+
+  /**
+   * TranscriptionUsage createMany
+   */
+  export type TranscriptionUsageCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TranscriptionUsages.
+     */
+    data: TranscriptionUsageCreateManyInput | TranscriptionUsageCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TranscriptionUsage createManyAndReturn
+   */
+  export type TranscriptionUsageCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * The data used to create many TranscriptionUsages.
+     */
+    data: TranscriptionUsageCreateManyInput | TranscriptionUsageCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TranscriptionUsage update
+   */
+  export type TranscriptionUsageUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TranscriptionUsage.
+     */
+    data: XOR<TranscriptionUsageUpdateInput, TranscriptionUsageUncheckedUpdateInput>
+    /**
+     * Choose, which TranscriptionUsage to update.
+     */
+    where: TranscriptionUsageWhereUniqueInput
+  }
+
+  /**
+   * TranscriptionUsage updateMany
+   */
+  export type TranscriptionUsageUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TranscriptionUsages.
+     */
+    data: XOR<TranscriptionUsageUpdateManyMutationInput, TranscriptionUsageUncheckedUpdateManyInput>
+    /**
+     * Filter which TranscriptionUsages to update
+     */
+    where?: TranscriptionUsageWhereInput
+    /**
+     * Limit how many TranscriptionUsages to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TranscriptionUsage updateManyAndReturn
+   */
+  export type TranscriptionUsageUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * The data used to update TranscriptionUsages.
+     */
+    data: XOR<TranscriptionUsageUpdateManyMutationInput, TranscriptionUsageUncheckedUpdateManyInput>
+    /**
+     * Filter which TranscriptionUsages to update
+     */
+    where?: TranscriptionUsageWhereInput
+    /**
+     * Limit how many TranscriptionUsages to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TranscriptionUsage upsert
+   */
+  export type TranscriptionUsageUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TranscriptionUsage to update in case it exists.
+     */
+    where: TranscriptionUsageWhereUniqueInput
+    /**
+     * In case the TranscriptionUsage found by the `where` argument doesn't exist, create a new TranscriptionUsage with this data.
+     */
+    create: XOR<TranscriptionUsageCreateInput, TranscriptionUsageUncheckedCreateInput>
+    /**
+     * In case the TranscriptionUsage was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TranscriptionUsageUpdateInput, TranscriptionUsageUncheckedUpdateInput>
+  }
+
+  /**
+   * TranscriptionUsage delete
+   */
+  export type TranscriptionUsageDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageInclude<ExtArgs> | null
+    /**
+     * Filter which TranscriptionUsage to delete.
+     */
+    where: TranscriptionUsageWhereUniqueInput
+  }
+
+  /**
+   * TranscriptionUsage deleteMany
+   */
+  export type TranscriptionUsageDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TranscriptionUsages to delete
+     */
+    where?: TranscriptionUsageWhereInput
+    /**
+     * Limit how many TranscriptionUsages to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TranscriptionUsage without action
+   */
+  export type TranscriptionUsageDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TranscriptionUsage
+     */
+    select?: TranscriptionUsageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TranscriptionUsage
+     */
+    omit?: TranscriptionUsageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TranscriptionUsageInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -11788,6 +16726,7 @@ export namespace Prisma {
     emailVerified: 'emailVerified',
     image: 'image',
     passwordHash: 'passwordHash',
+    stripeCustomerId: 'stripeCustomerId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -11853,6 +16792,60 @@ export namespace Prisma {
   };
 
   export type BlockFieldDefinitionScalarFieldEnum = (typeof BlockFieldDefinitionScalarFieldEnum)[keyof typeof BlockFieldDefinitionScalarFieldEnum]
+
+
+  export const PlanScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    slug: 'slug',
+    stripePriceId: 'stripePriceId',
+    featuresJson: 'featuresJson',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PlanScalarFieldEnum = (typeof PlanScalarFieldEnum)[keyof typeof PlanScalarFieldEnum]
+
+
+  export const UserPlanScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    planId: 'planId',
+    status: 'status',
+    stripeSubscriptionId: 'stripeSubscriptionId',
+    currentPeriodStart: 'currentPeriodStart',
+    currentPeriodEnd: 'currentPeriodEnd',
+    cancelAtPeriodEnd: 'cancelAtPeriodEnd',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type UserPlanScalarFieldEnum = (typeof UserPlanScalarFieldEnum)[keyof typeof UserPlanScalarFieldEnum]
+
+
+  export const CustomBlockScalarFieldEnum: {
+    id: 'id',
+    ownerId: 'ownerId',
+    title: 'title',
+    description: 'description',
+    fieldsJson: 'fieldsJson',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CustomBlockScalarFieldEnum = (typeof CustomBlockScalarFieldEnum)[keyof typeof CustomBlockScalarFieldEnum]
+
+
+  export const TranscriptionUsageScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    date: 'date',
+    count: 'count',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TranscriptionUsageScalarFieldEnum = (typeof TranscriptionUsageScalarFieldEnum)[keyof typeof TranscriptionUsageScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -11958,6 +16951,20 @@ export namespace Prisma {
    * Reference to a field of type 'Boolean'
    */
   export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
+   * Reference to a field of type 'SubscriptionStatus'
+   */
+  export type EnumSubscriptionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SubscriptionStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'SubscriptionStatus[]'
+   */
+  export type ListEnumSubscriptionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SubscriptionStatus[]'>
     
 
 
@@ -12174,12 +17181,16 @@ export namespace Prisma {
     emailVerified?: DateTimeNullableFilter<"User"> | Date | string | null
     image?: StringNullableFilter<"User"> | string | null
     passwordHash?: StringNullableFilter<"User"> | string | null
+    stripeCustomerId?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     accounts?: AccountListRelationFilter
     sessions?: SessionListRelationFilter
     templates?: TemplateListRelationFilter
     blockDefinitions?: BlockDefinitionListRelationFilter
+    customBlocks?: CustomBlockListRelationFilter
+    transcriptionUsages?: TranscriptionUsageListRelationFilter
+    userPlan?: XOR<UserPlanNullableScalarRelationFilter, UserPlanWhereInput> | null
   }
 
   export type UserOrderByWithRelationInput = {
@@ -12189,17 +17200,22 @@ export namespace Prisma {
     emailVerified?: SortOrderInput | SortOrder
     image?: SortOrderInput | SortOrder
     passwordHash?: SortOrderInput | SortOrder
+    stripeCustomerId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     accounts?: AccountOrderByRelationAggregateInput
     sessions?: SessionOrderByRelationAggregateInput
     templates?: TemplateOrderByRelationAggregateInput
     blockDefinitions?: BlockDefinitionOrderByRelationAggregateInput
+    customBlocks?: CustomBlockOrderByRelationAggregateInput
+    transcriptionUsages?: TranscriptionUsageOrderByRelationAggregateInput
+    userPlan?: UserPlanOrderByWithRelationInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     email?: string
+    stripeCustomerId?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
@@ -12213,7 +17229,10 @@ export namespace Prisma {
     sessions?: SessionListRelationFilter
     templates?: TemplateListRelationFilter
     blockDefinitions?: BlockDefinitionListRelationFilter
-  }, "id" | "email">
+    customBlocks?: CustomBlockListRelationFilter
+    transcriptionUsages?: TranscriptionUsageListRelationFilter
+    userPlan?: XOR<UserPlanNullableScalarRelationFilter, UserPlanWhereInput> | null
+  }, "id" | "email" | "stripeCustomerId">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
@@ -12222,6 +17241,7 @@ export namespace Prisma {
     emailVerified?: SortOrderInput | SortOrder
     image?: SortOrderInput | SortOrder
     passwordHash?: SortOrderInput | SortOrder
+    stripeCustomerId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -12239,6 +17259,7 @@ export namespace Prisma {
     emailVerified?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     image?: StringNullableWithAggregatesFilter<"User"> | string | null
     passwordHash?: StringNullableWithAggregatesFilter<"User"> | string | null
+    stripeCustomerId?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
@@ -12558,6 +17579,282 @@ export namespace Prisma {
     required?: BoolWithAggregatesFilter<"BlockFieldDefinition"> | boolean
   }
 
+  export type PlanWhereInput = {
+    AND?: PlanWhereInput | PlanWhereInput[]
+    OR?: PlanWhereInput[]
+    NOT?: PlanWhereInput | PlanWhereInput[]
+    id?: StringFilter<"Plan"> | string
+    name?: StringFilter<"Plan"> | string
+    slug?: StringFilter<"Plan"> | string
+    stripePriceId?: StringNullableFilter<"Plan"> | string | null
+    featuresJson?: StringFilter<"Plan"> | string
+    createdAt?: DateTimeFilter<"Plan"> | Date | string
+    updatedAt?: DateTimeFilter<"Plan"> | Date | string
+    userPlans?: UserPlanListRelationFilter
+  }
+
+  export type PlanOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    stripePriceId?: SortOrderInput | SortOrder
+    featuresJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    userPlans?: UserPlanOrderByRelationAggregateInput
+  }
+
+  export type PlanWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    slug?: string
+    stripePriceId?: string
+    AND?: PlanWhereInput | PlanWhereInput[]
+    OR?: PlanWhereInput[]
+    NOT?: PlanWhereInput | PlanWhereInput[]
+    name?: StringFilter<"Plan"> | string
+    featuresJson?: StringFilter<"Plan"> | string
+    createdAt?: DateTimeFilter<"Plan"> | Date | string
+    updatedAt?: DateTimeFilter<"Plan"> | Date | string
+    userPlans?: UserPlanListRelationFilter
+  }, "id" | "slug" | "stripePriceId">
+
+  export type PlanOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    stripePriceId?: SortOrderInput | SortOrder
+    featuresJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PlanCountOrderByAggregateInput
+    _max?: PlanMaxOrderByAggregateInput
+    _min?: PlanMinOrderByAggregateInput
+  }
+
+  export type PlanScalarWhereWithAggregatesInput = {
+    AND?: PlanScalarWhereWithAggregatesInput | PlanScalarWhereWithAggregatesInput[]
+    OR?: PlanScalarWhereWithAggregatesInput[]
+    NOT?: PlanScalarWhereWithAggregatesInput | PlanScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Plan"> | string
+    name?: StringWithAggregatesFilter<"Plan"> | string
+    slug?: StringWithAggregatesFilter<"Plan"> | string
+    stripePriceId?: StringNullableWithAggregatesFilter<"Plan"> | string | null
+    featuresJson?: StringWithAggregatesFilter<"Plan"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"Plan"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Plan"> | Date | string
+  }
+
+  export type UserPlanWhereInput = {
+    AND?: UserPlanWhereInput | UserPlanWhereInput[]
+    OR?: UserPlanWhereInput[]
+    NOT?: UserPlanWhereInput | UserPlanWhereInput[]
+    id?: StringFilter<"UserPlan"> | string
+    userId?: StringFilter<"UserPlan"> | string
+    planId?: StringFilter<"UserPlan"> | string
+    status?: EnumSubscriptionStatusFilter<"UserPlan"> | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: StringNullableFilter<"UserPlan"> | string | null
+    currentPeriodStart?: DateTimeNullableFilter<"UserPlan"> | Date | string | null
+    currentPeriodEnd?: DateTimeNullableFilter<"UserPlan"> | Date | string | null
+    cancelAtPeriodEnd?: BoolFilter<"UserPlan"> | boolean
+    createdAt?: DateTimeFilter<"UserPlan"> | Date | string
+    updatedAt?: DateTimeFilter<"UserPlan"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    plan?: XOR<PlanScalarRelationFilter, PlanWhereInput>
+  }
+
+  export type UserPlanOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    planId?: SortOrder
+    status?: SortOrder
+    stripeSubscriptionId?: SortOrderInput | SortOrder
+    currentPeriodStart?: SortOrderInput | SortOrder
+    currentPeriodEnd?: SortOrderInput | SortOrder
+    cancelAtPeriodEnd?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+    plan?: PlanOrderByWithRelationInput
+  }
+
+  export type UserPlanWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    userId?: string
+    stripeSubscriptionId?: string
+    AND?: UserPlanWhereInput | UserPlanWhereInput[]
+    OR?: UserPlanWhereInput[]
+    NOT?: UserPlanWhereInput | UserPlanWhereInput[]
+    planId?: StringFilter<"UserPlan"> | string
+    status?: EnumSubscriptionStatusFilter<"UserPlan"> | $Enums.SubscriptionStatus
+    currentPeriodStart?: DateTimeNullableFilter<"UserPlan"> | Date | string | null
+    currentPeriodEnd?: DateTimeNullableFilter<"UserPlan"> | Date | string | null
+    cancelAtPeriodEnd?: BoolFilter<"UserPlan"> | boolean
+    createdAt?: DateTimeFilter<"UserPlan"> | Date | string
+    updatedAt?: DateTimeFilter<"UserPlan"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    plan?: XOR<PlanScalarRelationFilter, PlanWhereInput>
+  }, "id" | "userId" | "stripeSubscriptionId">
+
+  export type UserPlanOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    planId?: SortOrder
+    status?: SortOrder
+    stripeSubscriptionId?: SortOrderInput | SortOrder
+    currentPeriodStart?: SortOrderInput | SortOrder
+    currentPeriodEnd?: SortOrderInput | SortOrder
+    cancelAtPeriodEnd?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: UserPlanCountOrderByAggregateInput
+    _max?: UserPlanMaxOrderByAggregateInput
+    _min?: UserPlanMinOrderByAggregateInput
+  }
+
+  export type UserPlanScalarWhereWithAggregatesInput = {
+    AND?: UserPlanScalarWhereWithAggregatesInput | UserPlanScalarWhereWithAggregatesInput[]
+    OR?: UserPlanScalarWhereWithAggregatesInput[]
+    NOT?: UserPlanScalarWhereWithAggregatesInput | UserPlanScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"UserPlan"> | string
+    userId?: StringWithAggregatesFilter<"UserPlan"> | string
+    planId?: StringWithAggregatesFilter<"UserPlan"> | string
+    status?: EnumSubscriptionStatusWithAggregatesFilter<"UserPlan"> | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: StringNullableWithAggregatesFilter<"UserPlan"> | string | null
+    currentPeriodStart?: DateTimeNullableWithAggregatesFilter<"UserPlan"> | Date | string | null
+    currentPeriodEnd?: DateTimeNullableWithAggregatesFilter<"UserPlan"> | Date | string | null
+    cancelAtPeriodEnd?: BoolWithAggregatesFilter<"UserPlan"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"UserPlan"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"UserPlan"> | Date | string
+  }
+
+  export type CustomBlockWhereInput = {
+    AND?: CustomBlockWhereInput | CustomBlockWhereInput[]
+    OR?: CustomBlockWhereInput[]
+    NOT?: CustomBlockWhereInput | CustomBlockWhereInput[]
+    id?: StringFilter<"CustomBlock"> | string
+    ownerId?: StringFilter<"CustomBlock"> | string
+    title?: StringFilter<"CustomBlock"> | string
+    description?: StringNullableFilter<"CustomBlock"> | string | null
+    fieldsJson?: StringFilter<"CustomBlock"> | string
+    createdAt?: DateTimeFilter<"CustomBlock"> | Date | string
+    updatedAt?: DateTimeFilter<"CustomBlock"> | Date | string
+    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type CustomBlockOrderByWithRelationInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    title?: SortOrder
+    description?: SortOrderInput | SortOrder
+    fieldsJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    owner?: UserOrderByWithRelationInput
+  }
+
+  export type CustomBlockWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: CustomBlockWhereInput | CustomBlockWhereInput[]
+    OR?: CustomBlockWhereInput[]
+    NOT?: CustomBlockWhereInput | CustomBlockWhereInput[]
+    ownerId?: StringFilter<"CustomBlock"> | string
+    title?: StringFilter<"CustomBlock"> | string
+    description?: StringNullableFilter<"CustomBlock"> | string | null
+    fieldsJson?: StringFilter<"CustomBlock"> | string
+    createdAt?: DateTimeFilter<"CustomBlock"> | Date | string
+    updatedAt?: DateTimeFilter<"CustomBlock"> | Date | string
+    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type CustomBlockOrderByWithAggregationInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    title?: SortOrder
+    description?: SortOrderInput | SortOrder
+    fieldsJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CustomBlockCountOrderByAggregateInput
+    _max?: CustomBlockMaxOrderByAggregateInput
+    _min?: CustomBlockMinOrderByAggregateInput
+  }
+
+  export type CustomBlockScalarWhereWithAggregatesInput = {
+    AND?: CustomBlockScalarWhereWithAggregatesInput | CustomBlockScalarWhereWithAggregatesInput[]
+    OR?: CustomBlockScalarWhereWithAggregatesInput[]
+    NOT?: CustomBlockScalarWhereWithAggregatesInput | CustomBlockScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CustomBlock"> | string
+    ownerId?: StringWithAggregatesFilter<"CustomBlock"> | string
+    title?: StringWithAggregatesFilter<"CustomBlock"> | string
+    description?: StringNullableWithAggregatesFilter<"CustomBlock"> | string | null
+    fieldsJson?: StringWithAggregatesFilter<"CustomBlock"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"CustomBlock"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CustomBlock"> | Date | string
+  }
+
+  export type TranscriptionUsageWhereInput = {
+    AND?: TranscriptionUsageWhereInput | TranscriptionUsageWhereInput[]
+    OR?: TranscriptionUsageWhereInput[]
+    NOT?: TranscriptionUsageWhereInput | TranscriptionUsageWhereInput[]
+    id?: StringFilter<"TranscriptionUsage"> | string
+    userId?: StringFilter<"TranscriptionUsage"> | string
+    date?: StringFilter<"TranscriptionUsage"> | string
+    count?: IntFilter<"TranscriptionUsage"> | number
+    createdAt?: DateTimeFilter<"TranscriptionUsage"> | Date | string
+    updatedAt?: DateTimeFilter<"TranscriptionUsage"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type TranscriptionUsageOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    date?: SortOrder
+    count?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type TranscriptionUsageWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    userId_date?: TranscriptionUsageUserIdDateCompoundUniqueInput
+    AND?: TranscriptionUsageWhereInput | TranscriptionUsageWhereInput[]
+    OR?: TranscriptionUsageWhereInput[]
+    NOT?: TranscriptionUsageWhereInput | TranscriptionUsageWhereInput[]
+    userId?: StringFilter<"TranscriptionUsage"> | string
+    date?: StringFilter<"TranscriptionUsage"> | string
+    count?: IntFilter<"TranscriptionUsage"> | number
+    createdAt?: DateTimeFilter<"TranscriptionUsage"> | Date | string
+    updatedAt?: DateTimeFilter<"TranscriptionUsage"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "userId_date">
+
+  export type TranscriptionUsageOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    date?: SortOrder
+    count?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TranscriptionUsageCountOrderByAggregateInput
+    _avg?: TranscriptionUsageAvgOrderByAggregateInput
+    _max?: TranscriptionUsageMaxOrderByAggregateInput
+    _min?: TranscriptionUsageMinOrderByAggregateInput
+    _sum?: TranscriptionUsageSumOrderByAggregateInput
+  }
+
+  export type TranscriptionUsageScalarWhereWithAggregatesInput = {
+    AND?: TranscriptionUsageScalarWhereWithAggregatesInput | TranscriptionUsageScalarWhereWithAggregatesInput[]
+    OR?: TranscriptionUsageScalarWhereWithAggregatesInput[]
+    NOT?: TranscriptionUsageScalarWhereWithAggregatesInput | TranscriptionUsageScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TranscriptionUsage"> | string
+    userId?: StringWithAggregatesFilter<"TranscriptionUsage"> | string
+    date?: StringWithAggregatesFilter<"TranscriptionUsage"> | string
+    count?: IntWithAggregatesFilter<"TranscriptionUsage"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"TranscriptionUsage"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TranscriptionUsage"> | Date | string
+  }
+
   export type AccountCreateInput = {
     id?: string
     type: string
@@ -12759,12 +18056,16 @@ export namespace Prisma {
     emailVerified?: Date | string | null
     image?: string | null
     passwordHash?: string | null
+    stripeCustomerId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     templates?: TemplateCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanCreateNestedOneWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -12774,12 +18075,16 @@ export namespace Prisma {
     emailVerified?: Date | string | null
     image?: string | null
     passwordHash?: string | null
+    stripeCustomerId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -12789,12 +18094,16 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     templates?: TemplateUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUpdateOneWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -12804,12 +18113,16 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -12819,6 +18132,7 @@ export namespace Prisma {
     emailVerified?: Date | string | null
     image?: string | null
     passwordHash?: string | null
+    stripeCustomerId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -12830,6 +18144,7 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12841,6 +18156,7 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -13167,6 +18483,300 @@ export namespace Prisma {
     required?: BoolFieldUpdateOperationsInput | boolean
   }
 
+  export type PlanCreateInput = {
+    id?: string
+    name: string
+    slug: string
+    stripePriceId?: string | null
+    featuresJson: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    userPlans?: UserPlanCreateNestedManyWithoutPlanInput
+  }
+
+  export type PlanUncheckedCreateInput = {
+    id?: string
+    name: string
+    slug: string
+    stripePriceId?: string | null
+    featuresJson: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    userPlans?: UserPlanUncheckedCreateNestedManyWithoutPlanInput
+  }
+
+  export type PlanUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    stripePriceId?: NullableStringFieldUpdateOperationsInput | string | null
+    featuresJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userPlans?: UserPlanUpdateManyWithoutPlanNestedInput
+  }
+
+  export type PlanUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    stripePriceId?: NullableStringFieldUpdateOperationsInput | string | null
+    featuresJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userPlans?: UserPlanUncheckedUpdateManyWithoutPlanNestedInput
+  }
+
+  export type PlanCreateManyInput = {
+    id?: string
+    name: string
+    slug: string
+    stripePriceId?: string | null
+    featuresJson: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlanUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    stripePriceId?: NullableStringFieldUpdateOperationsInput | string | null
+    featuresJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlanUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    stripePriceId?: NullableStringFieldUpdateOperationsInput | string | null
+    featuresJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserPlanCreateInput = {
+    id?: string
+    status?: $Enums.SubscriptionStatus
+    stripeSubscriptionId?: string | null
+    currentPeriodStart?: Date | string | null
+    currentPeriodEnd?: Date | string | null
+    cancelAtPeriodEnd?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutUserPlanInput
+    plan: PlanCreateNestedOneWithoutUserPlansInput
+  }
+
+  export type UserPlanUncheckedCreateInput = {
+    id?: string
+    userId: string
+    planId: string
+    status?: $Enums.SubscriptionStatus
+    stripeSubscriptionId?: string | null
+    currentPeriodStart?: Date | string | null
+    currentPeriodEnd?: Date | string | null
+    cancelAtPeriodEnd?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserPlanUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumSubscriptionStatusFieldUpdateOperationsInput | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    currentPeriodStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    currentPeriodEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutUserPlanNestedInput
+    plan?: PlanUpdateOneRequiredWithoutUserPlansNestedInput
+  }
+
+  export type UserPlanUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    planId?: StringFieldUpdateOperationsInput | string
+    status?: EnumSubscriptionStatusFieldUpdateOperationsInput | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    currentPeriodStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    currentPeriodEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserPlanCreateManyInput = {
+    id?: string
+    userId: string
+    planId: string
+    status?: $Enums.SubscriptionStatus
+    stripeSubscriptionId?: string | null
+    currentPeriodStart?: Date | string | null
+    currentPeriodEnd?: Date | string | null
+    cancelAtPeriodEnd?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserPlanUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumSubscriptionStatusFieldUpdateOperationsInput | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    currentPeriodStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    currentPeriodEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserPlanUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    planId?: StringFieldUpdateOperationsInput | string
+    status?: EnumSubscriptionStatusFieldUpdateOperationsInput | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    currentPeriodStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    currentPeriodEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CustomBlockCreateInput = {
+    id?: string
+    title: string
+    description?: string | null
+    fieldsJson: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    owner: UserCreateNestedOneWithoutCustomBlocksInput
+  }
+
+  export type CustomBlockUncheckedCreateInput = {
+    id?: string
+    ownerId: string
+    title: string
+    description?: string | null
+    fieldsJson: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CustomBlockUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldsJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    owner?: UserUpdateOneRequiredWithoutCustomBlocksNestedInput
+  }
+
+  export type CustomBlockUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldsJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CustomBlockCreateManyInput = {
+    id?: string
+    ownerId: string
+    title: string
+    description?: string | null
+    fieldsJson: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CustomBlockUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldsJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CustomBlockUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldsJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TranscriptionUsageCreateInput = {
+    id?: string
+    date: string
+    count?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutTranscriptionUsagesInput
+  }
+
+  export type TranscriptionUsageUncheckedCreateInput = {
+    id?: string
+    userId: string
+    date: string
+    count?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TranscriptionUsageUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: StringFieldUpdateOperationsInput | string
+    count?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutTranscriptionUsagesNestedInput
+  }
+
+  export type TranscriptionUsageUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    date?: StringFieldUpdateOperationsInput | string
+    count?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TranscriptionUsageCreateManyInput = {
+    id?: string
+    userId: string
+    date: string
+    count?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TranscriptionUsageUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: StringFieldUpdateOperationsInput | string
+    count?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TranscriptionUsageUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    date?: StringFieldUpdateOperationsInput | string
+    count?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -13432,6 +19042,23 @@ export namespace Prisma {
     none?: BlockDefinitionWhereInput
   }
 
+  export type CustomBlockListRelationFilter = {
+    every?: CustomBlockWhereInput
+    some?: CustomBlockWhereInput
+    none?: CustomBlockWhereInput
+  }
+
+  export type TranscriptionUsageListRelationFilter = {
+    every?: TranscriptionUsageWhereInput
+    some?: TranscriptionUsageWhereInput
+    none?: TranscriptionUsageWhereInput
+  }
+
+  export type UserPlanNullableScalarRelationFilter = {
+    is?: UserPlanWhereInput | null
+    isNot?: UserPlanWhereInput | null
+  }
+
   export type AccountOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -13448,6 +19075,14 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type CustomBlockOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TranscriptionUsageOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type UserCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
@@ -13455,6 +19090,7 @@ export namespace Prisma {
     emailVerified?: SortOrder
     image?: SortOrder
     passwordHash?: SortOrder
+    stripeCustomerId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -13466,6 +19102,7 @@ export namespace Prisma {
     emailVerified?: SortOrder
     image?: SortOrder
     passwordHash?: SortOrder
+    stripeCustomerId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -13477,6 +19114,7 @@ export namespace Prisma {
     emailVerified?: SortOrder
     image?: SortOrder
     passwordHash?: SortOrder
+    stripeCustomerId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -13778,6 +19416,177 @@ export namespace Prisma {
     order?: SortOrder
   }
 
+  export type UserPlanListRelationFilter = {
+    every?: UserPlanWhereInput
+    some?: UserPlanWhereInput
+    none?: UserPlanWhereInput
+  }
+
+  export type UserPlanOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PlanCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    stripePriceId?: SortOrder
+    featuresJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlanMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    stripePriceId?: SortOrder
+    featuresJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlanMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    stripePriceId?: SortOrder
+    featuresJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumSubscriptionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.SubscriptionStatus | EnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SubscriptionStatus[] | ListEnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SubscriptionStatus[] | ListEnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSubscriptionStatusFilter<$PrismaModel> | $Enums.SubscriptionStatus
+  }
+
+  export type PlanScalarRelationFilter = {
+    is?: PlanWhereInput
+    isNot?: PlanWhereInput
+  }
+
+  export type UserPlanCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    planId?: SortOrder
+    status?: SortOrder
+    stripeSubscriptionId?: SortOrder
+    currentPeriodStart?: SortOrder
+    currentPeriodEnd?: SortOrder
+    cancelAtPeriodEnd?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserPlanMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    planId?: SortOrder
+    status?: SortOrder
+    stripeSubscriptionId?: SortOrder
+    currentPeriodStart?: SortOrder
+    currentPeriodEnd?: SortOrder
+    cancelAtPeriodEnd?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserPlanMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    planId?: SortOrder
+    status?: SortOrder
+    stripeSubscriptionId?: SortOrder
+    currentPeriodStart?: SortOrder
+    currentPeriodEnd?: SortOrder
+    cancelAtPeriodEnd?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumSubscriptionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SubscriptionStatus | EnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SubscriptionStatus[] | ListEnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SubscriptionStatus[] | ListEnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSubscriptionStatusWithAggregatesFilter<$PrismaModel> | $Enums.SubscriptionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSubscriptionStatusFilter<$PrismaModel>
+    _max?: NestedEnumSubscriptionStatusFilter<$PrismaModel>
+  }
+
+  export type CustomBlockCountOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    title?: SortOrder
+    description?: SortOrder
+    fieldsJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CustomBlockMaxOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    title?: SortOrder
+    description?: SortOrder
+    fieldsJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CustomBlockMinOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    title?: SortOrder
+    description?: SortOrder
+    fieldsJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TranscriptionUsageUserIdDateCompoundUniqueInput = {
+    userId: string
+    date: string
+  }
+
+  export type TranscriptionUsageCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    date?: SortOrder
+    count?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TranscriptionUsageAvgOrderByAggregateInput = {
+    count?: SortOrder
+  }
+
+  export type TranscriptionUsageMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    date?: SortOrder
+    count?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TranscriptionUsageMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    date?: SortOrder
+    count?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TranscriptionUsageSumOrderByAggregateInput = {
+    count?: SortOrder
+  }
+
   export type UserCreateNestedOneWithoutAccountsInput = {
     create?: XOR<UserCreateWithoutAccountsInput, UserUncheckedCreateWithoutAccountsInput>
     connectOrCreate?: UserCreateOrConnectWithoutAccountsInput
@@ -13854,6 +19663,26 @@ export namespace Prisma {
     connect?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
   }
 
+  export type CustomBlockCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput> | CustomBlockCreateWithoutOwnerInput[] | CustomBlockUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: CustomBlockCreateOrConnectWithoutOwnerInput | CustomBlockCreateOrConnectWithoutOwnerInput[]
+    createMany?: CustomBlockCreateManyOwnerInputEnvelope
+    connect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
+  }
+
+  export type TranscriptionUsageCreateNestedManyWithoutUserInput = {
+    create?: XOR<TranscriptionUsageCreateWithoutUserInput, TranscriptionUsageUncheckedCreateWithoutUserInput> | TranscriptionUsageCreateWithoutUserInput[] | TranscriptionUsageUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TranscriptionUsageCreateOrConnectWithoutUserInput | TranscriptionUsageCreateOrConnectWithoutUserInput[]
+    createMany?: TranscriptionUsageCreateManyUserInputEnvelope
+    connect?: TranscriptionUsageWhereUniqueInput | TranscriptionUsageWhereUniqueInput[]
+  }
+
+  export type UserPlanCreateNestedOneWithoutUserInput = {
+    create?: XOR<UserPlanCreateWithoutUserInput, UserPlanUncheckedCreateWithoutUserInput>
+    connectOrCreate?: UserPlanCreateOrConnectWithoutUserInput
+    connect?: UserPlanWhereUniqueInput
+  }
+
   export type AccountUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<AccountCreateWithoutUserInput, AccountUncheckedCreateWithoutUserInput> | AccountCreateWithoutUserInput[] | AccountUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccountCreateOrConnectWithoutUserInput | AccountCreateOrConnectWithoutUserInput[]
@@ -13880,6 +19709,26 @@ export namespace Prisma {
     connectOrCreate?: BlockDefinitionCreateOrConnectWithoutOwnerInput | BlockDefinitionCreateOrConnectWithoutOwnerInput[]
     createMany?: BlockDefinitionCreateManyOwnerInputEnvelope
     connect?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
+  }
+
+  export type CustomBlockUncheckedCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput> | CustomBlockCreateWithoutOwnerInput[] | CustomBlockUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: CustomBlockCreateOrConnectWithoutOwnerInput | CustomBlockCreateOrConnectWithoutOwnerInput[]
+    createMany?: CustomBlockCreateManyOwnerInputEnvelope
+    connect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
+  }
+
+  export type TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<TranscriptionUsageCreateWithoutUserInput, TranscriptionUsageUncheckedCreateWithoutUserInput> | TranscriptionUsageCreateWithoutUserInput[] | TranscriptionUsageUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TranscriptionUsageCreateOrConnectWithoutUserInput | TranscriptionUsageCreateOrConnectWithoutUserInput[]
+    createMany?: TranscriptionUsageCreateManyUserInputEnvelope
+    connect?: TranscriptionUsageWhereUniqueInput | TranscriptionUsageWhereUniqueInput[]
+  }
+
+  export type UserPlanUncheckedCreateNestedOneWithoutUserInput = {
+    create?: XOR<UserPlanCreateWithoutUserInput, UserPlanUncheckedCreateWithoutUserInput>
+    connectOrCreate?: UserPlanCreateOrConnectWithoutUserInput
+    connect?: UserPlanWhereUniqueInput
   }
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -13942,6 +19791,44 @@ export namespace Prisma {
     deleteMany?: BlockDefinitionScalarWhereInput | BlockDefinitionScalarWhereInput[]
   }
 
+  export type CustomBlockUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput> | CustomBlockCreateWithoutOwnerInput[] | CustomBlockUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: CustomBlockCreateOrConnectWithoutOwnerInput | CustomBlockCreateOrConnectWithoutOwnerInput[]
+    upsert?: CustomBlockUpsertWithWhereUniqueWithoutOwnerInput | CustomBlockUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: CustomBlockCreateManyOwnerInputEnvelope
+    set?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
+    disconnect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
+    delete?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
+    connect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
+    update?: CustomBlockUpdateWithWhereUniqueWithoutOwnerInput | CustomBlockUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: CustomBlockUpdateManyWithWhereWithoutOwnerInput | CustomBlockUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: CustomBlockScalarWhereInput | CustomBlockScalarWhereInput[]
+  }
+
+  export type TranscriptionUsageUpdateManyWithoutUserNestedInput = {
+    create?: XOR<TranscriptionUsageCreateWithoutUserInput, TranscriptionUsageUncheckedCreateWithoutUserInput> | TranscriptionUsageCreateWithoutUserInput[] | TranscriptionUsageUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TranscriptionUsageCreateOrConnectWithoutUserInput | TranscriptionUsageCreateOrConnectWithoutUserInput[]
+    upsert?: TranscriptionUsageUpsertWithWhereUniqueWithoutUserInput | TranscriptionUsageUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: TranscriptionUsageCreateManyUserInputEnvelope
+    set?: TranscriptionUsageWhereUniqueInput | TranscriptionUsageWhereUniqueInput[]
+    disconnect?: TranscriptionUsageWhereUniqueInput | TranscriptionUsageWhereUniqueInput[]
+    delete?: TranscriptionUsageWhereUniqueInput | TranscriptionUsageWhereUniqueInput[]
+    connect?: TranscriptionUsageWhereUniqueInput | TranscriptionUsageWhereUniqueInput[]
+    update?: TranscriptionUsageUpdateWithWhereUniqueWithoutUserInput | TranscriptionUsageUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: TranscriptionUsageUpdateManyWithWhereWithoutUserInput | TranscriptionUsageUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: TranscriptionUsageScalarWhereInput | TranscriptionUsageScalarWhereInput[]
+  }
+
+  export type UserPlanUpdateOneWithoutUserNestedInput = {
+    create?: XOR<UserPlanCreateWithoutUserInput, UserPlanUncheckedCreateWithoutUserInput>
+    connectOrCreate?: UserPlanCreateOrConnectWithoutUserInput
+    upsert?: UserPlanUpsertWithoutUserInput
+    disconnect?: UserPlanWhereInput | boolean
+    delete?: UserPlanWhereInput | boolean
+    connect?: UserPlanWhereUniqueInput
+    update?: XOR<XOR<UserPlanUpdateToOneWithWhereWithoutUserInput, UserPlanUpdateWithoutUserInput>, UserPlanUncheckedUpdateWithoutUserInput>
+  }
+
   export type AccountUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<AccountCreateWithoutUserInput, AccountUncheckedCreateWithoutUserInput> | AccountCreateWithoutUserInput[] | AccountUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccountCreateOrConnectWithoutUserInput | AccountCreateOrConnectWithoutUserInput[]
@@ -13996,6 +19883,44 @@ export namespace Prisma {
     update?: BlockDefinitionUpdateWithWhereUniqueWithoutOwnerInput | BlockDefinitionUpdateWithWhereUniqueWithoutOwnerInput[]
     updateMany?: BlockDefinitionUpdateManyWithWhereWithoutOwnerInput | BlockDefinitionUpdateManyWithWhereWithoutOwnerInput[]
     deleteMany?: BlockDefinitionScalarWhereInput | BlockDefinitionScalarWhereInput[]
+  }
+
+  export type CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput> | CustomBlockCreateWithoutOwnerInput[] | CustomBlockUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: CustomBlockCreateOrConnectWithoutOwnerInput | CustomBlockCreateOrConnectWithoutOwnerInput[]
+    upsert?: CustomBlockUpsertWithWhereUniqueWithoutOwnerInput | CustomBlockUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: CustomBlockCreateManyOwnerInputEnvelope
+    set?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
+    disconnect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
+    delete?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
+    connect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
+    update?: CustomBlockUpdateWithWhereUniqueWithoutOwnerInput | CustomBlockUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: CustomBlockUpdateManyWithWhereWithoutOwnerInput | CustomBlockUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: CustomBlockScalarWhereInput | CustomBlockScalarWhereInput[]
+  }
+
+  export type TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<TranscriptionUsageCreateWithoutUserInput, TranscriptionUsageUncheckedCreateWithoutUserInput> | TranscriptionUsageCreateWithoutUserInput[] | TranscriptionUsageUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TranscriptionUsageCreateOrConnectWithoutUserInput | TranscriptionUsageCreateOrConnectWithoutUserInput[]
+    upsert?: TranscriptionUsageUpsertWithWhereUniqueWithoutUserInput | TranscriptionUsageUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: TranscriptionUsageCreateManyUserInputEnvelope
+    set?: TranscriptionUsageWhereUniqueInput | TranscriptionUsageWhereUniqueInput[]
+    disconnect?: TranscriptionUsageWhereUniqueInput | TranscriptionUsageWhereUniqueInput[]
+    delete?: TranscriptionUsageWhereUniqueInput | TranscriptionUsageWhereUniqueInput[]
+    connect?: TranscriptionUsageWhereUniqueInput | TranscriptionUsageWhereUniqueInput[]
+    update?: TranscriptionUsageUpdateWithWhereUniqueWithoutUserInput | TranscriptionUsageUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: TranscriptionUsageUpdateManyWithWhereWithoutUserInput | TranscriptionUsageUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: TranscriptionUsageScalarWhereInput | TranscriptionUsageScalarWhereInput[]
+  }
+
+  export type UserPlanUncheckedUpdateOneWithoutUserNestedInput = {
+    create?: XOR<UserPlanCreateWithoutUserInput, UserPlanUncheckedCreateWithoutUserInput>
+    connectOrCreate?: UserPlanCreateOrConnectWithoutUserInput
+    upsert?: UserPlanUpsertWithoutUserInput
+    disconnect?: UserPlanWhereInput | boolean
+    delete?: UserPlanWhereInput | boolean
+    connect?: UserPlanWhereUniqueInput
+    update?: XOR<XOR<UserPlanUpdateToOneWithWhereWithoutUserInput, UserPlanUpdateWithoutUserInput>, UserPlanUncheckedUpdateWithoutUserInput>
   }
 
   export type TemplateBlockCreateNestedManyWithoutTemplateInput = {
@@ -14214,6 +20139,108 @@ export namespace Prisma {
     upsert?: BlockDefinitionUpsertWithoutFieldsInput
     connect?: BlockDefinitionWhereUniqueInput
     update?: XOR<XOR<BlockDefinitionUpdateToOneWithWhereWithoutFieldsInput, BlockDefinitionUpdateWithoutFieldsInput>, BlockDefinitionUncheckedUpdateWithoutFieldsInput>
+  }
+
+  export type UserPlanCreateNestedManyWithoutPlanInput = {
+    create?: XOR<UserPlanCreateWithoutPlanInput, UserPlanUncheckedCreateWithoutPlanInput> | UserPlanCreateWithoutPlanInput[] | UserPlanUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: UserPlanCreateOrConnectWithoutPlanInput | UserPlanCreateOrConnectWithoutPlanInput[]
+    createMany?: UserPlanCreateManyPlanInputEnvelope
+    connect?: UserPlanWhereUniqueInput | UserPlanWhereUniqueInput[]
+  }
+
+  export type UserPlanUncheckedCreateNestedManyWithoutPlanInput = {
+    create?: XOR<UserPlanCreateWithoutPlanInput, UserPlanUncheckedCreateWithoutPlanInput> | UserPlanCreateWithoutPlanInput[] | UserPlanUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: UserPlanCreateOrConnectWithoutPlanInput | UserPlanCreateOrConnectWithoutPlanInput[]
+    createMany?: UserPlanCreateManyPlanInputEnvelope
+    connect?: UserPlanWhereUniqueInput | UserPlanWhereUniqueInput[]
+  }
+
+  export type UserPlanUpdateManyWithoutPlanNestedInput = {
+    create?: XOR<UserPlanCreateWithoutPlanInput, UserPlanUncheckedCreateWithoutPlanInput> | UserPlanCreateWithoutPlanInput[] | UserPlanUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: UserPlanCreateOrConnectWithoutPlanInput | UserPlanCreateOrConnectWithoutPlanInput[]
+    upsert?: UserPlanUpsertWithWhereUniqueWithoutPlanInput | UserPlanUpsertWithWhereUniqueWithoutPlanInput[]
+    createMany?: UserPlanCreateManyPlanInputEnvelope
+    set?: UserPlanWhereUniqueInput | UserPlanWhereUniqueInput[]
+    disconnect?: UserPlanWhereUniqueInput | UserPlanWhereUniqueInput[]
+    delete?: UserPlanWhereUniqueInput | UserPlanWhereUniqueInput[]
+    connect?: UserPlanWhereUniqueInput | UserPlanWhereUniqueInput[]
+    update?: UserPlanUpdateWithWhereUniqueWithoutPlanInput | UserPlanUpdateWithWhereUniqueWithoutPlanInput[]
+    updateMany?: UserPlanUpdateManyWithWhereWithoutPlanInput | UserPlanUpdateManyWithWhereWithoutPlanInput[]
+    deleteMany?: UserPlanScalarWhereInput | UserPlanScalarWhereInput[]
+  }
+
+  export type UserPlanUncheckedUpdateManyWithoutPlanNestedInput = {
+    create?: XOR<UserPlanCreateWithoutPlanInput, UserPlanUncheckedCreateWithoutPlanInput> | UserPlanCreateWithoutPlanInput[] | UserPlanUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: UserPlanCreateOrConnectWithoutPlanInput | UserPlanCreateOrConnectWithoutPlanInput[]
+    upsert?: UserPlanUpsertWithWhereUniqueWithoutPlanInput | UserPlanUpsertWithWhereUniqueWithoutPlanInput[]
+    createMany?: UserPlanCreateManyPlanInputEnvelope
+    set?: UserPlanWhereUniqueInput | UserPlanWhereUniqueInput[]
+    disconnect?: UserPlanWhereUniqueInput | UserPlanWhereUniqueInput[]
+    delete?: UserPlanWhereUniqueInput | UserPlanWhereUniqueInput[]
+    connect?: UserPlanWhereUniqueInput | UserPlanWhereUniqueInput[]
+    update?: UserPlanUpdateWithWhereUniqueWithoutPlanInput | UserPlanUpdateWithWhereUniqueWithoutPlanInput[]
+    updateMany?: UserPlanUpdateManyWithWhereWithoutPlanInput | UserPlanUpdateManyWithWhereWithoutPlanInput[]
+    deleteMany?: UserPlanScalarWhereInput | UserPlanScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutUserPlanInput = {
+    create?: XOR<UserCreateWithoutUserPlanInput, UserUncheckedCreateWithoutUserPlanInput>
+    connectOrCreate?: UserCreateOrConnectWithoutUserPlanInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type PlanCreateNestedOneWithoutUserPlansInput = {
+    create?: XOR<PlanCreateWithoutUserPlansInput, PlanUncheckedCreateWithoutUserPlansInput>
+    connectOrCreate?: PlanCreateOrConnectWithoutUserPlansInput
+    connect?: PlanWhereUniqueInput
+  }
+
+  export type EnumSubscriptionStatusFieldUpdateOperationsInput = {
+    set?: $Enums.SubscriptionStatus
+  }
+
+  export type UserUpdateOneRequiredWithoutUserPlanNestedInput = {
+    create?: XOR<UserCreateWithoutUserPlanInput, UserUncheckedCreateWithoutUserPlanInput>
+    connectOrCreate?: UserCreateOrConnectWithoutUserPlanInput
+    upsert?: UserUpsertWithoutUserPlanInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutUserPlanInput, UserUpdateWithoutUserPlanInput>, UserUncheckedUpdateWithoutUserPlanInput>
+  }
+
+  export type PlanUpdateOneRequiredWithoutUserPlansNestedInput = {
+    create?: XOR<PlanCreateWithoutUserPlansInput, PlanUncheckedCreateWithoutUserPlansInput>
+    connectOrCreate?: PlanCreateOrConnectWithoutUserPlansInput
+    upsert?: PlanUpsertWithoutUserPlansInput
+    connect?: PlanWhereUniqueInput
+    update?: XOR<XOR<PlanUpdateToOneWithWhereWithoutUserPlansInput, PlanUpdateWithoutUserPlansInput>, PlanUncheckedUpdateWithoutUserPlansInput>
+  }
+
+  export type UserCreateNestedOneWithoutCustomBlocksInput = {
+    create?: XOR<UserCreateWithoutCustomBlocksInput, UserUncheckedCreateWithoutCustomBlocksInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCustomBlocksInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutCustomBlocksNestedInput = {
+    create?: XOR<UserCreateWithoutCustomBlocksInput, UserUncheckedCreateWithoutCustomBlocksInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCustomBlocksInput
+    upsert?: UserUpsertWithoutCustomBlocksInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCustomBlocksInput, UserUpdateWithoutCustomBlocksInput>, UserUncheckedUpdateWithoutCustomBlocksInput>
+  }
+
+  export type UserCreateNestedOneWithoutTranscriptionUsagesInput = {
+    create?: XOR<UserCreateWithoutTranscriptionUsagesInput, UserUncheckedCreateWithoutTranscriptionUsagesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTranscriptionUsagesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutTranscriptionUsagesNestedInput = {
+    create?: XOR<UserCreateWithoutTranscriptionUsagesInput, UserUncheckedCreateWithoutTranscriptionUsagesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTranscriptionUsagesInput
+    upsert?: UserUpsertWithoutTranscriptionUsagesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTranscriptionUsagesInput, UserUpdateWithoutTranscriptionUsagesInput>, UserUncheckedUpdateWithoutTranscriptionUsagesInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -14451,6 +20478,23 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
+  export type NestedEnumSubscriptionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.SubscriptionStatus | EnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SubscriptionStatus[] | ListEnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SubscriptionStatus[] | ListEnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSubscriptionStatusFilter<$PrismaModel> | $Enums.SubscriptionStatus
+  }
+
+  export type NestedEnumSubscriptionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SubscriptionStatus | EnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SubscriptionStatus[] | ListEnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SubscriptionStatus[] | ListEnumSubscriptionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSubscriptionStatusWithAggregatesFilter<$PrismaModel> | $Enums.SubscriptionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSubscriptionStatusFilter<$PrismaModel>
+    _max?: NestedEnumSubscriptionStatusFilter<$PrismaModel>
+  }
+
   export type UserCreateWithoutAccountsInput = {
     id?: string
     name?: string | null
@@ -14458,11 +20502,15 @@ export namespace Prisma {
     emailVerified?: Date | string | null
     image?: string | null
     passwordHash?: string | null
+    stripeCustomerId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     sessions?: SessionCreateNestedManyWithoutUserInput
     templates?: TemplateCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanCreateNestedOneWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAccountsInput = {
@@ -14472,11 +20520,15 @@ export namespace Prisma {
     emailVerified?: Date | string | null
     image?: string | null
     passwordHash?: string | null
+    stripeCustomerId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAccountsInput = {
@@ -14502,11 +20554,15 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUpdateManyWithoutUserNestedInput
     templates?: TemplateUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUpdateOneWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -14516,11 +20572,15 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
   }
 
   export type UserCreateWithoutSessionsInput = {
@@ -14530,11 +20590,15 @@ export namespace Prisma {
     emailVerified?: Date | string | null
     image?: string | null
     passwordHash?: string | null
+    stripeCustomerId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     templates?: TemplateCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanCreateNestedOneWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -14544,11 +20608,15 @@ export namespace Prisma {
     emailVerified?: Date | string | null
     image?: string | null
     passwordHash?: string | null
+    stripeCustomerId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -14574,11 +20642,15 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     templates?: TemplateUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUpdateOneWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -14588,11 +20660,15 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
   }
 
   export type AccountCreateWithoutUserInput = {
@@ -14705,6 +20781,89 @@ export namespace Prisma {
   export type BlockDefinitionCreateManyOwnerInputEnvelope = {
     data: BlockDefinitionCreateManyOwnerInput | BlockDefinitionCreateManyOwnerInput[]
     skipDuplicates?: boolean
+  }
+
+  export type CustomBlockCreateWithoutOwnerInput = {
+    id?: string
+    title: string
+    description?: string | null
+    fieldsJson: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CustomBlockUncheckedCreateWithoutOwnerInput = {
+    id?: string
+    title: string
+    description?: string | null
+    fieldsJson: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CustomBlockCreateOrConnectWithoutOwnerInput = {
+    where: CustomBlockWhereUniqueInput
+    create: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type CustomBlockCreateManyOwnerInputEnvelope = {
+    data: CustomBlockCreateManyOwnerInput | CustomBlockCreateManyOwnerInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TranscriptionUsageCreateWithoutUserInput = {
+    id?: string
+    date: string
+    count?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TranscriptionUsageUncheckedCreateWithoutUserInput = {
+    id?: string
+    date: string
+    count?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TranscriptionUsageCreateOrConnectWithoutUserInput = {
+    where: TranscriptionUsageWhereUniqueInput
+    create: XOR<TranscriptionUsageCreateWithoutUserInput, TranscriptionUsageUncheckedCreateWithoutUserInput>
+  }
+
+  export type TranscriptionUsageCreateManyUserInputEnvelope = {
+    data: TranscriptionUsageCreateManyUserInput | TranscriptionUsageCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserPlanCreateWithoutUserInput = {
+    id?: string
+    status?: $Enums.SubscriptionStatus
+    stripeSubscriptionId?: string | null
+    currentPeriodStart?: Date | string | null
+    currentPeriodEnd?: Date | string | null
+    cancelAtPeriodEnd?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    plan: PlanCreateNestedOneWithoutUserPlansInput
+  }
+
+  export type UserPlanUncheckedCreateWithoutUserInput = {
+    id?: string
+    planId: string
+    status?: $Enums.SubscriptionStatus
+    stripeSubscriptionId?: string | null
+    currentPeriodStart?: Date | string | null
+    currentPeriodEnd?: Date | string | null
+    cancelAtPeriodEnd?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserPlanCreateOrConnectWithoutUserInput = {
+    where: UserPlanWhereUniqueInput
+    create: XOR<UserPlanCreateWithoutUserInput, UserPlanUncheckedCreateWithoutUserInput>
   }
 
   export type AccountUpsertWithWhereUniqueWithoutUserInput = {
@@ -14821,6 +20980,98 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"BlockDefinition"> | Date | string
   }
 
+  export type CustomBlockUpsertWithWhereUniqueWithoutOwnerInput = {
+    where: CustomBlockWhereUniqueInput
+    update: XOR<CustomBlockUpdateWithoutOwnerInput, CustomBlockUncheckedUpdateWithoutOwnerInput>
+    create: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type CustomBlockUpdateWithWhereUniqueWithoutOwnerInput = {
+    where: CustomBlockWhereUniqueInput
+    data: XOR<CustomBlockUpdateWithoutOwnerInput, CustomBlockUncheckedUpdateWithoutOwnerInput>
+  }
+
+  export type CustomBlockUpdateManyWithWhereWithoutOwnerInput = {
+    where: CustomBlockScalarWhereInput
+    data: XOR<CustomBlockUpdateManyMutationInput, CustomBlockUncheckedUpdateManyWithoutOwnerInput>
+  }
+
+  export type CustomBlockScalarWhereInput = {
+    AND?: CustomBlockScalarWhereInput | CustomBlockScalarWhereInput[]
+    OR?: CustomBlockScalarWhereInput[]
+    NOT?: CustomBlockScalarWhereInput | CustomBlockScalarWhereInput[]
+    id?: StringFilter<"CustomBlock"> | string
+    ownerId?: StringFilter<"CustomBlock"> | string
+    title?: StringFilter<"CustomBlock"> | string
+    description?: StringNullableFilter<"CustomBlock"> | string | null
+    fieldsJson?: StringFilter<"CustomBlock"> | string
+    createdAt?: DateTimeFilter<"CustomBlock"> | Date | string
+    updatedAt?: DateTimeFilter<"CustomBlock"> | Date | string
+  }
+
+  export type TranscriptionUsageUpsertWithWhereUniqueWithoutUserInput = {
+    where: TranscriptionUsageWhereUniqueInput
+    update: XOR<TranscriptionUsageUpdateWithoutUserInput, TranscriptionUsageUncheckedUpdateWithoutUserInput>
+    create: XOR<TranscriptionUsageCreateWithoutUserInput, TranscriptionUsageUncheckedCreateWithoutUserInput>
+  }
+
+  export type TranscriptionUsageUpdateWithWhereUniqueWithoutUserInput = {
+    where: TranscriptionUsageWhereUniqueInput
+    data: XOR<TranscriptionUsageUpdateWithoutUserInput, TranscriptionUsageUncheckedUpdateWithoutUserInput>
+  }
+
+  export type TranscriptionUsageUpdateManyWithWhereWithoutUserInput = {
+    where: TranscriptionUsageScalarWhereInput
+    data: XOR<TranscriptionUsageUpdateManyMutationInput, TranscriptionUsageUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type TranscriptionUsageScalarWhereInput = {
+    AND?: TranscriptionUsageScalarWhereInput | TranscriptionUsageScalarWhereInput[]
+    OR?: TranscriptionUsageScalarWhereInput[]
+    NOT?: TranscriptionUsageScalarWhereInput | TranscriptionUsageScalarWhereInput[]
+    id?: StringFilter<"TranscriptionUsage"> | string
+    userId?: StringFilter<"TranscriptionUsage"> | string
+    date?: StringFilter<"TranscriptionUsage"> | string
+    count?: IntFilter<"TranscriptionUsage"> | number
+    createdAt?: DateTimeFilter<"TranscriptionUsage"> | Date | string
+    updatedAt?: DateTimeFilter<"TranscriptionUsage"> | Date | string
+  }
+
+  export type UserPlanUpsertWithoutUserInput = {
+    update: XOR<UserPlanUpdateWithoutUserInput, UserPlanUncheckedUpdateWithoutUserInput>
+    create: XOR<UserPlanCreateWithoutUserInput, UserPlanUncheckedCreateWithoutUserInput>
+    where?: UserPlanWhereInput
+  }
+
+  export type UserPlanUpdateToOneWithWhereWithoutUserInput = {
+    where?: UserPlanWhereInput
+    data: XOR<UserPlanUpdateWithoutUserInput, UserPlanUncheckedUpdateWithoutUserInput>
+  }
+
+  export type UserPlanUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumSubscriptionStatusFieldUpdateOperationsInput | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    currentPeriodStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    currentPeriodEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    plan?: PlanUpdateOneRequiredWithoutUserPlansNestedInput
+  }
+
+  export type UserPlanUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    planId?: StringFieldUpdateOperationsInput | string
+    status?: EnumSubscriptionStatusFieldUpdateOperationsInput | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    currentPeriodStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    currentPeriodEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type TemplateBlockCreateWithoutTemplateInput = {
     id?: string
     order: number
@@ -14856,11 +21107,15 @@ export namespace Prisma {
     emailVerified?: Date | string | null
     image?: string | null
     passwordHash?: string | null
+    stripeCustomerId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanCreateNestedOneWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTemplatesInput = {
@@ -14870,11 +21125,15 @@ export namespace Prisma {
     emailVerified?: Date | string | null
     image?: string | null
     passwordHash?: string | null
+    stripeCustomerId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTemplatesInput = {
@@ -14928,11 +21187,15 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUpdateOneWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTemplatesInput = {
@@ -14942,11 +21205,15 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
   }
 
   export type TemplateFieldCreateWithoutTemplateBlockInput = {
@@ -15141,11 +21408,15 @@ export namespace Prisma {
     emailVerified?: Date | string | null
     image?: string | null
     passwordHash?: string | null
+    stripeCustomerId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     templates?: TemplateCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanCreateNestedOneWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutBlockDefinitionsInput = {
@@ -15155,11 +21426,15 @@ export namespace Prisma {
     emailVerified?: Date | string | null
     image?: string | null
     passwordHash?: string | null
+    stripeCustomerId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutBlockDefinitionsInput = {
@@ -15214,11 +21489,15 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     templates?: TemplateUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUpdateOneWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutBlockDefinitionsInput = {
@@ -15228,11 +21507,15 @@ export namespace Prisma {
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
   }
 
   export type BlockDefinitionCreateWithoutFieldsInput = {
@@ -15283,6 +21566,392 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type UserPlanCreateWithoutPlanInput = {
+    id?: string
+    status?: $Enums.SubscriptionStatus
+    stripeSubscriptionId?: string | null
+    currentPeriodStart?: Date | string | null
+    currentPeriodEnd?: Date | string | null
+    cancelAtPeriodEnd?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutUserPlanInput
+  }
+
+  export type UserPlanUncheckedCreateWithoutPlanInput = {
+    id?: string
+    userId: string
+    status?: $Enums.SubscriptionStatus
+    stripeSubscriptionId?: string | null
+    currentPeriodStart?: Date | string | null
+    currentPeriodEnd?: Date | string | null
+    cancelAtPeriodEnd?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserPlanCreateOrConnectWithoutPlanInput = {
+    where: UserPlanWhereUniqueInput
+    create: XOR<UserPlanCreateWithoutPlanInput, UserPlanUncheckedCreateWithoutPlanInput>
+  }
+
+  export type UserPlanCreateManyPlanInputEnvelope = {
+    data: UserPlanCreateManyPlanInput | UserPlanCreateManyPlanInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserPlanUpsertWithWhereUniqueWithoutPlanInput = {
+    where: UserPlanWhereUniqueInput
+    update: XOR<UserPlanUpdateWithoutPlanInput, UserPlanUncheckedUpdateWithoutPlanInput>
+    create: XOR<UserPlanCreateWithoutPlanInput, UserPlanUncheckedCreateWithoutPlanInput>
+  }
+
+  export type UserPlanUpdateWithWhereUniqueWithoutPlanInput = {
+    where: UserPlanWhereUniqueInput
+    data: XOR<UserPlanUpdateWithoutPlanInput, UserPlanUncheckedUpdateWithoutPlanInput>
+  }
+
+  export type UserPlanUpdateManyWithWhereWithoutPlanInput = {
+    where: UserPlanScalarWhereInput
+    data: XOR<UserPlanUpdateManyMutationInput, UserPlanUncheckedUpdateManyWithoutPlanInput>
+  }
+
+  export type UserPlanScalarWhereInput = {
+    AND?: UserPlanScalarWhereInput | UserPlanScalarWhereInput[]
+    OR?: UserPlanScalarWhereInput[]
+    NOT?: UserPlanScalarWhereInput | UserPlanScalarWhereInput[]
+    id?: StringFilter<"UserPlan"> | string
+    userId?: StringFilter<"UserPlan"> | string
+    planId?: StringFilter<"UserPlan"> | string
+    status?: EnumSubscriptionStatusFilter<"UserPlan"> | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: StringNullableFilter<"UserPlan"> | string | null
+    currentPeriodStart?: DateTimeNullableFilter<"UserPlan"> | Date | string | null
+    currentPeriodEnd?: DateTimeNullableFilter<"UserPlan"> | Date | string | null
+    cancelAtPeriodEnd?: BoolFilter<"UserPlan"> | boolean
+    createdAt?: DateTimeFilter<"UserPlan"> | Date | string
+    updatedAt?: DateTimeFilter<"UserPlan"> | Date | string
+  }
+
+  export type UserCreateWithoutUserPlanInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    stripeCustomerId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    templates?: TemplateCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutUserPlanInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    stripeCustomerId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutUserPlanInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutUserPlanInput, UserUncheckedCreateWithoutUserPlanInput>
+  }
+
+  export type PlanCreateWithoutUserPlansInput = {
+    id?: string
+    name: string
+    slug: string
+    stripePriceId?: string | null
+    featuresJson: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlanUncheckedCreateWithoutUserPlansInput = {
+    id?: string
+    name: string
+    slug: string
+    stripePriceId?: string | null
+    featuresJson: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlanCreateOrConnectWithoutUserPlansInput = {
+    where: PlanWhereUniqueInput
+    create: XOR<PlanCreateWithoutUserPlansInput, PlanUncheckedCreateWithoutUserPlansInput>
+  }
+
+  export type UserUpsertWithoutUserPlanInput = {
+    update: XOR<UserUpdateWithoutUserPlanInput, UserUncheckedUpdateWithoutUserPlanInput>
+    create: XOR<UserCreateWithoutUserPlanInput, UserUncheckedCreateWithoutUserPlanInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutUserPlanInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutUserPlanInput, UserUncheckedUpdateWithoutUserPlanInput>
+  }
+
+  export type UserUpdateWithoutUserPlanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    templates?: TemplateUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutUserPlanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type PlanUpsertWithoutUserPlansInput = {
+    update: XOR<PlanUpdateWithoutUserPlansInput, PlanUncheckedUpdateWithoutUserPlansInput>
+    create: XOR<PlanCreateWithoutUserPlansInput, PlanUncheckedCreateWithoutUserPlansInput>
+    where?: PlanWhereInput
+  }
+
+  export type PlanUpdateToOneWithWhereWithoutUserPlansInput = {
+    where?: PlanWhereInput
+    data: XOR<PlanUpdateWithoutUserPlansInput, PlanUncheckedUpdateWithoutUserPlansInput>
+  }
+
+  export type PlanUpdateWithoutUserPlansInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    stripePriceId?: NullableStringFieldUpdateOperationsInput | string | null
+    featuresJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlanUncheckedUpdateWithoutUserPlansInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    stripePriceId?: NullableStringFieldUpdateOperationsInput | string | null
+    featuresJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserCreateWithoutCustomBlocksInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    stripeCustomerId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    templates?: TemplateCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanCreateNestedOneWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutCustomBlocksInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    stripeCustomerId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutCustomBlocksInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutCustomBlocksInput, UserUncheckedCreateWithoutCustomBlocksInput>
+  }
+
+  export type UserUpsertWithoutCustomBlocksInput = {
+    update: XOR<UserUpdateWithoutCustomBlocksInput, UserUncheckedUpdateWithoutCustomBlocksInput>
+    create: XOR<UserCreateWithoutCustomBlocksInput, UserUncheckedCreateWithoutCustomBlocksInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutCustomBlocksInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutCustomBlocksInput, UserUncheckedUpdateWithoutCustomBlocksInput>
+  }
+
+  export type UserUpdateWithoutCustomBlocksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    templates?: TemplateUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutCustomBlocksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutTranscriptionUsagesInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    stripeCustomerId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    templates?: TemplateCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
+    userPlan?: UserPlanCreateNestedOneWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutTranscriptionUsagesInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    stripeCustomerId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
+    userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutTranscriptionUsagesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTranscriptionUsagesInput, UserUncheckedCreateWithoutTranscriptionUsagesInput>
+  }
+
+  export type UserUpsertWithoutTranscriptionUsagesInput = {
+    update: XOR<UserUpdateWithoutTranscriptionUsagesInput, UserUncheckedUpdateWithoutTranscriptionUsagesInput>
+    create: XOR<UserCreateWithoutTranscriptionUsagesInput, UserUncheckedCreateWithoutTranscriptionUsagesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutTranscriptionUsagesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutTranscriptionUsagesInput, UserUncheckedUpdateWithoutTranscriptionUsagesInput>
+  }
+
+  export type UserUpdateWithoutTranscriptionUsagesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    templates?: TemplateUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
+    userPlan?: UserPlanUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutTranscriptionUsagesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
+    userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
+  }
+
   export type AccountCreateManyUserInput = {
     id?: string
     type: string
@@ -15313,6 +21982,23 @@ export namespace Prisma {
   export type BlockDefinitionCreateManyOwnerInput = {
     id?: string
     name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CustomBlockCreateManyOwnerInput = {
+    id?: string
+    title: string
+    description?: string | null
+    fieldsJson: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TranscriptionUsageCreateManyUserInput = {
+    id?: string
+    date: string
+    count?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -15423,6 +22109,57 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CustomBlockUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldsJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CustomBlockUncheckedUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldsJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CustomBlockUncheckedUpdateManyWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    fieldsJson?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TranscriptionUsageUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: StringFieldUpdateOperationsInput | string
+    count?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TranscriptionUsageUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: StringFieldUpdateOperationsInput | string
+    count?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TranscriptionUsageUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    date?: StringFieldUpdateOperationsInput | string
+    count?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type TemplateBlockCreateManyTemplateInput = {
     id?: string
     order: number
@@ -15527,6 +22264,54 @@ export namespace Prisma {
     label?: NullableStringFieldUpdateOperationsInput | string | null
     fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
     required?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type UserPlanCreateManyPlanInput = {
+    id?: string
+    userId: string
+    status?: $Enums.SubscriptionStatus
+    stripeSubscriptionId?: string | null
+    currentPeriodStart?: Date | string | null
+    currentPeriodEnd?: Date | string | null
+    cancelAtPeriodEnd?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserPlanUpdateWithoutPlanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumSubscriptionStatusFieldUpdateOperationsInput | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    currentPeriodStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    currentPeriodEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutUserPlanNestedInput
+  }
+
+  export type UserPlanUncheckedUpdateWithoutPlanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    status?: EnumSubscriptionStatusFieldUpdateOperationsInput | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    currentPeriodStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    currentPeriodEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserPlanUncheckedUpdateManyWithoutPlanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    status?: EnumSubscriptionStatusFieldUpdateOperationsInput | $Enums.SubscriptionStatus
+    stripeSubscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    currentPeriodStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    currentPeriodEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

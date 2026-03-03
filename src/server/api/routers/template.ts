@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import type { BlockSource, FieldType } from "../../../../generated/prisma";
+import { TRPCError } from "@trpc/server";
+import { getUserEntitlements, hasFeature, FEATURES } from "@/server/entitlements";
+import { PLAN_LIMITS } from "@/server/entitlements/features";
 
 const templateFieldSchema = z.object({
     key: z.string().min(1),
@@ -22,6 +25,18 @@ const templateBodySchema = z.object({
     name: z.string().min(1).max(200),
     blocks: z.array(templateBlockSchema),
 });
+
+async function enforceFreeTemplateLimit(userId: string, db: any) {
+    const entitlements = await getUserEntitlements(userId);
+    if (hasFeature(entitlements, FEATURES.TEMPLATES_UNLIMITED)) return;
+    const count = await db.template.count({ where: { ownerId: userId } });
+    if (count >= PLAN_LIMITS.FREE_TEMPLATES) {
+        throw new TRPCError({
+            code: "FORBIDDEN",
+            message: `Free plan is limited to ${PLAN_LIMITS.FREE_TEMPLATES} templates. Upgrade to Pro for unlimited.`,
+        });
+    }
+}
 
 export const templateRouter = createTRPCRouter({
     list: protectedProcedure.query(async ({ ctx }) => {
@@ -54,6 +69,7 @@ export const templateRouter = createTRPCRouter({
     create: protectedProcedure
         .input(templateBodySchema)
         .mutation(async ({ ctx, input }) => {
+            await enforceFreeTemplateLimit(ctx.session.user.id, ctx.db); // ← ADD HERE
             return ctx.db.template.create({
                 data: {
                     ownerId: ctx.session.user.id,
@@ -131,6 +147,7 @@ export const templateRouter = createTRPCRouter({
     duplicate: protectedProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {
+            await enforceFreeTemplateLimit(ctx.session.user.id, ctx.db); // ← ADD HERE
             const source = await ctx.db.template.findFirst({
                 where: { id: input.id, ownerId: ctx.session.user.id },
                 include: {

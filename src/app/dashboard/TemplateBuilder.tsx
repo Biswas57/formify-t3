@@ -6,9 +6,10 @@ import Link from "next/link";
 import { api } from "@/trpc/react";
 import {
     ChevronDown, ChevronUp, X, Plus, Save, ArrowLeft,
-    GripVertical, Loader2, Check,
+    GripVertical, Loader2, Check, Lock,
 } from "lucide-react";
 import type { SystemBlock } from "@/server/blocks-library";
+import UpgradeModal from "./_components/UpgradeModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -134,12 +135,17 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
 
     // Custom block modal
     const [modalOpen, setModalOpen] = useState(false);
+    const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
     const [modalName, setModalName] = useState("");
     const [modalFields, setModalFields] = useState<
         { key: string; label: string; fieldType: FieldType }[]
     >([{ key: "", label: "", fieldType: "TEXT" }]);
 
     const utils = api.useUtils();
+
+    // Check user entitlements
+    const { data: entitlements } = api.entitlements.me.useQuery();
+    const isPro = entitlements?.planSlug === "pro";
 
     const createMutation = api.template.create.useMutation({
         onSuccess: (t: { id: string }) => {
@@ -156,20 +162,21 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
         },
     });
 
-    const createBlockMutation = api.block.createCustom.useMutation({
-        onSuccess: (newBlock: { id: string; name: string; fields: { key: string; label: string | null; fieldType: string; required: boolean; order: number }[] }) => {
+    const createBlockMutation = api.customBlock.create.useMutation({
+        onSuccess: (newBlock) => {
             void utils.block.listLibrary.invalidate();
             // Also add it to canvas immediately
             addBlockToCanvas({
                 id: newBlock.id,
-                name: newBlock.name,
+                name: newBlock.title,
                 sourceType: "USER",
-                fields: newBlock.fields.map((f: { key: string; label: string | null; fieldType: string; required: boolean; order: number }) => ({
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                fields: newBlock.fields.map((f: { key: string; label: string; fieldType: string; required: boolean }, i: number) => ({
                     key: f.key,
-                    label: f.label ?? f.key,
+                    label: f.label,
                     fieldType: f.fieldType as FieldType,
                     required: f.required,
-                    order: f.order,
+                    order: i,
                 })),
             });
             setModalOpen(false);
@@ -294,7 +301,7 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
         const validFields = modalFields.filter((f) => f.key.trim());
         if (!modalName.trim() || validFields.length === 0) return;
         createBlockMutation.mutate({
-            name: modalName.trim(),
+            title: modalName.trim(),
             fields: validFields.map((f) => ({
                 key: f.key.trim().toLowerCase().replace(/\s+/g, "_"),
                 label: f.label.trim() || f.key.trim(),
@@ -302,6 +309,15 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
                 required: false,
             })),
         });
+    };
+
+    // Handler for clicking "Create" button - check if PRO or show upgrade modal
+    const handleCreateBlockClick = () => {
+        if (isPro) {
+            setModalOpen(true);
+        } else {
+            setUpgradeModalOpen(true);
+        }
     };
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -474,9 +490,10 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
                         <div className="flex items-center justify-between mb-2">
                             <p className="text-xs font-medium text-slate-500">My Blocks</p>
                             <button
-                                onClick={() => setModalOpen(true)}
+                                onClick={handleCreateBlockClick}
                                 className="flex items-center gap-1 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors"
                             >
+                                {!isPro && <Lock className="w-3 h-3" />}
                                 <Plus className="w-3 h-3" />
                                 Create
                             </button>
@@ -485,9 +502,10 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
                             <div className="text-center py-6">
                                 <p className="text-xs text-[#868C94] mb-3">No custom blocks yet</p>
                                 <button
-                                    onClick={() => setModalOpen(true)}
-                                    className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors"
+                                    onClick={handleCreateBlockClick}
+                                    className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors inline-flex items-center gap-1"
                                 >
+                                    {!isPro && <Lock className="w-3 h-3" />}
                                     Create your first block →
                                 </button>
                             </div>
@@ -623,6 +641,9 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
                     </div>
                 </div>
             )}
+
+            {/* ── Upgrade Modal ── */}
+            <UpgradeModal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
         </div>
     );
 }

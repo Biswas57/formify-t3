@@ -15,6 +15,7 @@ import {
   X,
   Bell,
 } from "lucide-react";
+import PricingSection from "./_components/PricingSection";
 
 export default function HomePage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -43,7 +44,7 @@ export default function HomePage() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6 animate-fade-in-delay">
-            {["about", "features", "industries"].map((section) => (
+            {["about", "features", "industries", "pricing"].map((section) => (
               <button
                 key={section}
                 onClick={() => scrollToSection(section)}
@@ -78,7 +79,7 @@ export default function HomePage() {
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-sm">
             <div className="container mx-auto px-4 py-4 space-y-4">
-              {["about", "features", "industries"].map((section) => (
+              {["about", "features", "industries", "pricing"].map((section) => (
                 <button
                   key={section}
                   onClick={() => scrollToSection(section)}
@@ -432,6 +433,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Pricing ── */}
+      <PricingSection />
 
       {/* ── CTA ── */}
       <section className="py-16 sm:py-20">

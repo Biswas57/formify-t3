@@ -1,3 +1,4 @@
+// CORRECTED VERSION — replace src/app/transcription/TranscriptionClient.tsx
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -32,6 +33,16 @@ type RecordStatus = "idle" | "recording" | "finalizing" | "paused";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/**
+ * Canonical internal key format: lowercase snake_case.
+ * "Date of Birth" → "date_of_birth", "chief-complaint" → "chief_complaint"
+ * This must be applied consistently: when parsing templates, sending to server,
+ * AND when receiving attributes back from the server.
+ */
+function normalizeKey(key: string): string {
+    return key.trim().toLowerCase().replace(/[\s\-]+/g, "_");
+}
+
 function parseBlocks(raw: string): Record<string, string[]> {
     const result: Record<string, string[]> = {};
     for (const line of raw.split("\n")) {
@@ -42,7 +53,7 @@ function parseBlocks(raw: string): Record<string, string[]> {
         const fields = trimmed
             .slice(colonIdx + 1)
             .split(",")
-            .map((f) => f.trim())
+            .map((f) => normalizeKey(f))  // normalize to snake_case
             .filter(Boolean);
         if (blockName && fields.length > 0) result[blockName] = fields;
     }
@@ -96,6 +107,26 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const [isSendingEmail, setIsSendingEmail] = useState(false);
     const [emailStatus, setEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
+    // ── Template preload from query param ────────────────────────────────────────
+    const searchParams = useSearchParams();
+    const templateId = searchParams.get("templateId");
+
+    // True once we know what template to send: either no templateId (use default immediately),
+    // or templateId exists and the query has resolved (loaded OR failed).
+    const { data: preloadedTemplate, isLoading: templateLoading } = api.template.get.useQuery(
+        { id: templateId! },
+        {
+            enabled: !!templateId,
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
+            staleTime: Infinity,
+        }
+    );
+
+    // Template is ready to send when: no templateId, OR the query has settled (data or null)
+    const templateReady = !templateId || !templateLoading;
+
     // Derived
     const blocks = parseBlocks(templateRaw);
     const allFields = Object.values(blocks).flat();
@@ -103,30 +134,21 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const isRecording = recordStatus === "recording";
     const isFinalizing = recordStatus === "finalizing";
     const isPaused = recordStatus === "paused";
-    const canRecord = isConnected && blocksReady && !isFinalizing;
+    const canRecord = isConnected && blocksReady && !isFinalizing && templateReady;
     const errorMessage = wsError ?? micError;
-
-    // ── Template preload from query param ────────────────────────────────────────
-    const searchParams = useSearchParams();
-    const templateId = searchParams.get("templateId");
-
-    const { data: preloadedTemplate } = api.template.get.useQuery(
-        { id: templateId! },
-        {
-            enabled: !!templateId,
-            refetchOnMount: false,
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
-            staleTime: Infinity, // Template won't change during the session
-        }
-    );
 
     useEffect(() => {
         if (!preloadedTemplate) return;
         setFormTitle(preloadedTemplate.name);
+        // Build raw template string — field keys will be normalized by parseBlocks
         const raw = preloadedTemplate.blocks
             .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
-            .map((b: { title: string; fields: { key: string; order: number }[] }) => `${b.title}: ${b.fields.sort((a: { order: number }, b: { order: number }) => a.order - b.order).map((f: { key: string }) => f.key).join(", ")}`)
+            .map((b: { title: string; fields: { key: string; order: number }[] }) =>
+                `${b.title}: ${b.fields
+                    .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
+                    .map((f: { key: string }) => f.key)
+                    .join(", ")}`
+            )
             .join("\n");
         setTemplateRaw(raw);
     }, [preloadedTemplate]);
@@ -215,7 +237,22 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 }
 
                 if (msg.attributes !== undefined) {
-                    setAttributes((prev) => ({ ...prev, ...msg.attributes }));
+                    setAttributes((prev) => {
+                        // Build the allowed key set from the current template (already normalized)
+                        const allowedKeys = new Set(Object.values(parseBlocks(templateRaw)).flat());
+
+                        // Normalize incoming keys and drop anything not in the template
+                        const normalized: Record<string, string> = {};
+                        for (const [rawKey, val] of Object.entries(msg.attributes!)) {
+                            const key = normalizeKey(rawKey);
+                            if (allowedKeys.has(key) && val) {
+                                normalized[key] = val;
+                            } else if (!allowedKeys.has(key)) {
+                                console.warn(`[Formify] Dropping unknown attribute key: "${rawKey}" (normalized: "${key}")`);
+                            }
+                        }
+                        return { ...prev, ...normalized };
+                    });
                     // Final message after pause → leave finalizing
                     setRecordStatus((s) => (s === "finalizing" ? "paused" : s));
                 }
@@ -230,7 +267,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
         return () => { wsRef.current?.close(); };
     }, [connectWS]);
 
-    // ── Auto-send blocks once connected ──────────────────────────────────────
+    // ── Auto-send blocks once connected AND template is ready ────────────────
 
     const sendBlocks = useCallback(() => {
         const ws = wsRef.current;
@@ -238,12 +275,19 @@ export default function TranscriptionClient({ user }: { user: User }) {
         const parsed = parseBlocks(templateRaw);
         if (Object.keys(parsed).length === 0) return;
         ws.send(JSON.stringify({ action: "start", blocks: parsed }));
-        console.log("[Formify] Blocks sent:", Object.keys(parsed).join(", "));
+        console.log("[Formify] Blocks sent:", Object.keys(parsed).join(", "),
+            `(${Object.values(parsed).flat().length} fields)`);
     }, [templateRaw]);
 
     useEffect(() => {
-        if (wsStatus === "connected" && !blocksReadyRef.current) sendBlocks();
-    }, [wsStatus, sendBlocks]);
+        // Only send once connected AND the correct template is ready.
+        // If templateId is in the URL, wait for the query to settle before sending —
+        // this prevents sending DEFAULT_TEMPLATE and then a second start with the real
+        // template, which the server used to silently ignore.
+        if (wsStatus === "connected" && !blocksReadyRef.current && templateReady) {
+            sendBlocks();
+        }
+    }, [wsStatus, sendBlocks, templateReady]);
 
     // ── Recording ─────────────────────────────────────────────────────────────
 
@@ -270,7 +314,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
             recorder.onstop = () => stream.getTracks().forEach((t) => t.stop());
 
-            recorder.start(750);
+            recorder.start(500);
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             setMicError(
@@ -541,6 +585,14 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
             {/* ── Main ── */}
             <div className="container mx-auto px-4 py-8 max-w-3xl">
+
+                {/* Template loading state — only shown when waiting for a preloaded template */}
+                {templateId && !templateReady && (
+                    <div className="mb-6 flex items-center gap-2.5 bg-[#e8eef9] border border-[#2149A1]/20 text-[#2149A1] text-sm rounded-lg px-4 py-3">
+                        <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                        Loading template…
+                    </div>
+                )}
 
                 {/* Error banner */}
                 {errorMessage && (

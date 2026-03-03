@@ -123,9 +123,14 @@ function LoginForm() {
                     {/* Mobile logo */}
                     <div className="lg:hidden mb-8 text-center">
                         <Link href="/">
-                            <span className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-[#2149A1] to-[#4a72d4] text-transparent bg-clip-text italic">
-                                Formify
-                            </span>
+                            <div className="flex items-center gap-2.5 animate-fade-in">
+                                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                                    <Mic className="w-6 h-6 text-white" />
+                                </div>
+                                <span className="text-3xl font-extrabold tracking-tight text-white">
+                                    Formify
+                                </span>
+                            </div>
                         </Link>
                     </div>
 

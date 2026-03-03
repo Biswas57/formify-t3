@@ -2,6 +2,7 @@
 
 import { signOut } from "next-auth/react";
 import { LogOut, User, Mail, Calendar, FileText, ShieldCheck } from "lucide-react";
+import BillingCard from "@/app/_components/BillingCard";
 
 interface Props {
     user: {
@@ -41,7 +42,7 @@ export default function ProfileClient({ user }: Props) {
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-slate-900">Profile</h1>
-                    <p className="text-sm text-[#868C94] mt-1">Your account details</p>
+                    <p className="text-sm text-[#868C94] mt-1">Your account details and subscription</p>
                 </div>
 
                 {/* Avatar + name card */}
@@ -81,58 +82,72 @@ export default function ProfileClient({ user }: Props) {
                     </div>
                 </div>
 
-                {/* Details */}
-                <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 mb-5">
-                    <div className="flex items-center gap-4 px-5 md:px-6 py-4">
-                        <User className="w-4 h-4 text-[#868C94] flex-shrink-0" />
-                        <div>
-                            <p className="text-xs text-[#868C94] mb-0.5">Full name</p>
-                            <p className="text-sm text-slate-800">{user.name ?? "—"}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4 px-5 md:px-6 py-4">
-                        <Mail className="w-4 h-4 text-[#868C94] flex-shrink-0" />
-                        <div>
-                            <p className="text-xs text-[#868C94] mb-0.5">Email</p>
-                            <p className="text-sm text-slate-800">{user.email}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4 px-5 md:px-6 py-4">
-                        <Calendar className="w-4 h-4 text-[#868C94] flex-shrink-0" />
-                        <div>
-                            <p className="text-xs text-[#868C94] mb-0.5">Member since</p>
-                            <p className="text-sm text-slate-800">{formatDate(user.createdAt)}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4 px-5 md:px-6 py-4">
-                        <FileText className="w-4 h-4 text-[#868C94] flex-shrink-0" />
-                        <div>
-                            <p className="text-xs text-[#868C94] mb-0.5">Templates created</p>
-                            <p className="text-sm text-slate-800">{user._count.templates}</p>
-                        </div>
-                    </div>
+                {/* ── Subscription / Billing ── */}
+                <div className="mb-5">
+                    <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3 px-1">
+                        Subscription
+                    </p>
+                    <BillingCard />
                 </div>
 
-                {/* Actions */}
-                <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
-                    <div className="px-5 md:px-6 py-4">
-                        <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3">
-                            Account
-                        </p>
-                        <button
-                            onClick={() => void signOut({ callbackUrl: "/" })}
-                            className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-red-600 transition-colors group min-h-[44px]"
-                        >
-                            <LogOut className="w-4 h-4 group-hover:text-red-500 transition-colors" />
-                            Sign out
-                        </button>
+                {/* Account details */}
+                <div className="mb-5">
+                    <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3 px-1">
+                        Account details
+                    </p>
+                    <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 mb-5">
+                        <div className="flex items-center gap-4 px-5 md:px-6 py-4">
+                            <User className="w-4 h-4 text-[#868C94] flex-shrink-0" />
+                            <div>
+                                <p className="text-xs text-[#868C94] mb-0.5">Full name</p>
+                                <p className="text-sm text-slate-800">{user.name ?? "—"}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4 px-5 md:px-6 py-4">
+                            <Mail className="w-4 h-4 text-[#868C94] flex-shrink-0" />
+                            <div>
+                                <p className="text-xs text-[#868C94] mb-0.5">Email</p>
+                                <p className="text-sm text-slate-800">{user.email}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4 px-5 md:px-6 py-4">
+                            <Calendar className="w-4 h-4 text-[#868C94] flex-shrink-0" />
+                            <div>
+                                <p className="text-xs text-[#868C94] mb-0.5">Member since</p>
+                                <p className="text-sm text-slate-800">{formatDate(user.createdAt)}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4 px-5 md:px-6 py-4">
+                            <FileText className="w-4 h-4 text-[#868C94] flex-shrink-0" />
+                            <div>
+                                <p className="text-xs text-[#868C94] mb-0.5">Templates created</p>
+                                <p className="text-sm text-slate-800">{user._count.templates}</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <p className="text-xs text-slate-400 text-center mt-8">
-                    Account management features (password change, delete account) coming soon.
-                </p>
+                </div>
             </div>
+
+            {/* Actions */}
+            <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
+                <div className="px-5 md:px-6 py-4">
+                    <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3">
+                        Account
+                    </p>
+                    <button
+                        onClick={() => void signOut({ callbackUrl: "/" })}
+                        className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-red-600 transition-colors group min-h-[44px]"
+                    >
+                        <LogOut className="w-4 h-4 group-hover:text-red-500 transition-colors" />
+                        Sign out
+                    </button>
+                </div>
+            </div>
+
+            <p className="text-xs text-slate-400 text-center mt-8">
+                Account management features (password change, delete account) coming soon.
+            </p>
         </div>
     );
 }
