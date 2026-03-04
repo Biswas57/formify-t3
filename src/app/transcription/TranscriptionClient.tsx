@@ -91,6 +91,10 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
     // Template
     const [templateRaw, setTemplateRaw] = useState(DEFAULT_TEMPLATE);
+    // Ref so the WS onmessage closure always sees the current template,
+    // even though connectWS has [] deps and can't re-capture templateRaw state.
+    const templateRawRef = useRef(templateRaw);
+    useEffect(() => { templateRawRef.current = templateRaw; }, [templateRaw]);
     const [templateOpen, setTemplateOpen] = useState(false);
     const [formTitle, setFormTitle] = useState("New Form");
 
@@ -239,7 +243,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 if (msg.attributes !== undefined) {
                     setAttributes((prev) => {
                         // Build the allowed key set from the current template (already normalized)
-                        const allowedKeys = new Set(Object.values(parseBlocks(templateRaw)).flat());
+                        const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
 
                         // Normalize incoming keys and drop anything not in the template
                         const normalized: Record<string, string> = {};
