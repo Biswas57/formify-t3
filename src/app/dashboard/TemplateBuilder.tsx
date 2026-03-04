@@ -386,7 +386,7 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
                             <p className="text-slate-700 font-medium mb-1">No blocks yet</p>
                             <p className="text-sm text-[#868C94]">
                                 <span className="hidden md:inline">Add blocks from the library on the right →</span>
-                                <span className="md:hidden">Tap "Add Block" below to get started</span>
+                                <span className="md:hidden">Tap &ldquo;Add Block&rdquo; below to get started</span>
                             </p>
                         </div>
                     ) : (
