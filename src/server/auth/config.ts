@@ -72,6 +72,40 @@ export const authConfig = {
   },
 
   callbacks: {
+    async signIn({ user, account }) {
+      // Handle the case where a user registered with email/password and then
+      // tries to sign in with Google using the same email (OAuthAccountNotLinked)
+      if (account?.provider === "google" && user.email) {
+        const existingUser = await db.user.findUnique({ where: { email: user.email } });
+        if (existingUser) {
+          const existingAccount = await db.account.findUnique({
+            where: {
+              provider_providerAccountId: {
+                provider: "google",
+                providerAccountId: account.providerAccountId,
+              },
+            },
+          });
+          if (!existingAccount) {
+            await db.account.create({
+              data: {
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
+              },
+            });
+          }
+          // Update the user object so JWT gets the correct id
+          user.id = existingUser.id;
+        }
+      }
+      return true;
+    },
     jwt({ token, user }) {
       if (user) token.id = user.id;
       return token;
