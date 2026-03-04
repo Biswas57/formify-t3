@@ -127,27 +127,27 @@ export default function ProfileClient({ user }: Props) {
                     </div>
 
                 </div>
-            </div>
 
-            {/* Actions */}
-            <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
-                <div className="px-5 md:px-6 py-4">
-                    <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3">
-                        Account
-                    </p>
-                    <button
-                        onClick={() => void signOut({ callbackUrl: "/" })}
-                        className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-red-600 transition-colors group min-h-[44px]"
-                    >
-                        <LogOut className="w-4 h-4 group-hover:text-red-500 transition-colors" />
-                        Sign out
-                    </button>
+                {/* Actions */}
+                <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
+                    <div className="px-5 md:px-6 py-4">
+                        <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3">
+                            Account
+                        </p>
+                        <button
+                            onClick={() => void signOut({ callbackUrl: "/" })}
+                            className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-red-600 transition-colors group min-h-[44px]"
+                        >
+                            <LogOut className="w-4 h-4 group-hover:text-red-500 transition-colors" />
+                            Sign out
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <p className="text-xs text-slate-400 text-center mt-8">
-                Account management features (password change, delete account) coming soon.
-            </p>
+                <p className="text-xs text-slate-400 text-center mt-8 pb-8">
+                    Account management features (password change, delete account) coming soon.
+                </p>
+            </div>
         </div>
     );
 }

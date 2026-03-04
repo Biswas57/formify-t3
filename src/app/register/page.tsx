@@ -184,7 +184,7 @@ export default function RegisterPage() {
                                 <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
                                     <Mic className="w-6 h-6 text-white" />
                                 </div>
-                                <span className="text-3xl font-extrabold tracking-tight text-white">
+                                <span className="text-3xl font-extrabold tracking-tight text-black">
                                     Formify
                                 </span>
                             </div>

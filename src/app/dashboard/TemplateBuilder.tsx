@@ -136,6 +136,7 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
     // Custom block modal
     const [modalOpen, setModalOpen] = useState(false);
     const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+    const [showLibrary, setShowLibrary] = useState(false);
     const [modalName, setModalName] = useState("");
     const [modalFields, setModalFields] = useState<
         { key: string; label: string; fieldType: FieldType }[]
@@ -265,6 +266,16 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
         setDragOverIndex(null);
     };
 
+    const moveBlock = useCallback((idx: number, direction: -1 | 1) => {
+        setBlocks((prev) => {
+            const next = [...prev];
+            const targetIdx = idx + direction;
+            if (targetIdx < 0 || targetIdx >= next.length) return prev;
+            [next[idx], next[targetIdx]] = [next[targetIdx]!, next[idx]!];
+            return next;
+        });
+    }, []);
+
     // ── Save ──────────────────────────────────────────────────────────────────
 
     const handleSave = () => {
@@ -325,9 +336,9 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
     // ─────────────────────────────────────────────────────────────────────────
 
     return (
-        <div className="flex flex-col h-screen bg-[#FBFBFB]">
+        <div className="flex flex-col flex-1 min-h-0 bg-[#FBFBFB]">
             {/* ── Top bar ── */}
-            <header className="flex items-center gap-4 px-6 py-3.5 border-b border-slate-200 bg-white sticky top-0 z-30 md:static">
+            <header className="flex items-center gap-3 px-4 md:px-6 py-3 md:py-3.5 border-b border-slate-200 bg-white sticky top-0 z-30 md:static">
                 <Link
                     href="/dashboard/formbank"
                     className="flex items-center gap-1.5 text-sm text-[#868C94] hover:text-slate-700 transition-colors flex-shrink-0"
@@ -366,7 +377,7 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
             <div className="flex flex-1 min-h-0 overflow-hidden">
 
                 {/* ── Canvas ── */}
-                <div className="flex-1 overflow-y-auto px-6 py-6">
+                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 pb-28 md:pb-6">
                     {blocks.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center py-20">
                             <div className="w-16 h-16 bg-[#e8eef9] rounded-2xl flex items-center justify-center mb-4">
@@ -374,7 +385,8 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
                             </div>
                             <p className="text-slate-700 font-medium mb-1">No blocks yet</p>
                             <p className="text-sm text-[#868C94]">
-                                Add blocks from the library on the right →
+                                <span className="hidden md:inline">Add blocks from the library on the right →</span>
+                                <span className="md:hidden">Tap "Add Block" below to get started</span>
                             </p>
                         </div>
                     ) : (
@@ -393,10 +405,30 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
                                         }`}
                                 >
                                     {/* Block header */}
-                                    <div className="flex items-center gap-3 px-4 py-3 bg-white">
-                                        {/* Drag handle */}
-                                        <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors flex-shrink-0">
+                                    <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-3 bg-white">
+                                        {/* Drag handle — desktop only */}
+                                        <div className="hidden md:block cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors flex-shrink-0">
                                             <GripVertical className="w-4 h-4" />
+                                        </div>
+
+                                        {/* Up/down reorder — mobile only */}
+                                        <div className="flex md:hidden flex-col flex-shrink-0">
+                                            <button
+                                                onClick={() => moveBlock(idx, -1)}
+                                                disabled={idx === 0}
+                                                className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors"
+                                                title="Move up"
+                                            >
+                                                <ChevronUp className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => moveBlock(idx, 1)}
+                                                disabled={idx === blocks.length - 1}
+                                                className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors"
+                                                title="Move down"
+                                            >
+                                                <ChevronDown className="w-3.5 h-3.5" />
+                                            </button>
                                         </div>
 
                                         <div className="flex-1 min-w-0">
@@ -412,10 +444,10 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
                                             </p>
                                         </div>
 
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-0.5">
                                             <button
                                                 onClick={() => toggleCollapse(block.instanceId)}
-                                                className="p-1.5 rounded-lg text-[#868C94] hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 hover:text-slate-700 transition-colors"
                                                 title={block.collapsed ? "Expand" : "Collapse"}
                                             >
                                                 {block.collapsed ? (
@@ -426,7 +458,7 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
                                             </button>
                                             <button
                                                 onClick={() => removeBlock(block.instanceId)}
-                                                className="p-1.5 rounded-lg text-[#868C94] hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-red-50 hover:text-red-500 transition-colors"
                                                 title="Remove block"
                                             >
                                                 <X className="w-4 h-4" />
@@ -462,7 +494,7 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
                 </div>
 
                 {/* ── Block Library (right panel) ── */}
-                <aside className="w-72 shrink-0 border-l border-slate-200 bg-white overflow-y-auto">
+                <aside className="hidden md:flex md:flex-col w-72 shrink-0 border-l border-slate-200 bg-white overflow-y-auto">
                     <div className="px-4 py-4 border-b border-slate-100">
                         <h2 className="text-xs font-semibold text-[#868C94] uppercase tracking-widest">
                             Block Library
@@ -644,6 +676,123 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
 
             {/* ── Upgrade Modal ── */}
             <UpgradeModal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
+
+            {/* ── Mobile sticky bottom bar ── */}
+            <div
+                className="fixed bottom-0 left-0 right-0 md:hidden z-30 bg-white border-t border-slate-200 px-4 py-3"
+                style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+            >
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setShowLibrary(true)}
+                        className="flex-1 flex items-center justify-center gap-2 border border-slate-200 text-slate-700 text-sm font-medium py-3 rounded-xl hover:bg-slate-50 transition-colors"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Block
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving || blocks.length === 0 || !templateName.trim()}
+                        className="flex-1 flex items-center justify-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium py-3 rounded-xl transition-all"
+                    >
+                        {isSaving ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : saved ? (
+                            <Check className="w-4 h-4" />
+                        ) : (
+                            <Save className="w-4 h-4" />
+                        )}
+                        {isSaving ? "Saving…" : saved ? "Saved" : "Save"}
+                    </button>
+                </div>
+            </div>
+
+            {/* ── Mobile block library bottom sheet ── */}
+            {showLibrary && (
+                <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/40"
+                        onClick={() => setShowLibrary(false)}
+                    />
+                    {/* Sheet */}
+                    <div className="relative bg-white rounded-t-2xl flex flex-col max-h-[75vh]">
+                        {/* Pull indicator */}
+                        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+                            <div className="w-10 h-1 bg-slate-200 rounded-full" />
+                        </div>
+                        {/* Sheet header */}
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 flex-shrink-0">
+                            <h2 className="font-semibold text-slate-900">Block Library</h2>
+                            <button
+                                onClick={() => setShowLibrary(false)}
+                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        {/* Sheet content */}
+                        <div
+                            className="overflow-y-auto flex-1 px-4"
+                            style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
+                        >
+                            {/* System blocks */}
+                            <div className="py-3">
+                                <p className="text-xs font-medium text-slate-500 mb-2">System Blocks</p>
+                                <div className="space-y-1.5">
+                                    {allLibraryBlocks
+                                        .filter((b) => b.sourceType === "SYSTEM")
+                                        .map((lib) => (
+                                            <LibraryBlockRow
+                                                key={lib.id}
+                                                block={lib}
+                                                onAdd={() => { addBlockToCanvas(lib); setShowLibrary(false); }}
+                                            />
+                                        ))}
+                                </div>
+                            </div>
+                            {/* Custom blocks */}
+                            <div className="py-3 border-t border-slate-100">
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-medium text-slate-500">My Blocks</p>
+                                    <button
+                                        onClick={() => { setShowLibrary(false); handleCreateBlockClick(); }}
+                                        className="flex items-center gap-1 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors"
+                                    >
+                                        {!isPro && <Lock className="w-3 h-3" />}
+                                        <Plus className="w-3 h-3" />
+                                        Create
+                                    </button>
+                                </div>
+                                {allLibraryBlocks.filter((b) => b.sourceType === "USER").length === 0 ? (
+                                    <div className="text-center py-6">
+                                        <p className="text-xs text-[#868C94] mb-3">No custom blocks yet</p>
+                                        <button
+                                            onClick={() => { setShowLibrary(false); handleCreateBlockClick(); }}
+                                            className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors inline-flex items-center gap-1"
+                                        >
+                                            {!isPro && <Lock className="w-3 h-3" />}
+                                            Create your first block →
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1.5">
+                                        {allLibraryBlocks
+                                            .filter((b) => b.sourceType === "USER")
+                                            .map((lib) => (
+                                                <LibraryBlockRow
+                                                    key={lib.id}
+                                                    block={lib}
+                                                    onAdd={() => { addBlockToCanvas(lib); setShowLibrary(false); }}
+                                                />
+                                            ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -669,7 +818,7 @@ function LibraryBlockRow({
             </div>
             <button
                 onClick={onAdd}
-                className="ml-2 flex items-center justify-center w-7 h-7 rounded-lg bg-[#2149A1] text-white opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 hover:bg-[#1a3a87]"
+                className="ml-2 flex items-center justify-center w-8 h-8 rounded-lg bg-[#2149A1] text-white flex-shrink-0 hover:bg-[#1a3a87] transition-colors"
                 title="Add to template"
             >
                 <Plus className="w-3.5 h-3.5" />
