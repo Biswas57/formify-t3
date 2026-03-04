@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import type { BlockSource, FieldType } from "../../../../generated/prisma";
+import type { BlockSource, FieldType, PrismaClient } from "../../../../generated/prisma";
 import { TRPCError } from "@trpc/server";
 import { getUserEntitlements, hasFeature, FEATURES } from "@/server/entitlements";
 import { PLAN_LIMITS } from "@/server/entitlements/features";
@@ -26,7 +26,7 @@ const templateBodySchema = z.object({
     blocks: z.array(templateBlockSchema),
 });
 
-async function enforceFreeTemplateLimit(userId: string, db: any) {
+async function enforceFreeTemplateLimit(userId: string, db: PrismaClient) {
     const entitlements = await getUserEntitlements(userId);
     if (hasFeature(entitlements, FEATURES.TEMPLATES_UNLIMITED)) return;
     const count = await db.template.count({ where: { ownerId: userId } });
