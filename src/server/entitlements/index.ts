@@ -32,7 +32,12 @@ export async function getUserEntitlements(
         include: { plan: true },
     });
 
-    // Default to free plan if no subscription
+    // Default to free plan if no subscription.
+    // features: [] is correct today because the free plan has no features.
+    // If the free plan ever gains features, update PLAN_FEATURES.free in
+    // features.ts, re-run the seed to write them into the Plan row, and
+    // replace [] here with JSON.parse(freePlan.featuresJson) after a
+    // db.plan.findUnique({ where: { slug: "free" } }) lookup.
     if (!userPlan) {
         return {
             planSlug: "free",
