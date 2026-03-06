@@ -29,7 +29,9 @@ export const PLAN_FEATURES: Record<string, FeatureKey[]> = {
 };
 
 export const PLAN_LIMITS = {
-    FREE_TEMPLATES: 5,
+    // Aligned with Stripe pricing table: Free plan shows "Up to 10 templates"
+    FREE_TEMPLATES: 10,
+    // Aligned with BillingCard copy: "3 transcription sessions per day"
     FREE_DAILY_TRANSCRIPTIONS: 3,
 } as const;
 

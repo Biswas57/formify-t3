@@ -115,7 +115,7 @@ export default function BillingCard() {
                             <div className="text-xs text-[#868C94] space-y-0.5 pt-1 border-t border-slate-100">
                                 <ul className="space-y-0.5 mb-1.5">
                                     <li>• {usage?.limit ?? 3} transcription sessions per day</li>
-                                    <li>• Up to 5 saved templates</li>
+                                    <li>• Up to 10 saved templates</li>
                                     <li>• System blocks only</li>
                                 </ul>
                                 <button onClick={() => setShowUpgradeModal(true)} className="text-[#2149A1] font-medium hover:underline">
