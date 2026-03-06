@@ -4,7 +4,6 @@ import { blockRouter } from "@/server/api/routers/block";
 import { templateRouter } from "@/server/api/routers/template";
 import { billingRouter } from "@/server/api/routers/billing";
 import { entitlementsRouter } from "@/server/api/routers/entitlements";
-import { customBlockRouter } from "@/server/api/routers/customBlock";
 import { usageRouter } from "@/server/api/routers/usage";
 
 
@@ -18,7 +17,6 @@ export const appRouter = createTRPCRouter({
   post: postRouter,
   template: templateRouter,
   block: blockRouter,
-  customBlock: customBlockRouter,
   billing: billingRouter,
   entitlements: entitlementsRouter,
   usage: usageRouter,

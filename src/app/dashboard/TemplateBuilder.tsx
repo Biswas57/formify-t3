@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { SystemBlock } from "@/server/blocks-library";
 import UpgradeModal from "./_components/UpgradeModal";
+import { hasFeature, FEATURES } from "@/server/entitlements";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -146,7 +147,7 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
 
     // Check user entitlements
     const { data: entitlements } = api.entitlements.me.useQuery();
-    const isPro = entitlements?.planSlug === "pro";
+    const isPro = entitlements ? hasFeature(entitlements, FEATURES.CUSTOM_BLOCKS_CREATE) : false;
 
     const createMutation = api.template.create.useMutation({
         onSuccess: (t: { id: string }) => {

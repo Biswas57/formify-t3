@@ -11,6 +11,7 @@ import {
     Download, Mail, X
 } from "lucide-react";
 import { formatFieldLabel } from "@/lib/format-field-label";
+import { env } from "@/env";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -61,7 +62,7 @@ function parseBlocks(raw: string): Record<string, string[]> {
 }
 
 function getWSUrl(): string {
-    return process.env.NEXT_PUBLIC_WS_URL ?? "wss://formify-transcription-server.onrender.com";
+    return env.NEXT_PUBLIC_WS_URL;
 }
 
 const SUPPORTED_MIME =
@@ -358,9 +359,11 @@ export default function TranscriptionClient({ user }: { user: User }) {
         allFields.forEach((f) => { empty[f] = ""; });
         setAttributes(empty);
         setEditedValues(empty);
+        // Setting blocksReadyRef to false is enough — the useEffect watching
+        // wsStatus + blocksReady will fire and call sendBlocks() once.
+        // Calling sendBlocks() directly here would send a second start action.
         blocksReadyRef.current = false;
         setBlocksReady(false);
-        sendBlocks();
     };
 
     // ── PDF Export ────────────────────────────────────────────────────────────
