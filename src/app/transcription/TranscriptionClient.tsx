@@ -112,6 +112,8 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const [isSendingEmail, setIsSendingEmail] = useState(false);
     const [emailStatus, setEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
+    const recordSessionMutation = api.usage.recordSession.useMutation();
+
     // ── Template preload from query param ────────────────────────────────────────
     const searchParams = useSearchParams();
     const templateId = searchParams.get("templateId");
@@ -338,7 +340,9 @@ export default function TranscriptionClient({ user }: { user: User }) {
             ws.send(JSON.stringify({ action: "stop" }));
             console.log("[Formify] Paused — awaiting final extraction");
         }
-    }, []);
+        // Record usage so the daily counter increments
+        recordSessionMutation.mutate();
+    }, [recordSessionMutation]);
 
     // ── Edit / Save ───────────────────────────────────────────────────────────
 
