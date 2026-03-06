@@ -8,9 +8,9 @@ import {
     ChevronDown, ChevronUp, X, Plus, Save, ArrowLeft,
     GripVertical, Loader2, Check, Lock,
 } from "lucide-react";
-import type { SystemBlock } from "@/server/blocks-library";
-import UpgradeModal from "./_components/UpgradeModal";
+import { SYSTEM_BLOCKS } from "@/server/blocks-library";
 import { hasFeature, FEATURES } from "@/server/entitlements/features";
+import UpgradeModal from "./_components/UpgradeModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -116,11 +116,9 @@ function canvasToSavePayload(name: string, blocks: CanvasBlock[]) {
 
 interface Props {
     initialTemplate?: DBTemplate;
-    systemBlocks: SystemBlock[];
-    userBlocks: LibraryBlock[];
 }
 
-export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlocks }: Props) {
+export default function TemplateBuilder({ initialTemplate }: Props) {
     const router = useRouter();
 
     // Canvas state
@@ -145,7 +143,7 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
 
     const utils = api.useUtils();
 
-    // Check user entitlements
+    // Check user entitlements — reads from server-prefetched cache, no waterfall.
     const { data: entitlements } = api.entitlements.me.useQuery();
     const isPro = entitlements ? hasFeature(entitlements, FEATURES.CUSTOM_BLOCKS_CREATE) : false;
 
@@ -187,23 +185,19 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
     });
 
     // ── Library for right panel ───────────────────────────────────────────────
+    // No initialData needed — server prefetched this in the page component.
+    // staleTime=5min means no background refetch on mount.
+    const { data: libraryData } = api.block.listLibrary.useQuery();
 
-    const { data: libraryData } = api.block.listLibrary.useQuery(undefined, {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-        initialData: { systemBlocks, userBlocks } as any,
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const allLibraryBlocks: LibraryBlock[] = [
-        ...(libraryData?.systemBlocks ?? systemBlocks).map((b: SystemBlock) => ({
+        ...(libraryData?.systemBlocks ?? SYSTEM_BLOCKS).map((b) => ({
             id: b.id,
             name: b.name,
             sourceType: "SYSTEM" as const,
             fields: b.fields as CanvasField[],
         })),
-        ...(libraryData?.userBlocks ?? userBlocks),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ] as any;
+        ...(libraryData?.userBlocks ?? []) as LibraryBlock[],
+    ];
 
     // ── Canvas operations ─────────────────────────────────────────────────────
 

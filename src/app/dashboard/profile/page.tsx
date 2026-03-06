@@ -1,13 +1,11 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
-import { redirect } from "next/navigation";
 import ProfileClient from "./ProfileClient";
-
-export const metadata = { title: "Formify" };
 
 export default async function ProfilePage() {
     const session = await auth();
-    if (!session?.user) redirect("/login");
+    if (!session?.user?.id) redirect("/login");
 
     const user = await db.user.findUnique({
         where: { id: session.user.id },
@@ -16,13 +14,30 @@ export default async function ProfilePage() {
             name: true,
             email: true,
             image: true,
-            createdAt: true,
+            passwordHash: true,
             accounts: { select: { provider: true } },
-            _count: { select: { templates: true } },
         },
     });
 
     if (!user) redirect("/login");
 
-    return <ProfileClient user={user} />;
+    return (
+        <ProfileClient
+            user={{
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                image: user.image,
+                // Pass whether they have a password without exposing the hash
+                accounts: [
+                    ...user.accounts,
+                    // If passwordHash exists, represent it as a credentials account
+                    // even if no Account row exists (legacy credential users)
+                    ...(user.passwordHash && !user.accounts.find(a => a.provider === "credentials")
+                        ? [{ provider: "credentials" }]
+                        : []),
+                ],
+            }}
+        />
+    );
 }

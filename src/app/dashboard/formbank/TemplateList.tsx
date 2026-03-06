@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import {
     Plus, Mic, Pencil, Copy, Trash2, FileText,
-    ChevronRight, Sparkles, MoreHorizontal, Search
+    ChevronRight, Sparkles, MoreHorizontal, Search, Loader2
 } from "lucide-react";
 import type { SystemBlock } from "@/server/blocks-library";
 
@@ -43,14 +43,13 @@ interface ExampleTemplate {
 }
 
 interface Props {
-    initialTemplates: Template[];
     exampleTemplates: ExampleTemplate[];
     systemBlocks: SystemBlock[];
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function TemplateList({ initialTemplates, exampleTemplates, systemBlocks }: Props) {
+export default function TemplateList({ exampleTemplates, systemBlocks }: Props) {
     const router = useRouter();
     const [search, setSearch] = useState("");
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -58,10 +57,9 @@ export default function TemplateList({ initialTemplates, exampleTemplates, syste
 
     const utils = api.useUtils();
 
-    const { data: templates = initialTemplates } = api.template.list.useQuery(undefined, {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-        initialData: initialTemplates as any,
-    });
+    // No initialData — reads directly from the server-prefetched cache.
+    // staleTime=5min means no background refetch unless data is actually stale.
+    const { data: templates = [], isLoading } = api.template.list.useQuery();
 
     const deleteMutation = api.template.delete.useMutation({
         onSuccess: () => void utils.template.list.invalidate(),
@@ -113,6 +111,35 @@ export default function TemplateList({ initialTemplates, exampleTemplates, syste
 
         createFromExample.mutate({ name: ex.name, blocks });
     };
+
+    // ── Skeleton ──────────────────────────────────────────────────────────────
+
+    if (isLoading) {
+        return (
+            <div>
+                <div className="flex items-start justify-between mb-6">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">Form Bank</h1>
+                        <p className="text-sm text-[#868C94] mt-1">Your saved templates</p>
+                    </div>
+                    <div className="w-36 h-10 bg-slate-200 rounded-lg animate-pulse" />
+                </div>
+                <div className="space-y-2 mb-10">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-white border border-slate-200 rounded-xl px-5 py-4">
+                            <div className="flex items-center gap-4">
+                                <div className="w-9 h-9 bg-slate-200 rounded-lg animate-pulse flex-shrink-0" />
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-4 bg-slate-200 rounded animate-pulse w-48" />
+                                    <div className="h-3 bg-slate-100 rounded animate-pulse w-32" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -214,7 +241,10 @@ export default function TemplateList({ initialTemplates, exampleTemplates, syste
                                     disabled={createFromExample.isPending}
                                     className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors disabled:opacity-50 min-h-[36px]"
                                 >
-                                    Use this template <ChevronRight className="w-3.5 h-3.5" />
+                                    {createFromExample.isPending
+                                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        : <>Use this template <ChevronRight className="w-3.5 h-3.5" /></>
+                                    }
                                 </button>
                             </div>
                         );
@@ -263,7 +293,6 @@ function TemplateRow({
                 {/* Name + meta */}
                 <div className="flex-1 min-w-0">
                     <p className="font-semibold text-slate-800 text-sm">{template.name}</p>
-                    {/* Block chips — always visible, max 3 */}
                     {template.blocks.length > 0 && (
                         <div className="flex items-center gap-1.5 flex-wrap mt-1">
                             {template.blocks.slice(0, 3).map((b) => (
@@ -281,7 +310,7 @@ function TemplateRow({
                     </p>
                 </div>
 
-                {/* Actions — always visible, responsive */}
+                {/* Actions */}
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                     <Link href={`/transcription?templateId=${template.id}`}>
                         <button className="flex items-center gap-1.5 bg-[#2149A1] hover:bg-[#1a3a87] text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors min-h-[36px]">
@@ -307,7 +336,6 @@ function TemplateRow({
 
                         {openMenu === template.id && (
                             <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-20 py-1">
-                                {/* Edit — mobile only (hidden on sm+) */}
                                 <Link href={`/dashboard/templates/${template.id}`} className="sm:hidden">
                                     <button className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
                                         <Pencil className="w-3.5 h-3.5" />
