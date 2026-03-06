@@ -374,7 +374,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Industries ── */}
-      <section id="industries" className="py-16 sm:py-20 bg-[#FBFBFB]">
+      <section id="industries" className="py-16 sm:py-20 bg-[#FBFBFB] overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12 sm:mb-16 animate-fade-up">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">
@@ -386,7 +386,7 @@ export default function HomePage() {
           </div>
 
           {/* Stacked paper cards */}
-          <div className="flex justify-center">
+          <div className="flex justify-center overflow-hidden">
             <div className="relative w-full max-w-[320px] sm:max-w-[480px] md:max-w-[600px] h-64 sm:h-80 md:h-96 group">
               {[
                 { label: "Legal", icon: Bell, color: "orange", rotate: "-15deg", left: "0px", z: 10 },
