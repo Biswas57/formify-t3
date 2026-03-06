@@ -1,17 +1,16 @@
-import { api } from "@/trpc/server";
-import TemplateBuilder from "../TemplateBuilder";
+import { api, HydrateClient } from "@/trpc/server";
+import TemplateBuilderLazy from "../TemplateBuilderLazy";
 
-export const metadata = { title: "Formify" };
+export const metadata = { title: "New Template — Formify" };
 
 export default async function NewTemplatePage() {
-    const library = await api.block.listLibrary();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    const userBlocksAny = library.userBlocks as any;
+    // Prefetch block library server-side — dehydrates into HTML.
+    // TemplateBuilder reads from cache on mount, no client waterfall.
+    void api.block.listLibrary.prefetch();
+
     return (
-        <TemplateBuilder
-            systemBlocks={library.systemBlocks}
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            userBlocks={userBlocksAny}
-        />
+        <HydrateClient>
+            <TemplateBuilderLazy />
+        </HydrateClient>
     );
 }
