@@ -163,18 +163,17 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
         },
     });
 
-    const createBlockMutation = api.customBlock.create.useMutation({
+    const createBlockMutation = api.block.createCustom.useMutation({
         onSuccess: (newBlock) => {
             void utils.block.listLibrary.invalidate();
             // Also add it to canvas immediately
             addBlockToCanvas({
                 id: newBlock.id,
-                name: newBlock.title,
+                name: newBlock.name,
                 sourceType: "USER",
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                fields: newBlock.fields.map((f: { key: string; label: string; fieldType: string; required: boolean }, i: number) => ({
+                fields: newBlock.fields.map((f, i) => ({
                     key: f.key,
-                    label: f.label,
+                    label: f.label ?? f.key,
                     fieldType: f.fieldType as FieldType,
                     required: f.required,
                     order: i,
@@ -312,7 +311,7 @@ export default function TemplateBuilder({ initialTemplate, systemBlocks, userBlo
         const validFields = modalFields.filter((f) => f.key.trim());
         if (!modalName.trim() || validFields.length === 0) return;
         createBlockMutation.mutate({
-            title: modalName.trim(),
+            name: modalName.trim(),
             fields: validFields.map((f) => ({
                 key: f.key.trim().toLowerCase().replace(/\s+/g, "_"),
                 label: f.label.trim() || f.key.trim(),
