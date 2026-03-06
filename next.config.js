@@ -5,6 +5,16 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+    images: {
+        remotePatterns: [
+            {
+                // Google OAuth profile pictures (lh3.googleusercontent.com)
+                protocol: "https",
+                hostname: "**.googleusercontent.com",
+            },
+        ],
+    },
+};
 
 export default config;

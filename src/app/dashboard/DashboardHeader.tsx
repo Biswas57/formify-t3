@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -118,9 +119,11 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                         className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors group"
                     >
                         {user.image ? (
-                            <img
+                            <Image
                                 src={user.image}
                                 alt={user.name ?? "User"}
+                                width={28}
+                                height={28}
                                 className="w-7 h-7 rounded-full object-cover"
                             />
                         ) : (
@@ -207,9 +210,11 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                 {/* User info */}
                 <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-100">
                     {user.image ? (
-                        <img
+                        <Image
                             src={user.image}
                             alt={user.name ?? "User"}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                         />
                     ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { signOut } from "next-auth/react";
 import { LogOut, User, Mail, ShieldCheck, Pencil, Lock, Trash2, Eye, EyeOff, Loader2, Check, AlertCircle } from "lucide-react";
 import BillingCard from "@/app/_components/BillingCard";
@@ -323,9 +324,11 @@ export default function ProfileClient({ user }: Props) {
                 {/* Avatar + name card */}
                 <div className="bg-white border border-slate-200 rounded-xl p-5 md:p-6 mb-5 flex items-center gap-4 md:gap-5">
                     {user.image ? (
-                        <img
+                        <Image
                             src={user.image}
                             alt={user.name ?? "User"}
+                            width={64}
+                            height={64}
                             className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover flex-shrink-0"
                         />
                     ) : (
