@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import type { SystemBlock } from "@/server/blocks-library";
 import UpgradeModal from "./_components/UpgradeModal";
-import { hasFeature, FEATURES } from "@/server/entitlements";
+import { hasFeature, FEATURES } from "@/server/entitlements/features";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

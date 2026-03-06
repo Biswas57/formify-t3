@@ -2,10 +2,11 @@ import "server-only";
 import { db } from "@/server/db";
 import { TRPCError } from "@trpc/server";
 import type { FeatureKey } from "./features";
+import { hasFeature } from "./features";
 import type { SubscriptionStatus } from "../../../generated/prisma";
 
 export type { FeatureKey } from "./features";
-export { FEATURES } from "./features";
+export { FEATURES, hasFeature } from "./features";
 
 /**
  * User entitlements object containing plan info and feature flags.
@@ -59,16 +60,6 @@ export async function getUserEntitlements(
         features,
         currentPeriodEnd: userPlan.currentPeriodEnd,
     };
-}
-
-/**
- * Check if entitlements include a specific feature.
- */
-export function hasFeature(
-    entitlements: UserEntitlements,
-    featureKey: FeatureKey
-): boolean {
-    return entitlements.features.includes(featureKey);
 }
 
 /**

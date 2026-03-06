@@ -32,3 +32,14 @@ export const PLAN_LIMITS = {
     FREE_TEMPLATES: 5,
     FREE_DAILY_TRANSCRIPTIONS: 3,
 } as const;
+
+/**
+ * Pure helper — safe to import in client components.
+ * Check if a features array includes a specific feature key.
+ */
+export function hasFeature(
+    entitlements: { features: FeatureKey[] },
+    featureKey: FeatureKey
+): boolean {
+    return entitlements.features.includes(featureKey);
+}
