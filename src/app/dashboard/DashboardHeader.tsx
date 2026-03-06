@@ -7,6 +7,7 @@ import { signOut } from "next-auth/react";
 import { FileText, Plus, LogOut, User, ChevronDown, Mic, Menu, X } from "lucide-react";
 import { api } from "@/trpc/react";
 import PlanBadge from "@/app/_components/PlanBadge";
+import { hasFeature, FEATURES } from "@/server/entitlements/features";
 
 interface HeaderUser {
     name?: string | null;
@@ -26,6 +27,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const { data: entitlements } = api.entitlements.me.useQuery();
+    const isPro = entitlements ? hasFeature(entitlements, FEATURES.TEMPLATES_UNLIMITED) : false;
 
     const isActive = (href: string) => {
         if (href === "/dashboard/formbank") {
@@ -139,7 +141,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                                     {user.name ?? "User"}
                                 </p>
                                 <p className="text-xs text-[#868C94] truncate">{user.email}</p>
-                                {entitlements?.planSlug === "pro" && (
+                                {isPro && (
                                     <div className="mt-1.5">
                                         <PlanBadge tier="pro" size="sm" showIcon={false} />
                                     </div>
@@ -190,7 +192,17 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
 
             {/* Mobile drawer */}
             <div
-                className={`fixed top-16 left-0 right-0 bottom-0 bg-white z-30 md:hidden flex flex-col transform transition-transform duration-200 ease-in-out ${mobileMenuOpen ? "translate-y-0" : "-translate-y-full pointer-events-none"}`}
+                className={`fixed top-16 left-0 right-0 bottom-0 bg-white z-30 md:hidden flex flex-col transform transition-transform duration-200 ease-in-out ${mobileMenuOpen ? "translate-y-0" : "-translate-y-full"}`}
+                aria-hidden={!mobileMenuOpen}
+                style={{
+                    visibility: mobileMenuOpen ? "visible" : "hidden",
+                    // On close: delay visibility:hidden by 200ms so the slide-up
+                    // transform animation is visible before the element disappears.
+                    // On open: no delay — visibility becomes visible immediately.
+                    transition: mobileMenuOpen
+                        ? undefined
+                        : "transform 200ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 200ms",
+                }}
             >
                 {/* User info */}
                 <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-100">
@@ -210,7 +222,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                             <p className="text-sm font-semibold text-slate-900 truncate">
                                 {user.name ?? "User"}
                             </p>
-                            {entitlements?.planSlug === "pro" && (
+                            {isPro && (
                                 <PlanBadge tier="pro" size="sm" showIcon={false} />
                             )}
                         </div>
