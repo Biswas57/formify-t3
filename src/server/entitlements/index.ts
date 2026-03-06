@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/server/db";
 import { TRPCError } from "@trpc/server";
-import { PLAN_FEATURES, type FeatureKey } from "./features";
+import type { FeatureKey } from "./features";
 import type { SubscriptionStatus } from "../../../generated/prisma";
 
 export type { FeatureKey } from "./features";
@@ -38,14 +38,14 @@ export async function getUserEntitlements(
             planSlug: "free",
             planName: "Free",
             status: null,
-            features: PLAN_FEATURES.free ?? [],
+            features: [],
             currentPeriodEnd: null,
         };
     }
 
-    // Return user's actual plan
+    // Return user's actual plan — features come from the DB row, not hardcoded
     const planSlug = userPlan.plan.slug;
-    const features = PLAN_FEATURES[planSlug] ?? [];
+    const features = JSON.parse(userPlan.plan.featuresJson) as FeatureKey[];
 
     return {
         planSlug,

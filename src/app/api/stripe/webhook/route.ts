@@ -4,6 +4,7 @@ import { verifyWebhookSignature, stripe } from "@/server/billing/stripe";
 import { db } from "@/server/db";
 import type Stripe from "stripe";
 import { SubscriptionStatus } from "../../../../../generated/prisma";
+import { PLAN_FEATURES } from "@/server/entitlements/features";
 
 /**
  * Stripe webhook handler.
@@ -134,11 +135,7 @@ async function upsertUserPlan(userId: string, subscription: Stripe.Subscription)
             data: {
                 name: "Pro",
                 slug: "pro",
-                featuresJson: JSON.stringify([
-                    "custom_blocks:create",
-                    "custom_blocks:delete",
-                    "templates:unlimited",
-                ]),
+                featuresJson: JSON.stringify(PLAN_FEATURES.pro ?? []),
             },
         });
 
