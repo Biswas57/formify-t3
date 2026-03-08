@@ -44,7 +44,7 @@ const config = {
                             "script-src 'self' https://js.stripe.com https://va.vercel-scripts.com https://vercel.live 'unsafe-inline' 'unsafe-eval'",
                             // unsafe-inline needed by Stripe pricing table shadow DOM / constructable stylesheets
                             "style-src 'self' https://js.stripe.com https://fonts.googleapis.com 'unsafe-inline'",
-                            "frame-src 'self' https://js.stripe.com https://*.stripe.com",
+                            "frame-src 'self' https://js.stripe.com https://*.stripe.com https://vercel.live",
                             // wss://* covers the NEXT_PUBLIC_WS_URL transcription WebSocket server.
                             // vitals.vercel-insights.com + va.vercel-scripts.com are Vercel Analytics/Speed Insights.
                             "connect-src 'self' https://api.stripe.com https://*.stripe.com wss: ws: https://vitals.vercel-insights.com",
