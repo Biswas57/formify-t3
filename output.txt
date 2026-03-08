@@ -1,0 +1,3018 @@
+==== src/server/entitlements/index.ts ====
+import "server-only";
+import { db } from "@/server/db";
+import { TRPCError } from "@trpc/server";
+import type { FeatureKey } from "./features";
+import { hasFeature } from "./features";
+import type { SubscriptionStatus } from "../../../generated/prisma";
+
+export type { FeatureKey } from "./features";
+export { FEATURES, hasFeature } from "./features";
+
+/**
+ * User entitlements object containing plan info and feature flags.
+ */
+export interface UserEntitlements {
+    planSlug: string;
+    planName: string;
+    status: SubscriptionStatus | null;
+    features: FeatureKey[];
+    currentPeriodEnd: Date | null;
+}
+
+/**
+ * Get entitlements for a user by ID.
+ * Returns the user's current plan and available features.
+ * If no subscription exists, defaults to "free".
+ */
+export async function getUserEntitlements(
+    userId: string
+): Promise<UserEntitlements> {
+    // Fetch user's current plan + subscription status
+    const userPlan = await db.userPlan.findUnique({
+        where: { userId },
+        include: { plan: true },
+    });
+
+    // Default to free plan if no subscription.
+    // features: [] is correct today because the free plan has no features.
+    // If the free plan ever gains features, update PLAN_FEATURES.free in
+    // features.ts, re-run the seed to write them into the Plan row, and
+    // replace [] here with JSON.parse(freePlan.featuresJson) after a
+    // db.plan.findUnique({ where: { slug: "free" } }) lookup.
+    if (!userPlan) {
+        return {
+            planSlug: "free",
+            planName: "Free",
+            status: null,
+            features: [],
+            currentPeriodEnd: null,
+        };
+    }
+
+    // Return user's actual plan — features come from the DB row, not hardcoded
+    const planSlug = userPlan.plan.slug;
+    const features = JSON.parse(userPlan.plan.featuresJson) as FeatureKey[];
+
+    return {
+        planSlug,
+        planName: userPlan.plan.name,
+        status: userPlan.status,
+        features,
+        currentPeriodEnd: userPlan.currentPeriodEnd,
+    };
+}
+
+/**
+ * Throws TRPCError FORBIDDEN if the user doesn't have the required feature.
+ * Use this in tRPC procedures to gate PRO-only functionality.
+ */
+export async function requireFeature(
+    userId: string,
+    featureKey: FeatureKey
+): Promise<void> {
+    const entitlements = await getUserEntitlements(userId);
+
+    if (!hasFeature(entitlements, featureKey)) {
+        throw new TRPCError({
+            code: "FORBIDDEN",
+            message: `This feature requires a PRO subscription. Missing: ${featureKey}`,
+        });
+    }
+}
+
+==== src/server/entitlements/features.ts ====
+/**
+ * Feature keys for the entitlements system.
+ * Add new features here as the app grows.
+ */
+export const FEATURES = {
+    CUSTOM_BLOCKS_CREATE: "custom_blocks:create",
+    CUSTOM_BLOCKS_DELETE: "custom_blocks:delete",
+    TEMPLATES_UNLIMITED: "templates:unlimited",
+    TRANSCRIPTION_UNLIMITED: "transcription:unlimited",
+} as const;
+
+export type FeatureKey = (typeof FEATURES)[keyof typeof FEATURES];
+
+/**
+ * Feature definitions for each plan.
+ * Returns which features are enabled for a given plan slug.
+ */
+export const PLAN_FEATURES: Record<string, FeatureKey[]> = {
+    free: [
+        // Free users get basic features only
+    ],
+    pro: [
+        // Pro users get all features
+        FEATURES.CUSTOM_BLOCKS_CREATE,
+        FEATURES.CUSTOM_BLOCKS_DELETE,
+        FEATURES.TEMPLATES_UNLIMITED,
+        FEATURES.TRANSCRIPTION_UNLIMITED,
+    ],
+};
+
+export const PLAN_LIMITS = {
+    // Aligned with Stripe pricing table: Free plan shows "Up to 10 templates"
+    FREE_TEMPLATES: 10,
+    // Aligned with BillingCard copy: "3 transcription sessions per day"
+    FREE_DAILY_TRANSCRIPTIONS: 3,
+} as const;
+
+/**
+ * Pure helper — safe to import in client components.
+ * Check if a features array includes a specific feature key.
+ */
+export function hasFeature(
+    entitlements: { features: FeatureKey[] },
+    featureKey: FeatureKey
+): boolean {
+    return entitlements.features.includes(featureKey);
+}
+
+==== src/server/api/root.ts ====
+import { postRouter } from "@/server/api/routers/post";
+import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { blockRouter } from "@/server/api/routers/block";
+import { templateRouter } from "@/server/api/routers/template";
+import { billingRouter } from "@/server/api/routers/billing";
+import { entitlementsRouter } from "@/server/api/routers/entitlements";
+import { usageRouter } from "@/server/api/routers/usage";
+
+
+/**
+ * This is the primary router for your server.
+ *
+ * All routers added in /api/routers should be manually added here.
+ */
+
+export const appRouter = createTRPCRouter({
+  post: postRouter,
+  template: templateRouter,
+  block: blockRouter,
+  billing: billingRouter,
+  entitlements: entitlementsRouter,
+  usage: usageRouter,
+});
+
+// export type definition of API
+export type AppRouter = typeof appRouter;
+
+/**
+ * Create a server-side caller for the tRPC API.
+ * @example
+ * const trpc = createCaller(createContext);
+ * const res = await trpc.post.all();
+ *       ^? Post[]
+ */
+export const createCaller = createCallerFactory(appRouter);
+==== src/server/api/routers/usage.ts ====
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { getUserEntitlements, hasFeature, FEATURES } from "@/server/entitlements";
+import { PLAN_LIMITS } from "@/server/entitlements/features";
+
+function todayUTC(): string {
+    return new Date().toISOString().split("T")[0]!;
+}
+
+export const usageRouter = createTRPCRouter({
+    getToday: protectedProcedure.query(async ({ ctx }) => {
+        const entitlements = await getUserEntitlements(ctx.session.user.id);
+        const isPro = hasFeature(entitlements, FEATURES.TRANSCRIPTION_UNLIMITED);
+
+        if (isPro) {
+            return { count: 0, limit: null as number | null, isPro: true, canRecord: true };
+        }
+
+        const today = todayUTC();
+        const usage = await ctx.db.transcriptionUsage.findUnique({
+            where: { userId_date: { userId: ctx.session.user.id, date: today } },
+        });
+
+        const count = usage?.count ?? 0;
+        const limit = PLAN_LIMITS.FREE_DAILY_TRANSCRIPTIONS;
+        return { count, limit, isPro: false, canRecord: count < limit };
+    }),
+
+    recordSession: protectedProcedure.mutation(async ({ ctx }) => {
+        const today = todayUTC();
+        await ctx.db.transcriptionUsage.upsert({
+            where: { userId_date: { userId: ctx.session.user.id, date: today } },
+            create: { userId: ctx.session.user.id, date: today, count: 1 },
+            update: { count: { increment: 1 } },
+        });
+        return { success: true };
+    }),
+});
+==== src/app/transcription/TranscriptionClient.tsx ====
+// CORRECTED VERSION — replace src/app/transcription/TranscriptionClient.tsx
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { api } from "@/trpc/react";
+import Link from "next/link";
+import {
+    Mic, Square, Wifi, WifiOff, RotateCcw, ChevronDown,
+    Pencil, Check, AlertCircle, RefreshCw, Loader2,
+    Download, Mail, X
+} from "lucide-react";
+import { formatFieldLabel } from "@/lib/format-field-label";
+import { env } from "@/env";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface User {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+}
+
+interface ServerMessage {
+    corrected_audio?: string;
+    attributes?: Record<string, string>;
+    error?: string;
+    action?: string;
+    template_size?: number;
+}
+
+type WSStatus = "disconnected" | "connecting" | "connected" | "error";
+type RecordStatus = "idle" | "recording" | "finalizing" | "paused";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Canonical internal key format: lowercase snake_case.
+ * "Date of Birth" → "date_of_birth", "chief-complaint" → "chief_complaint"
+ * This must be applied consistently: when parsing templates, sending to server,
+ * AND when receiving attributes back from the server.
+ */
+function normalizeKey(key: string): string {
+    return key.trim().toLowerCase().replace(/[\s\-]+/g, "_");
+}
+
+function parseBlocks(raw: string): Record<string, string[]> {
+    const result: Record<string, string[]> = {};
+    for (const line of raw.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed?.includes(":")) continue;
+        const colonIdx = trimmed.indexOf(":");
+        const blockName = trimmed.slice(0, colonIdx).trim();
+        const fields = trimmed
+            .slice(colonIdx + 1)
+            .split(",")
+            .map((f) => normalizeKey(f))  // normalize to snake_case
+            .filter(Boolean);
+        if (blockName && fields.length > 0) result[blockName] = fields;
+    }
+    return result;
+}
+
+function getWSUrl(): string {
+    return env.NEXT_PUBLIC_WS_URL;
+}
+
+const SUPPORTED_MIME =
+    typeof MediaRecorder !== "undefined" &&
+        MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : "audio/webm";
+
+const DEFAULT_TEMPLATE = `ID: name, date of birth, email, phone
+Medical: chief complaint, medications, allergies
+Social: occupation, address`;
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function TranscriptionClient({ user }: { user: User }) {
+    // Connection
+    const wsRef = useRef<WebSocket | null>(null);
+    const [wsStatus, setWsStatus] = useState<WSStatus>("disconnected");
+    const [wsError, setWsError] = useState<string | null>(null);
+
+    // Recording
+    const recorderRef = useRef<MediaRecorder | null>(null);
+    const [recordStatus, setRecordStatus] = useState<RecordStatus>("idle");
+    const [micError, setMicError] = useState<string | null>(null);
+    const blocksReadyRef = useRef(false);
+    const [blocksReady, setBlocksReady] = useState(false);
+
+    // Template
+    const [templateRaw, setTemplateRaw] = useState(DEFAULT_TEMPLATE);
+    // Ref so the WS onmessage closure always sees the current template,
+    // even though connectWS has [] deps and can't re-capture templateRaw state.
+    const templateRawRef = useRef(templateRaw);
+    useEffect(() => { templateRawRef.current = templateRaw; }, [templateRaw]);
+    const [templateOpen, setTemplateOpen] = useState(false);
+    const [formTitle, setFormTitle] = useState("New Form");
+
+    // Form data
+    const [attributes, setAttributes] = useState<Record<string, string>>({});
+    const [editedValues, setEditedValues] = useState<Record<string, string>>({});
+    const [isEditing, setIsEditing] = useState(false);
+
+    // Export features
+    const formContainerRef = useRef<HTMLDivElement>(null);
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [emailOption, setEmailOption] = useState<"self" | "custom">("self");
+    const [customEmail, setCustomEmail] = useState("");
+    const [isSendingEmail, setIsSendingEmail] = useState(false);
+    const [emailStatus, setEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+    const recordSessionMutation = api.usage.recordSession.useMutation();
+    const utils = api.useUtils();
+
+    // Fetch today's usage to enforce the daily limit.
+    // staleTime=0 so we always get a fresh count on page load.
+    const { data: usageData } = api.usage.getToday.useQuery(undefined, {
+        staleTime: 0,
+        refetchOnWindowFocus: false,
+    });
+
+    // Tracks whether this page session has already been counted.
+    // A "session" = one WebSocket connection lifetime (i.e. one page load).
+    // Pause/resume cycles within the same connection do NOT count as new sessions.
+    const hasRecordedThisSession = useRef(false);
+
+    // ── Template preload from query param ────────────────────────────────────────
+    const searchParams = useSearchParams();
+    const templateId = searchParams.get("templateId");
+
+    // True once we know what template to send: either no templateId (use default immediately),
+    // or templateId exists and the query has resolved (loaded OR failed).
+    const { data: preloadedTemplate, isLoading: templateLoading } = api.template.get.useQuery(
+        { id: templateId! },
+        {
+            enabled: !!templateId,
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
+            staleTime: Infinity,
+        }
+    );
+
+    // Template is ready to send when: no templateId, OR the query has settled (data or null)
+    const templateReady = !templateId || !templateLoading;
+
+    // Derived
+    const blocks = parseBlocks(templateRaw);
+    const allFields = Object.values(blocks).flat();
+    const isConnected = wsStatus === "connected";
+    const isRecording = recordStatus === "recording";
+    const isFinalizing = recordStatus === "finalizing";
+    const isPaused = recordStatus === "paused";
+    const canRecord = isConnected && blocksReady && !isFinalizing && templateReady;
+    const errorMessage = wsError ?? micError;
+
+    useEffect(() => {
+        if (!preloadedTemplate) return;
+        setFormTitle(preloadedTemplate.name);
+        // Build raw template string — field keys will be normalized by parseBlocks
+        const raw = preloadedTemplate.blocks
+            .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
+            .map((b: { title: string; fields: { key: string; order: number }[] }) =>
+                `${b.title}: ${b.fields
+                    .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
+                    .map((f: { key: string }) => f.key)
+                    .join(", ")}`
+            )
+            .join("\n");
+        setTemplateRaw(raw);
+    }, [preloadedTemplate]);
+
+    // ── Sync attributes → editedValues when not editing ──────────────────────
+
+    useEffect(() => {
+        if (!isEditing) setEditedValues(attributes);
+    }, [attributes, isEditing]);
+
+    // ── Re-initialise fields when template changes ────────────────────────────
+
+    useEffect(() => {
+        const empty: Record<string, string> = {};
+        allFields.forEach((f) => { empty[f] = ""; });
+        setAttributes(empty);
+        setEditedValues(empty);
+        setIsEditing(false);
+        blocksReadyRef.current = false;
+        setBlocksReady(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [templateRaw]);
+
+    // ── WebSocket ─────────────────────────────────────────────────────────────
+
+    const connectWS = useCallback(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) return;
+        setWsStatus("connecting");
+        setWsError(null);
+        console.log("[Formify] WebSocket connecting to:", getWSUrl());
+
+        const ws = new WebSocket(getWSUrl());
+        ws.binaryType = "arraybuffer";
+        wsRef.current = ws;
+
+        // Timeout to detect if connection truly fails
+        const connectionTimeout = setTimeout(() => {
+            if (ws.readyState !== WebSocket.OPEN) {
+                console.error("[Formify] WebSocket connection timeout");
+                setWsStatus("error");
+                setWsError("Could not connect to the transcription server. Make sure it is running and try again.");
+                ws.close();
+            }
+        }, 3000); // 3 second timeout
+
+        ws.onopen = () => {
+            clearTimeout(connectionTimeout);
+            setWsStatus("connected");
+            setWsError(null); // Clear any previous errors
+            console.log("[Formify] WebSocket connected");
+        };
+
+        ws.onclose = (event) => {
+            clearTimeout(connectionTimeout);
+            setWsStatus("disconnected");
+            blocksReadyRef.current = false;
+            setBlocksReady(false);
+            console.log("[Formify] WebSocket disconnected", event.code, event.reason);
+        };
+
+        ws.onerror = () => {
+            // Don't set error state or log here - let the timeout handle it
+            // WebSocket onerror fires even on successful connections, causing false positives
+            // The connectionTimeout will catch true connection failures
+        };
+
+        ws.onmessage = (ev: MessageEvent) => {
+            try {
+                const msg = JSON.parse(ev.data as string) as ServerMessage;
+
+                if (msg.error) {
+                    console.warn("[Formify] Server error:", msg.error);
+                    return;
+                }
+
+                if (msg.action === "started") {
+                    blocksReadyRef.current = true;
+                    setBlocksReady(true);
+                    console.log(`[Formify] Blocks accepted — ${msg.template_size ?? "?"} fields`);
+                    return;
+                }
+
+                // Transcript: console only, never on page
+                if (msg.corrected_audio !== undefined) {
+                    console.log("[Formify] Transcript update:", msg.corrected_audio);
+                }
+
+                if (msg.attributes !== undefined) {
+                    setAttributes((prev) => {
+                        // Build the allowed key set from the current template (already normalized)
+                        const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
+
+                        // Normalize incoming keys and drop anything not in the template
+                        const normalized: Record<string, string> = {};
+                        for (const [rawKey, val] of Object.entries(msg.attributes!)) {
+                            const key = normalizeKey(rawKey);
+                            if (allowedKeys.has(key) && val) {
+                                normalized[key] = val;
+                            } else if (!allowedKeys.has(key)) {
+                                console.warn(`[Formify] Dropping unknown attribute key: "${rawKey}" (normalized: "${key}")`);
+                            }
+                        }
+                        return { ...prev, ...normalized };
+                    });
+                    // Final message after pause → leave finalizing
+                    setRecordStatus((s) => (s === "finalizing" ? "paused" : s));
+                }
+            } catch {
+                console.warn("[Formify] Non-JSON WS message");
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        connectWS();
+        return () => { wsRef.current?.close(); };
+    }, [connectWS]);
+
+    // ── Auto-send blocks once connected AND template is ready ────────────────
+
+    const sendBlocks = useCallback(() => {
+        const ws = wsRef.current;
+        if (ws?.readyState !== WebSocket.OPEN) return;
+        const parsed = parseBlocks(templateRaw);
+        if (Object.keys(parsed).length === 0) return;
+        ws.send(JSON.stringify({ action: "start", blocks: parsed }));
+        console.log("[Formify] Blocks sent:", Object.keys(parsed).join(", "),
+            `(${Object.values(parsed).flat().length} fields)`);
+    }, [templateRaw]);
+
+    useEffect(() => {
+        // Only send once connected AND the correct template is ready.
+        // If templateId is in the URL, wait for the query to settle before sending —
+        // this prevents sending DEFAULT_TEMPLATE and then a second start with the real
+        // template, which the server used to silently ignore.
+        if (wsStatus === "connected" && !blocksReadyRef.current && templateReady) {
+            sendBlocks();
+        }
+    }, [wsStatus, sendBlocks, templateReady]);
+
+    // ── Recording ─────────────────────────────────────────────────────────────
+
+    const startRecording = useCallback(async () => {
+        setMicError(null);
+        const ws = wsRef.current;
+        if (ws?.readyState !== WebSocket.OPEN || !blocksReadyRef.current) return;
+
+        // Enforce daily usage limit — check fresh data before allowing mic access.
+        // canRecord is also false for Pro users (limit: null means unlimited).
+        if (usageData && !usageData.canRecord) {
+            setMicError("You've reached your daily transcription limit. Upgrade to Pro for unlimited transcriptions, or try again tomorrow.");
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream, { mimeType: SUPPORTED_MIME });
+            recorderRef.current = recorder;
+
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+                    void e.data.arrayBuffer().then((buf) => ws.send(buf));
+                }
+            };
+
+            recorder.onstart = () => {
+                setRecordStatus("recording");
+                setIsEditing(false);
+            };
+
+            recorder.onstop = () => stream.getTracks().forEach((t) => t.stop());
+
+            recorder.start(500);
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            setMicError(
+                msg.toLowerCase().includes("permission")
+                    ? "Microphone permission was denied. Please allow microphone access in your browser and retry."
+                    : `Could not start recording: ${msg}`
+            );
+        }
+    }, [usageData]);
+
+    // ── Pause ─────────────────────────────────────────────────────────────────
+
+    const pauseRecording = useCallback(() => {
+        recorderRef.current?.stop();
+        setRecordStatus("finalizing");
+        const ws = wsRef.current;
+        if (ws?.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ action: "stop" }));
+            console.log("[Formify] Paused — awaiting final extraction");
+        }
+        // Only count usage once per page load (one WebSocket connection lifetime).
+        // Subsequent pause/resume cycles within the same session don't add to the counter.
+        if (!hasRecordedThisSession.current) {
+            hasRecordedThisSession.current = true;
+            recordSessionMutation.mutate(undefined, {
+                // Refetch usage after recording so the profile page count stays fresh.
+                onSuccess: () => void utils.usage.getToday.invalidate(),
+            });
+        }
+    }, [recordSessionMutation, utils]);
+
+    // ── Edit / Save ───────────────────────────────────────────────────────────
+
+    const handleSave = () => {
+        setAttributes(editedValues);
+        setIsEditing(false);
+    };
+
+    // ── Reset ─────────────────────────────────────────────────────────────────
+
+    const handleReset = () => {
+        recorderRef.current?.stop();
+        setRecordStatus("idle");
+        setIsEditing(false);
+        setMicError(null);
+        setWsError(null);
+        const empty: Record<string, string> = {};
+        allFields.forEach((f) => { empty[f] = ""; });
+        setAttributes(empty);
+        setEditedValues(empty);
+        // Setting blocksReadyRef to false is enough — the useEffect watching
+        // wsStatus + blocksReady will fire and call sendBlocks() once.
+        // Calling sendBlocks() directly here would send a second start action.
+        blocksReadyRef.current = false;
+        setBlocksReady(false);
+    };
+
+    // ── PDF Export ────────────────────────────────────────────────────────────
+
+    const handleSavePDF = async () => {
+        if (!formContainerRef.current) return;
+
+        try {
+            // Dynamically import heavy PDF libraries only when needed
+            const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+                import("jspdf"),
+                import("html2canvas-pro"),
+            ]);
+
+            // Clone the form container to avoid modifying the original
+            const clonedContainer = formContainerRef.current.cloneNode(true) as HTMLElement;
+
+            // Inline all computed styles to avoid html2canvas parsing modern color functions from stylesheets
+            const inlineAllStyles = (element: HTMLElement, sourceElement: HTMLElement) => {
+                const computedStyle = window.getComputedStyle(sourceElement);
+
+                // Copy all computed styles as inline styles (including RGB-converted colors)
+                // This forces html2canvas to use inline styles instead of parsing CSS
+                const importantStyles = [
+                    'color', 'backgroundColor', 'borderColor', 'borderStyle', 'borderWidth',
+                    'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+                    'borderTopStyle', 'borderRightStyle', 'borderBottomStyle', 'borderLeftStyle',
+                    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
+                    'borderRadius', 'padding', 'margin', 'width', 'height',
+                    'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'textAlign',
+                    'display', 'position', 'top', 'left', 'right', 'bottom',
+                    'boxShadow', 'opacity', 'transform'
+                ];
+
+                importantStyles.forEach(prop => {
+                    const value = computedStyle.getPropertyValue(prop);
+                    if (value && value !== '' && value !== 'none') {
+                        element.style.setProperty(prop, value, 'important');
+                    }
+                });
+
+                // Recursively process children
+                const sourceChildren = Array.from(sourceElement.children) as HTMLElement[];
+                const clonedChildren = Array.from(element.children) as HTMLElement[];
+                clonedChildren.forEach((child, index) => {
+                    if (sourceChildren[index]) {
+                        inlineAllStyles(child, sourceChildren[index]);
+                    }
+                });
+            };
+
+            inlineAllStyles(clonedContainer, formContainerRef.current);
+
+            // Temporarily add to DOM for rendering
+            clonedContainer.style.position = 'absolute';
+            clonedContainer.style.left = '-9999px';
+            document.body.appendChild(clonedContainer);
+
+            // Create a clean version of the form for PDF
+            const canvas = await html2canvas(clonedContainer, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                logging: false,
+                onclone: (clonedDoc) => {
+                    // Force inline styles for better compatibility
+                    const clonedElement = clonedDoc.body.querySelector('[style*="position: absolute"]')!;
+                    if (clonedElement) {
+                        (clonedElement as HTMLElement).style.position = 'relative';
+                        (clonedElement as HTMLElement).style.left = '0';
+                    }
+                }
+            });
+
+            // Remove the temporary clone
+            document.body.removeChild(clonedContainer);
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4',
+            });
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+            const imgX = (pdfWidth - imgWidth * ratio) / 2;
+            const imgY = 10;
+
+            pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+            pdf.save(`${formTitle.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (error) {
+            console.error('PDF generation error:', error);
+            alert('Failed to generate PDF. Please try again.');
+        }
+    };
+
+    // ── Email Export ──────────────────────────────────────────────────────────
+
+    const handleSendEmail = async () => {
+        setIsSendingEmail(true);
+        setEmailStatus(null);
+
+        const recipientEmail = emailOption === "self" ? user.email : customEmail;
+
+        if (!recipientEmail) {
+            setEmailStatus({ type: "error", message: "No email address available" });
+            setIsSendingEmail(false);
+            return;
+        }
+
+        try {
+            // Generate form data as HTML for email body
+            const formHTML = Object.entries(blocks)
+                .map(([blockName, fields]) => `
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #2149A1; font-size: 14px; font-weight: 600; margin-bottom: 10px;">${blockName}</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            ${fields.map(field => `
+                                <tr>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: 500; color: #6b7280; width: 40%;">${formatFieldLabel(field)}</td>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; color: #111827;">${attributes[field] ?? '—'}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
+                `).join('');
+
+            const response = await fetch('/api/email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: recipientEmail,
+                    formTitle,
+                    formHTML,
+                    formData: attributes,
+                }),
+            });
+
+            const result = (await response.json()) as { error?: unknown };
+
+            if (!response.ok) {
+                const errorMsg = typeof result.error === 'string' ? result.error : 'Failed to send email';
+                throw new Error(errorMsg);
+            }
+
+            setEmailStatus({ type: "success", message: `Email sent successfully to ${recipientEmail}` });
+            setTimeout(() => {
+                setShowEmailModal(false);
+                setEmailStatus(null);
+                setCustomEmail("");
+            }, 2000);
+        } catch (error) {
+            console.error('Email send error:', error);
+            const errorMessage = error instanceof Error ? error.message ?? 'Failed to send email' : 'Failed to send email';
+            setEmailStatus({
+                type: "error",
+                message: errorMessage
+            });
+        } finally {
+            setIsSendingEmail(false);
+        }
+    };
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RENDER
+    // ─────────────────────────────────────────────────────────────────────────
+
+    return (
+        <div className="min-h-screen bg-[#FBFBFB]">
+
+            {/* ── Header ── */}
+            <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+                <div className="container mx-auto px-4 py-3.5 flex items-center justify-between">
+                    <Link href="/dashboard" className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2.5 animate-fade-in">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                                <Mic className="w-6 h-6 text-white" />
+                            </div>
+                            <span className="text-3xl font-extrabold tracking-tight text-black">
+                                Formify
+                            </span>
+                        </div>
+                    </Link>
+
+                    <div className="flex items-center gap-3">
+                        {/* Subtle recording indicator */}
+                        {isRecording && (
+                            <span className="flex items-center gap-1.5 text-xs font-medium text-red-500">
+                                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                                Recording
+                            </span>
+                        )}
+                        {isFinalizing && (
+                            <span className="flex items-center gap-1.5 text-xs text-[#868C94]">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Finalizing…
+                            </span>
+                        )}
+
+                        {/* WS pill */}
+                        <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${isConnected
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : wsStatus === "connecting"
+                                ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                : "bg-red-50 text-red-600 border-red-200"
+                            }`}>
+                            {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                            {wsStatus === "connecting" ? "Connecting…" : isConnected ? "Connected" : "Disconnected"}
+                        </div>
+
+                        {/* User */}
+                        <Link href="/dashboard/profile" className="flex items-center gap-2 pl-3 border-l border-slate-200 hover:opacity-80 transition-opacity">
+                            <div className="w-7 h-7 rounded-full bg-[#2149A1] flex items-center justify-center text-xs font-bold text-white">
+                                {user.name?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? "?"}
+                            </div>
+                            <span className="text-sm text-[#868C94] hidden sm:block">
+                                {user.name ?? user.email}
+                            </span>
+                        </Link>
+                    </div>
+                </div>
+            </header>
+
+            {/* ── Main ── */}
+            <div className="container mx-auto px-4 py-8 max-w-3xl">
+
+                {/* Template loading state — only shown when waiting for a preloaded template */}
+                {templateId && !templateReady && (
+                    <div className="mb-6 flex items-center gap-2.5 bg-[#e8eef9] border border-[#2149A1]/20 text-[#2149A1] text-sm rounded-lg px-4 py-3">
+                        <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                        Loading template…
+                    </div>
+                )}
+
+                {/* Error banner */}
+                {errorMessage && (
+                    <div className="mb-6 flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+                        <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <p className="flex-1">{errorMessage}</p>
+                        <button
+                            onClick={() => { setWsError(null); setMicError(null); connectWS(); }}
+                            className="flex items-center gap-1 font-medium text-xs text-red-600 hover:text-red-800 whitespace-nowrap transition-colors"
+                        >
+                            <RotateCcw className="w-3 h-3" /> Retry
+                        </button>
+                    </div>
+                )}
+
+                {/* Finalizing banner */}
+                {isFinalizing && (
+                    <div className="mb-6 flex items-center gap-2.5 bg-[#e8eef9] border border-[#2149A1]/20 text-[#2149A1] text-sm rounded-lg px-4 py-3">
+                        <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                        Running final extraction — fields will update in a moment…
+                    </div>
+                )}
+
+                {/* ── Form title ── */}
+                <div className="mb-6">
+                    <input
+                        type="text"
+                        value={formTitle}
+                        onChange={(e) => setFormTitle(e.target.value)}
+                        className="text-2xl font-bold text-slate-900 bg-transparent border-none outline-none w-full placeholder-slate-300"
+                        placeholder="Form title"
+                    />
+                    <p className="text-sm text-[#868C94] mt-1">
+                        {isRecording
+                            ? "Recording — fields are filling automatically."
+                            : isPaused
+                                ? "Paused — review or edit fields below."
+                                : isFinalizing
+                                    ? "Processing final output…"
+                                    : "Press Start Recording when you're ready."}
+                    </p>
+                </div>
+
+                {/* ── Controls ── */}
+                <div className="flex flex-wrap items-center gap-3 mb-8">
+                    {!isRecording ? (
+                        <button
+                            onClick={startRecording}
+                            disabled={!canRecord}
+                            className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-all duration-200 hover:scale-[1.02]"
+                        >
+                            <Mic className="w-4 h-4" />
+                            {isPaused ? "Resume Recording" : "Start Recording"}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={pauseRecording}
+                            className="flex items-center gap-2 border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-medium px-5 py-2.5 rounded-lg transition-all duration-200"
+                        >
+                            <Square className="w-3.5 h-3.5 fill-current" />
+                            Pause
+                        </button>
+                    )}
+
+                    {/* Edit / Save — only visible after at least one pause */}
+                    {isPaused && (
+                        !isEditing ? (
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200"
+                            >
+                                <Pencil className="w-3.5 h-3.5" />
+                                Edit
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleSave}
+                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200"
+                            >
+                                <Check className="w-3.5 h-3.5" />
+                                Save
+                            </button>
+                        )
+                    )}
+
+                    {/* PDF Export — only show when paused */}
+                    {isPaused && (
+                        <button
+                            onClick={handleSavePDF}
+                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            Save as PDF
+                        </button>
+                    )}
+
+                    {/* Email Export — only show when paused */}
+                    {isPaused && (
+                        <button
+                            onClick={() => setShowEmailModal(true)}
+                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200"
+                        >
+                            <Mail className="w-3.5 h-3.5" />
+                            Email Form
+                        </button>
+                    )}
+
+                    {/* Reset — only show once something has happened */}
+                    {(isPaused || isRecording) && (
+                        <button
+                            onClick={handleReset}
+                            className="flex items-center gap-1.5 text-sm text-[#868C94] hover:text-slate-700 transition-colors ml-auto"
+                        >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            Reset form
+                        </button>
+                    )}
+                </div>
+
+                {/* ── Form blocks ── */}
+                <div ref={formContainerRef} className="space-y-5">
+                    {/* Form Title for PDF */}
+                    <div className="mb-4">
+                        <h2 className="text-2xl font-bold text-slate-900">{formTitle}</h2>
+                        <p className="text-sm text-slate-500 mt-1">
+                            {new Date().toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            })}
+                        </p>
+                    </div>
+
+                    {Object.entries(blocks).map(([blockName, fields]) => (
+                        <div key={blockName} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            {/* Block header */}
+                            <div className="px-6 py-3.5 border-b border-slate-100 bg-slate-50/60">
+                                <h3 className="text-sm font-semibold text-slate-600">{blockName}</h3>
+                            </div>
+
+                            {/* Fields grid */}
+                            <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                                {fields.map((field) => {
+                                    const value = isEditing
+                                        ? (editedValues[field] ?? "")
+                                        : (attributes[field] ?? "");
+                                    const isFilled = Boolean(attributes[field]);
+
+                                    return (
+                                        <div key={field}>
+                                            <label className="block text-xs font-medium text-[#868C94] mb-1.5">
+                                                {formatFieldLabel(field)}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={value}
+                                                readOnly={!isEditing}
+                                                onChange={(e) =>
+                                                    isEditing &&
+                                                    setEditedValues((prev) => ({ ...prev, [field]: e.target.value }))
+                                                }
+                                                placeholder={isRecording ? "" : "—"}
+                                                className={`w-full text-sm px-3 py-2.5 rounded-lg border outline-none transition-all duration-200
+                          ${isEditing
+                                                        ? "border-[#2149A1] bg-white text-slate-900 focus:ring-2 focus:ring-[#2149A1]/20 cursor-text"
+                                                        : isFilled
+                                                            ? "border-slate-200 bg-white text-slate-900 cursor-default select-text"
+                                                            : "border-slate-200 bg-slate-50 text-slate-400 cursor-default"
+                                                    }`}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* ── Advanced accordion ── */}
+                <div className="mt-8 rounded-xl border border-slate-200 overflow-hidden">
+                    <button
+                        onClick={() => setTemplateOpen((v) => !v)}
+                        className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-slate-50 text-sm text-[#868C94] hover:text-slate-700 transition-colors"
+                    >
+                        <span className="font-medium">Advanced — Template Editor</span>
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${templateOpen ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {templateOpen && (
+                        <div className="px-5 pb-5 pt-2 bg-white border-t border-slate-100">
+                            <p className="text-xs text-[#868C94] mb-3">
+                                Format: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">BlockName: field1, field2</code>
+                            </p>
+                            <textarea
+                                value={templateRaw}
+                                onChange={(e) => setTemplateRaw(e.target.value)}
+                                rows={6}
+                                disabled={isRecording}
+                                placeholder={DEFAULT_TEMPLATE}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono text-slate-700 resize-none focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 disabled:opacity-50 transition-all"
+                            />
+                            <div className="flex items-center justify-between mt-3">
+                                <p className="text-xs text-[#868C94]">
+                                    Changes reset the form fields.
+                                </p>
+                                <button
+                                    onClick={() => { setTemplateOpen(false); sendBlocks(); }}
+                                    disabled={!isConnected || isRecording}
+                                    className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    Apply template →
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* ── Footer ── */}
+                <p className="text-xs text-slate-400 text-center mt-8 pb-4">
+                    Not saved — refreshing this page will clear the form.
+                </p>
+            </div>
+
+            {/* ── Email Modal ── */}
+            {showEmailModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-slate-900">Email Form</h3>
+                            <button
+                                onClick={() => {
+                                    setShowEmailModal(false);
+                                    setEmailStatus(null);
+                                    setCustomEmail("");
+                                }}
+                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {emailStatus && (
+                            <div className={`mb-4 p-3 rounded-lg text-sm ${emailStatus.type === "success"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-red-50 text-red-700 border border-red-200"
+                                }`}>
+                                {emailStatus.message}
+                            </div>
+                        )}
+
+                        {/* Testing Notice */}
+                        <div className="mb-4 p-3 rounded-lg text-xs bg-blue-50 text-blue-700 border border-blue-200">
+                            <p className="font-medium mb-1">📧 Testing Mode</p>
+                            <p>Without domain verification, use <code className="bg-blue-100 px-1 py-0.5 rounded font-mono">biswas.simk@gmail.com</code> to test emails.</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="emailOption"
+                                        checked={emailOption === "self"}
+                                        onChange={() => setEmailOption("self")}
+                                        className="w-4 h-4 text-[#2149A1]"
+                                    />
+                                    <span className="text-sm text-slate-700">
+                                        Send to my email ({user.email ?? "No email"})
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div>
+                                <label className="flex items-center gap-2 cursor-pointer mb-2">
+                                    <input
+                                        type="radio"
+                                        name="emailOption"
+                                        checked={emailOption === "custom"}
+                                        onChange={() => setEmailOption("custom")}
+                                        className="w-4 h-4 text-[#2149A1]"
+                                    />
+                                    <span className="text-sm text-slate-700">
+                                        Send to custom email
+                                    </span>
+                                </label>
+                                {emailOption === "custom" && (
+                                    <input
+                                        type="email"
+                                        value={customEmail}
+                                        onChange={(e) => setCustomEmail(e.target.value)}
+                                        placeholder="recipient@example.com"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1]"
+                                    />
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => {
+                                    setShowEmailModal(false);
+                                    setEmailStatus(null);
+                                    setCustomEmail("");
+                                }}
+                                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSendEmail}
+                                disabled={isSendingEmail || (emailOption === "custom" && !customEmail)}
+                                className="flex-1 px-4 py-2 bg-[#2149A1] text-white rounded-lg hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                            >
+                                {isSendingEmail ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Sending...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Mail className="w-4 h-4" />
+                                        Send Email
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+==== src/app/dashboard/TemplateBuilder.tsx ====
+"use client";
+
+import { useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { api } from "@/trpc/react";
+import {
+    ChevronDown, ChevronUp, X, Plus, Save, ArrowLeft,
+    GripVertical, Loader2, Check, Lock,
+} from "lucide-react";
+import { SYSTEM_BLOCKS } from "@/server/blocks-library";
+import { hasFeature, FEATURES } from "@/server/entitlements/features";
+import UpgradeModal from "./_components/UpgradeModal";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type FieldType = "TEXT" | "NUMBER" | "DATE" | "EMAIL" | "PHONE" | "TEXTAREA" | "SELECT";
+type BlockSource = "SYSTEM" | "USER" | "CUSTOM_INLINE";
+
+interface CanvasField {
+    key: string;
+    label: string;
+    fieldType: FieldType;
+    required: boolean;
+    order: number;
+}
+
+interface CanvasBlock {
+    instanceId: string;
+    title: string;
+    sourceType: BlockSource;
+    sourceBlockId?: string;
+    fields: CanvasField[];
+    collapsed: boolean;
+}
+
+interface LibraryBlock {
+    id: string;
+    name: string;
+    sourceType: BlockSource;
+    fields: CanvasField[];
+}
+
+interface DBTemplate {
+    id: string;
+    name: string;
+    blocks: {
+        id: string;
+        title: string;
+        sourceType: string;
+        sourceBlockId: string | null;
+        order: number;
+        fields: {
+            key: string;
+            label: string | null;
+            fieldType: string;
+            required: boolean;
+            order: number;
+        }[];
+    }[];
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const FIELD_TYPE_LABELS: Record<FieldType, string> = {
+    TEXT: "Text",
+    NUMBER: "Number",
+    DATE: "Date",
+    EMAIL: "Email",
+    PHONE: "Phone",
+    TEXTAREA: "Long text",
+    SELECT: "Select",
+};
+
+function makeInstanceId() {
+    return Math.random().toString(36).slice(2);
+}
+
+function dbBlocksToCanvas(template: DBTemplate): CanvasBlock[] {
+    return template.blocks.map((b) => ({
+        instanceId: makeInstanceId(),
+        title: b.title,
+        sourceType: b.sourceType as BlockSource,
+        sourceBlockId: b.sourceBlockId ?? undefined,
+        collapsed: false,
+        fields: b.fields.map((f) => ({
+            key: f.key,
+            label: f.label ?? f.key,
+            fieldType: f.fieldType as FieldType,
+            required: f.required,
+            order: f.order,
+        })),
+    }));
+}
+
+function canvasToSavePayload(name: string, blocks: CanvasBlock[]) {
+    return {
+        name,
+        blocks: blocks.map((b, idx) => ({
+            title: b.title,
+            sourceType: b.sourceType,
+            sourceBlockId: b.sourceBlockId,
+            order: idx,
+            fields: b.fields.map((f, fi) => ({
+                key: f.key,
+                label: f.label,
+                fieldType: f.fieldType,
+                required: f.required,
+                order: fi,
+            })),
+        })),
+    };
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+interface Props {
+    initialTemplate?: DBTemplate;
+}
+
+export default function TemplateBuilder({ initialTemplate }: Props) {
+    const router = useRouter();
+
+    // Canvas state
+    const [templateName, setTemplateName] = useState(initialTemplate?.name ?? "Untitled Template");
+    const [blocks, setBlocks] = useState<CanvasBlock[]>(
+        initialTemplate ? dbBlocksToCanvas(initialTemplate) : []
+    );
+    const [saved, setSaved] = useState(false);
+
+    // Drag state
+    const dragIndex = useRef<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+    // Custom block modal
+    const [modalOpen, setModalOpen] = useState(false);
+    const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+    const [showLibrary, setShowLibrary] = useState(false);
+    const [modalName, setModalName] = useState("");
+    const [modalFields, setModalFields] = useState<
+        { key: string; label: string; fieldType: FieldType }[]
+    >([{ key: "", label: "", fieldType: "TEXT" }]);
+
+    const utils = api.useUtils();
+
+    // Check user entitlements — reads from server-prefetched cache, no waterfall.
+    const { data: entitlements } = api.entitlements.me.useQuery();
+    const isPro = entitlements ? hasFeature(entitlements, FEATURES.CUSTOM_BLOCKS_CREATE) : false;
+
+    const createMutation = api.template.create.useMutation({
+        onSuccess: (t: { id: string }) => {
+            setSaved(true);
+            setTimeout(() => router.push(`/dashboard/templates/${t.id}`), 600);
+        },
+    });
+
+    const updateMutation = api.template.update.useMutation({
+        onSuccess: () => {
+            setSaved(true);
+            void utils.template.list.invalidate();
+            setTimeout(() => setSaved(false), 2000);
+        },
+    });
+
+    const createBlockMutation = api.block.createCustom.useMutation({
+        onSuccess: (newBlock) => {
+            void utils.block.listLibrary.invalidate();
+            // Also add it to canvas immediately
+            addBlockToCanvas({
+                id: newBlock.id,
+                name: newBlock.name,
+                sourceType: "USER",
+                fields: newBlock.fields.map((f, i) => ({
+                    key: f.key,
+                    label: f.label ?? f.key,
+                    fieldType: f.fieldType as FieldType,
+                    required: f.required,
+                    order: i,
+                })),
+            });
+            setModalOpen(false);
+            setModalName("");
+            setModalFields([{ key: "", label: "", fieldType: "TEXT" }]);
+        },
+    });
+
+    // ── Library for right panel ───────────────────────────────────────────────
+    // No initialData needed — server prefetched this in the page component.
+    // staleTime=5min means no background refetch on mount.
+    const { data: libraryData } = api.block.listLibrary.useQuery();
+
+    const allLibraryBlocks: LibraryBlock[] = [
+        ...(libraryData?.systemBlocks ?? SYSTEM_BLOCKS).map((b) => ({
+            id: b.id,
+            name: b.name,
+            sourceType: "SYSTEM" as const,
+            fields: b.fields as CanvasField[],
+        })),
+        ...(libraryData?.userBlocks ?? []) as LibraryBlock[],
+    ];
+
+    // ── Canvas operations ─────────────────────────────────────────────────────
+
+    const addBlockToCanvas = useCallback((lib: LibraryBlock) => {
+        setBlocks((prev) => [
+            ...prev,
+            {
+                instanceId: makeInstanceId(),
+                title: lib.name,
+                sourceType: lib.sourceType,
+                sourceBlockId: lib.id,
+                collapsed: false,
+                fields: lib.fields.map((f, i) => ({ ...f, order: i })),
+            },
+        ]);
+    }, []);
+
+    const removeBlock = (instanceId: string) => {
+        setBlocks((prev) => prev.filter((b) => b.instanceId !== instanceId));
+    };
+
+    const toggleCollapse = (instanceId: string) => {
+        setBlocks((prev) =>
+            prev.map((b) =>
+                b.instanceId === instanceId ? { ...b, collapsed: !b.collapsed } : b
+            )
+        );
+    };
+
+    // ── Drag and drop ─────────────────────────────────────────────────────────
+
+    const handleDragStart = (idx: number) => {
+        dragIndex.current = idx;
+    };
+
+    const handleDragOver = (e: React.DragEvent, idx: number) => {
+        e.preventDefault();
+        setDragOverIndex(idx);
+    };
+
+    const handleDrop = (e: React.DragEvent, dropIdx: number) => {
+        e.preventDefault();
+        const from = dragIndex.current;
+        if (from === null || from === dropIdx) {
+            setDragOverIndex(null);
+            return;
+        }
+        setBlocks((prev) => {
+            const next = [...prev];
+            const [item] = next.splice(from, 1);
+            next.splice(dropIdx, 0, item!);
+            return next;
+        });
+        dragIndex.current = null;
+        setDragOverIndex(null);
+    };
+
+    const handleDragEnd = () => {
+        dragIndex.current = null;
+        setDragOverIndex(null);
+    };
+
+    const moveBlock = useCallback((idx: number, direction: -1 | 1) => {
+        setBlocks((prev) => {
+            const next = [...prev];
+            const targetIdx = idx + direction;
+            if (targetIdx < 0 || targetIdx >= next.length) return prev;
+            [next[idx], next[targetIdx]] = [next[targetIdx]!, next[idx]!];
+            return next;
+        });
+    }, []);
+
+    // ── Save ──────────────────────────────────────────────────────────────────
+
+    const handleSave = () => {
+        const payload = canvasToSavePayload(templateName, blocks);
+        if (initialTemplate) {
+            updateMutation.mutate({ id: initialTemplate.id, ...payload });
+        } else {
+            createMutation.mutate(payload);
+        }
+    };
+
+    const isSaving = createMutation.isPending || updateMutation.isPending;
+
+    // ── Custom block modal ────────────────────────────────────────────────────
+
+    const handleAddModalField = () => {
+        setModalFields((prev) => [...prev, { key: "", label: "", fieldType: "TEXT" }]);
+    };
+
+    const handleModalFieldChange = (
+        idx: number,
+        field: Partial<{ key: string; label: string; fieldType: FieldType }>
+    ) => {
+        setModalFields((prev) =>
+            prev.map((f, i) => (i === idx ? { ...f, ...field } : f))
+        );
+    };
+
+    const handleRemoveModalField = (idx: number) => {
+        setModalFields((prev) => prev.filter((_, i) => i !== idx));
+    };
+
+    const handleSaveCustomBlock = () => {
+        const validFields = modalFields.filter((f) => f.key.trim());
+        if (!modalName.trim() || validFields.length === 0) return;
+        createBlockMutation.mutate({
+            name: modalName.trim(),
+            fields: validFields.map((f) => ({
+                key: f.key.trim().toLowerCase().replace(/\s+/g, "_"),
+                label: f.label.trim() || f.key.trim(),
+                fieldType: f.fieldType,
+                required: false,
+            })),
+        });
+    };
+
+    // Handler for clicking "Create" button - check if PRO or show upgrade modal
+    const handleCreateBlockClick = () => {
+        if (isPro) {
+            setModalOpen(true);
+        } else {
+            setUpgradeModalOpen(true);
+        }
+    };
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RENDER
+    // ─────────────────────────────────────────────────────────────────────────
+
+    return (
+        <div className="flex flex-col flex-1 min-h-0 bg-[#FBFBFB]">
+            {/* ── Top bar ── */}
+            <header className="flex items-center gap-3 px-4 md:px-6 py-3 md:py-3.5 border-b border-slate-200 bg-white sticky top-0 z-30 md:static">
+                <Link
+                    href="/dashboard/formbank"
+                    className="flex items-center gap-1.5 text-sm text-[#868C94] hover:text-slate-700 transition-colors flex-shrink-0"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Form Bank</span>
+                </Link>
+
+                <div className="w-px h-5 bg-slate-200 flex-shrink-0" />
+
+                <input
+                    type="text"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder="Template name"
+                    className="flex-1 min-w-0 text-base font-semibold text-slate-900 bg-transparent border-none outline-none placeholder-slate-300"
+                />
+
+                <button
+                    onClick={handleSave}
+                    disabled={isSaving || blocks.length === 0 || !templateName.trim()}
+                    className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 flex-shrink-0"
+                >
+                    {isSaving ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : saved ? (
+                        <Check className="w-4 h-4" />
+                    ) : (
+                        <Save className="w-4 h-4" />
+                    )}
+                    {isSaving ? "Saving…" : saved ? "Saved" : "Save"}
+                </button>
+            </header>
+
+            {/* ── Body: canvas + library ── */}
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+
+                {/* ── Canvas ── */}
+                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 pb-28 md:pb-6">
+                    {blocks.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center py-20">
+                            <div className="w-16 h-16 bg-[#e8eef9] rounded-2xl flex items-center justify-center mb-4">
+                                <Plus className="w-7 h-7 text-[#2149A1]" />
+                            </div>
+                            <p className="text-slate-700 font-medium mb-1">No blocks yet</p>
+                            <p className="text-sm text-[#868C94]">
+                                <span className="hidden md:inline">Add blocks from the library on the right →</span>
+                                <span className="md:hidden">Tap &ldquo;Add Block&rdquo; below to get started</span>
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="max-w-2xl space-y-3">
+                            {blocks.map((block, idx) => (
+                                <div
+                                    key={block.instanceId}
+                                    draggable
+                                    onDragStart={() => handleDragStart(idx)}
+                                    onDragOver={(e) => handleDragOver(e, idx)}
+                                    onDrop={(e) => handleDrop(e, idx)}
+                                    onDragEnd={handleDragEnd}
+                                    className={`bg-white border rounded-xl overflow-hidden transition-all duration-150 ${dragOverIndex === idx
+                                        ? "border-[#2149A1] shadow-md"
+                                        : "border-slate-200"
+                                        }`}
+                                >
+                                    {/* Block header */}
+                                    <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-3 bg-white">
+                                        {/* Drag handle — desktop only */}
+                                        <div className="hidden md:block cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors flex-shrink-0">
+                                            <GripVertical className="w-4 h-4" />
+                                        </div>
+
+                                        {/* Up/down reorder — mobile only */}
+                                        <div className="flex md:hidden flex-col flex-shrink-0">
+                                            <button
+                                                onClick={() => moveBlock(idx, -1)}
+                                                disabled={idx === 0}
+                                                className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors"
+                                                title="Move up"
+                                            >
+                                                <ChevronUp className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => moveBlock(idx, 1)}
+                                                disabled={idx === blocks.length - 1}
+                                                className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors"
+                                                title="Move down"
+                                            >
+                                                <ChevronDown className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-sm text-slate-800">{block.title}</p>
+                                            <p className="text-xs text-[#868C94]">
+                                                {block.fields.length} field{block.fields.length !== 1 ? "s" : ""}
+                                                {block.sourceType === "SYSTEM" && (
+                                                    <span className="ml-1.5 text-[#2149A1]">· System</span>
+                                                )}
+                                                {block.sourceType === "USER" && (
+                                                    <span className="ml-1.5 text-emerald-600">· Custom</span>
+                                                )}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex items-center gap-0.5">
+                                            <button
+                                                onClick={() => toggleCollapse(block.instanceId)}
+                                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                                                title={block.collapsed ? "Expand" : "Collapse"}
+                                            >
+                                                {block.collapsed ? (
+                                                    <ChevronDown className="w-4 h-4" />
+                                                ) : (
+                                                    <ChevronUp className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => removeBlock(block.instanceId)}
+                                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                title="Remove block"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Fields */}
+                                    {!block.collapsed && (
+                                        <div className="border-t border-slate-100 px-4 py-3 grid grid-cols-2 gap-2 bg-slate-50/50">
+                                            {block.fields.map((field) => (
+                                                <div
+                                                    key={field.key}
+                                                    className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2"
+                                                >
+                                                    <div className="w-1.5 h-1.5 bg-[#2149A1]/40 rounded-full flex-shrink-0" />
+                                                    <div className="min-w-0">
+                                                        <p className="text-xs font-medium text-slate-700 truncate">
+                                                            {field.label}
+                                                        </p>
+                                                        <p className="text-xs text-[#868C94]">
+                                                            {FIELD_TYPE_LABELS[field.fieldType]}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* ── Block Library (right panel) ── */}
+                <aside className="hidden md:flex md:flex-col w-72 shrink-0 border-l border-slate-200 bg-white overflow-y-auto">
+                    <div className="px-4 py-4 border-b border-slate-100">
+                        <h2 className="text-xs font-semibold text-[#868C94] uppercase tracking-widest">
+                            Block Library
+                        </h2>
+                    </div>
+
+                    {/* System blocks */}
+                    <div className="px-4 py-3">
+                        <p className="text-xs font-medium text-slate-500 mb-2">System Blocks</p>
+                        <div className="space-y-1.5">
+                            {allLibraryBlocks
+                                .filter((b) => b.sourceType === "SYSTEM")
+                                .map((lib) => (
+                                    <LibraryBlockRow
+                                        key={lib.id}
+                                        block={lib}
+                                        onAdd={() => addBlockToCanvas(lib)}
+                                    />
+                                ))}
+                        </div>
+                    </div>
+
+                    {/* Custom blocks */}
+                    <div className="px-4 py-3 border-t border-slate-100">
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-medium text-slate-500">My Blocks</p>
+                            <button
+                                onClick={handleCreateBlockClick}
+                                className="flex items-center gap-1 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors"
+                            >
+                                {!isPro && <Lock className="w-3 h-3" />}
+                                <Plus className="w-3 h-3" />
+                                Create
+                            </button>
+                        </div>
+                        {allLibraryBlocks.filter((b) => b.sourceType === "USER").length === 0 ? (
+                            <div className="text-center py-6">
+                                <p className="text-xs text-[#868C94] mb-3">No custom blocks yet</p>
+                                <button
+                                    onClick={handleCreateBlockClick}
+                                    className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors inline-flex items-center gap-1"
+                                >
+                                    {!isPro && <Lock className="w-3 h-3" />}
+                                    Create your first block →
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-1.5">
+                                {allLibraryBlocks
+                                    .filter((b) => b.sourceType === "USER")
+                                    .map((lib) => (
+                                        <LibraryBlockRow
+                                            key={lib.id}
+                                            block={lib}
+                                            onAdd={() => addBlockToCanvas(lib)}
+                                        />
+                                    ))}
+                            </div>
+                        )}
+                    </div>
+                </aside>
+            </div>
+
+            {/* ── Custom Block Modal ── */}
+            {modalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div
+                        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+                        onClick={() => setModalOpen(false)}
+                    />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+                        {/* Modal header */}
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+                            <div>
+                                <h2 className="font-semibold text-slate-900">Create Custom Block</h2>
+                                <p className="text-xs text-[#868C94] mt-0.5">Saved to your block library</p>
+                            </div>
+                            <button
+                                onClick={() => setModalOpen(false)}
+                                className="p-2 rounded-lg text-[#868C94] hover:bg-slate-100 transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
+                            {/* Block name */}
+                            <div>
+                                <label className="block text-xs font-medium text-[#868C94] mb-1.5">
+                                    Block Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={modalName}
+                                    onChange={(e) => setModalName(e.target.value)}
+                                    placeholder="e.g. Insurance Details"
+                                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all"
+                                />
+                            </div>
+
+                            {/* Fields */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-xs font-medium text-[#868C94]">Fields</label>
+                                    <button
+                                        onClick={handleAddModalField}
+                                        className="flex items-center gap-1 text-xs text-[#2149A1] hover:text-[#1a3a87] font-medium transition-colors"
+                                    >
+                                        <Plus className="w-3 h-3" />
+                                        Add field
+                                    </button>
+                                </div>
+                                <div className="space-y-2">
+                                    {modalFields.map((field, idx) => (
+                                        <div key={idx} className="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                value={field.label}
+                                                onChange={(e) =>
+                                                    handleModalFieldChange(idx, {
+                                                        label: e.target.value,
+                                                        key: e.target.value.toLowerCase().replace(/\s+/g, "_"),
+                                                    })
+                                                }
+                                                placeholder="Field name"
+                                                className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all"
+                                            />
+                                            <select
+                                                value={field.fieldType}
+                                                onChange={(e) =>
+                                                    handleModalFieldChange(idx, { fieldType: e.target.value as FieldType })
+                                                }
+                                                className="border border-slate-200 rounded-lg px-2 py-2 text-xs text-slate-700 focus:outline-none focus:border-[#2149A1] transition-all bg-white"
+                                            >
+                                                {Object.entries(FIELD_TYPE_LABELS).map(([v, l]) => (
+                                                    <option key={v} value={v}>{l}</option>
+                                                ))}
+                                            </select>
+                                            {modalFields.length > 1 && (
+                                                <button
+                                                    onClick={() => handleRemoveModalField(idx)}
+                                                    className="p-1.5 rounded text-[#868C94] hover:text-red-500 transition-colors"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal footer */}
+                        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+                            <button
+                                onClick={() => setModalOpen(false)}
+                                className="text-sm font-medium text-[#868C94] hover:text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveCustomBlock}
+                                disabled={
+                                    !modalName.trim() ||
+                                    modalFields.every((f) => !f.label.trim()) ||
+                                    createBlockMutation.isPending
+                                }
+                                className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2 rounded-lg transition-all"
+                            >
+                                {createBlockMutation.isPending && (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                )}
+                                Save Block
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Upgrade Modal ── */}
+            <UpgradeModal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
+
+            {/* ── Mobile sticky bottom bar ── */}
+            <div
+                className="fixed bottom-0 left-0 right-0 md:hidden z-30 bg-white border-t border-slate-200 px-4 py-3"
+                style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+            >
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setShowLibrary(true)}
+                        className="flex-1 flex items-center justify-center gap-2 border border-slate-200 text-slate-700 text-sm font-medium py-3 rounded-xl hover:bg-slate-50 transition-colors"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Block
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving || blocks.length === 0 || !templateName.trim()}
+                        className="flex-1 flex items-center justify-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium py-3 rounded-xl transition-all"
+                    >
+                        {isSaving ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : saved ? (
+                            <Check className="w-4 h-4" />
+                        ) : (
+                            <Save className="w-4 h-4" />
+                        )}
+                        {isSaving ? "Saving…" : saved ? "Saved" : "Save"}
+                    </button>
+                </div>
+            </div>
+
+            {/* ── Mobile block library bottom sheet ── */}
+            {showLibrary && (
+                <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/40"
+                        onClick={() => setShowLibrary(false)}
+                    />
+                    {/* Sheet */}
+                    <div className="relative bg-white rounded-t-2xl flex flex-col max-h-[75vh]">
+                        {/* Pull indicator */}
+                        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+                            <div className="w-10 h-1 bg-slate-200 rounded-full" />
+                        </div>
+                        {/* Sheet header */}
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 flex-shrink-0">
+                            <h2 className="font-semibold text-slate-900">Block Library</h2>
+                            <button
+                                onClick={() => setShowLibrary(false)}
+                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        {/* Sheet content */}
+                        <div
+                            className="overflow-y-auto flex-1 px-4"
+                            style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
+                        >
+                            {/* System blocks */}
+                            <div className="py-3">
+                                <p className="text-xs font-medium text-slate-500 mb-2">System Blocks</p>
+                                <div className="space-y-1.5">
+                                    {allLibraryBlocks
+                                        .filter((b) => b.sourceType === "SYSTEM")
+                                        .map((lib) => (
+                                            <LibraryBlockRow
+                                                key={lib.id}
+                                                block={lib}
+                                                onAdd={() => { addBlockToCanvas(lib); setShowLibrary(false); }}
+                                            />
+                                        ))}
+                                </div>
+                            </div>
+                            {/* Custom blocks */}
+                            <div className="py-3 border-t border-slate-100">
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-medium text-slate-500">My Blocks</p>
+                                    <button
+                                        onClick={() => { setShowLibrary(false); handleCreateBlockClick(); }}
+                                        className="flex items-center gap-1 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors"
+                                    >
+                                        {!isPro && <Lock className="w-3 h-3" />}
+                                        <Plus className="w-3 h-3" />
+                                        Create
+                                    </button>
+                                </div>
+                                {allLibraryBlocks.filter((b) => b.sourceType === "USER").length === 0 ? (
+                                    <div className="text-center py-6">
+                                        <p className="text-xs text-[#868C94] mb-3">No custom blocks yet</p>
+                                        <button
+                                            onClick={() => { setShowLibrary(false); handleCreateBlockClick(); }}
+                                            className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors inline-flex items-center gap-1"
+                                        >
+                                            {!isPro && <Lock className="w-3 h-3" />}
+                                            Create your first block →
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1.5">
+                                        {allLibraryBlocks
+                                            .filter((b) => b.sourceType === "USER")
+                                            .map((lib) => (
+                                                <LibraryBlockRow
+                                                    key={lib.id}
+                                                    block={lib}
+                                                    onAdd={() => { addBlockToCanvas(lib); setShowLibrary(false); }}
+                                                />
+                                            ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─── Library Block Row ────────────────────────────────────────────────────────
+
+function LibraryBlockRow({
+    block,
+    onAdd,
+}: {
+    block: LibraryBlock;
+    onAdd: () => void;
+}) {
+    return (
+        <div
+            className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-slate-100 hover:border-[#2149A1]/30 hover:bg-[#e8eef9]/40 transition-all group cursor-default"
+        >
+            <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-700 truncate">{block.name}</p>
+                <p className="text-xs text-[#868C94]">
+                    {block.fields.length} field{block.fields.length !== 1 ? "s" : ""}
+                </p>
+            </div>
+            <button
+                onClick={onAdd}
+                className="ml-2 flex items-center justify-center w-8 h-8 rounded-lg bg-[#2149A1] text-white flex-shrink-0 hover:bg-[#1a3a87] transition-colors"
+                title="Add to template"
+            >
+                <Plus className="w-3.5 h-3.5" />
+            </button>
+        </div>
+    );
+}
+==== src/app/dashboard/profile/ProfileClient.tsx ====
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import { signOut } from "next-auth/react";
+import { LogOut, User, Mail, ShieldCheck, Pencil, Lock, Trash2, Eye, EyeOff, Loader2, Check, AlertCircle } from "lucide-react";
+import BillingCard from "@/app/_components/BillingCard";
+
+interface Props {
+    user: {
+        id: string;
+        name: string | null;
+        email: string | null;
+        image: string | null;
+        accounts: { provider: string }[];
+    };
+}
+
+// ─── Inline API helpers ───────────────────────────────────────────────────────
+
+async function apiPost(url: string, body: Record<string, string>) {
+    const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+    const json = (await res.json()) as { error?: string };
+    if (!res.ok) throw new Error(json.error ?? "Request failed");
+    return json;
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function StatusMsg({ type, msg }: { type: "success" | "error"; msg: string }) {
+    return (
+        <div className={`flex items-center gap-2 text-xs mt-2 ${type === "success" ? "text-emerald-600" : "text-red-600"}`}>
+            {type === "success" ? <Check className="w-3.5 h-3.5 flex-shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />}
+            {msg}
+        </div>
+    );
+}
+
+function PasswordField({
+    label, value, onChange, placeholder,
+}: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+    const [show, setShow] = useState(false);
+    return (
+        <div>
+            <label className="block text-xs font-medium text-[#868C94] mb-1">{label}</label>
+            <div className="relative">
+                <input
+                    type={show ? "text" : "password"}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 pr-9 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all"
+                />
+                <button
+                    type="button"
+                    onClick={() => setShow((v) => !v)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#868C94] hover:text-slate-600"
+                >
+                    {show ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// ─── Section: Change Name ─────────────────────────────────────────────────────
+
+function ChangeNameSection({ currentName }: { currentName: string | null }) {
+    const [open, setOpen] = useState(false);
+    const [name, setName] = useState(currentName ?? "");
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+    const handleSave = async () => {
+        if (!name.trim()) return;
+        setLoading(true);
+        setStatus(null);
+        try {
+            await apiPost("/api/account/update-name", { name: name.trim() });
+            setStatus({ type: "success", msg: "Name updated. Refresh to see changes." });
+            setOpen(false);
+        } catch (e) {
+            setStatus({ type: "error", msg: e instanceof Error ? e.message : "Failed to update name" });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex items-start gap-4 px-5 md:px-6 py-4">
+            <User className="w-4 h-4 text-[#868C94] flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+                <p className="text-xs text-[#868C94] mb-0.5">Full name</p>
+                {open ? (
+                    <div className="mt-1 space-y-2">
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all"
+                            placeholder="Your full name"
+                        />
+                        {status && <StatusMsg type={status.type} msg={status.msg} />}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleSave}
+                                disabled={loading || !name.trim()}
+                                className="flex items-center gap-1.5 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
+                            >
+                                {loading && <Loader2 className="w-3 h-3 animate-spin" />}
+                                Save
+                            </button>
+                            <button
+                                onClick={() => { setOpen(false); setStatus(null); setName(currentName ?? ""); }}
+                                className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm text-slate-800">{currentName ?? "—"}</p>
+                        <button
+                            onClick={() => setOpen(true)}
+                            className="ml-3 text-[#868C94] hover:text-[#2149A1] transition-colors"
+                            title="Edit name"
+                        >
+                            <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ─── Section: Change Password ─────────────────────────────────────────────────
+
+function ChangePasswordSection({ hasPassword }: { hasPassword: boolean }) {
+    const [open, setOpen] = useState(false);
+    const [current, setCurrent] = useState("");
+    const [next, setNext] = useState("");
+    const [confirm, setConfirm] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+    const handleSave = async () => {
+        if (next.length < 8) {
+            setStatus({ type: "error", msg: "New password must be at least 8 characters." });
+            return;
+        }
+        if (next !== confirm) {
+            setStatus({ type: "error", msg: "Passwords do not match." });
+            return;
+        }
+        setLoading(true);
+        setStatus(null);
+        try {
+            await apiPost("/api/account/change-password", {
+                currentPassword: current,
+                newPassword: next,
+            });
+            setStatus({ type: "success", msg: "Password changed successfully." });
+            setCurrent(""); setNext(""); setConfirm("");
+            setTimeout(() => setOpen(false), 1500);
+        } catch (e) {
+            setStatus({ type: "error", msg: e instanceof Error ? e.message : "Failed to change password" });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex items-start gap-4 px-5 md:px-6 py-4">
+            <Lock className="w-4 h-4 text-[#868C94] flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+                <p className="text-xs text-[#868C94] mb-0.5">Password</p>
+                {open ? (
+                    <div className="mt-1 space-y-2">
+                        {hasPassword && (
+                            <PasswordField label="Current password" value={current} onChange={setCurrent} />
+                        )}
+                        <PasswordField label="New password" value={next} onChange={setNext} placeholder="Min 8 characters" />
+                        <PasswordField label="Confirm new password" value={confirm} onChange={setConfirm} />
+                        {status && <StatusMsg type={status.type} msg={status.msg} />}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleSave}
+                                disabled={loading}
+                                className="flex items-center gap-1.5 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
+                            >
+                                {loading && <Loader2 className="w-3 h-3 animate-spin" />}
+                                {hasPassword ? "Change password" : "Set password"}
+                            </button>
+                            <button
+                                onClick={() => { setOpen(false); setStatus(null); setCurrent(""); setNext(""); setConfirm(""); }}
+                                className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm text-slate-800">{hasPassword ? "••••••••" : "Not set"}</p>
+                        <button
+                            onClick={() => setOpen(true)}
+                            className="ml-3 text-[#868C94] hover:text-[#2149A1] transition-colors"
+                            title={hasPassword ? "Change password" : "Set password"}
+                        >
+                            <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ─── Section: Delete Account ──────────────────────────────────────────────────
+
+function DeleteAccountSection() {
+    const [open, setOpen] = useState(false);
+    const [confirm, setConfirm] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+    const handleDelete = async () => {
+        if (confirm !== "DELETE") return;
+        setLoading(true);
+        setStatus(null);
+        try {
+            await apiPost("/api/account/delete", {});
+            await signOut({ callbackUrl: "/" });
+        } catch (e) {
+            setStatus({ type: "error", msg: e instanceof Error ? e.message : "Failed to delete account" });
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="px-5 md:px-6 py-4">
+            {!open ? (
+                <button
+                    onClick={() => setOpen(true)}
+                    className="flex items-center gap-2.5 text-sm text-red-600 hover:text-red-700 transition-colors min-h-[44px]"
+                >
+                    <Trash2 className="w-4 h-4" />
+                    Delete account
+                </button>
+            ) : (
+                <div className="space-y-3">
+                    <p className="text-sm font-medium text-red-600">Delete your account</p>
+                    <p className="text-xs text-slate-600">
+                        This permanently deletes your account, all templates, and cancels any active subscription.
+                        This action <strong>cannot be undone</strong>.
+                    </p>
+                    <div>
+                        <label className="block text-xs font-medium text-[#868C94] mb-1">
+                            Type <span className="font-mono font-bold text-slate-700">DELETE</span> to confirm
+                        </label>
+                        <input
+                            type="text"
+                            value={confirm}
+                            onChange={(e) => setConfirm(e.target.value)}
+                            className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/20 transition-all"
+                            placeholder="DELETE"
+                        />
+                    </div>
+                    {status && <StatusMsg type={status.type} msg={status.msg} />}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleDelete}
+                            disabled={confirm !== "DELETE" || loading}
+                            className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
+                        >
+                            {loading && <Loader2 className="w-3 h-3 animate-spin" />}
+                            Delete permanently
+                        </button>
+                        <button
+                            onClick={() => { setOpen(false); setConfirm(""); setStatus(null); }}
+                            className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export default function ProfileClient({ user }: Props) {
+    const providers = user.accounts.map((a) => a.provider);
+    const hasGoogle = providers.includes("google");
+    const hasPassword = !!user.accounts.find((a) => a.provider === "credentials") || providers.length === 0;
+
+    const initials =
+        user.name
+            ?.split(" ")
+            .map((w) => w[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2) ??
+        user.email?.[0]?.toUpperCase() ??
+        "?";
+
+    return (
+        <div className="flex-1 overflow-y-auto">
+            <div className="max-w-2xl mx-auto px-4 md:px-6 py-6 md:py-8">
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-2xl font-bold text-slate-900">Profile</h1>
+                    <p className="text-sm text-[#868C94] mt-1">Your account details and subscription</p>
+                </div>
+
+                {/* Avatar + name card */}
+                <div className="bg-white border border-slate-200 rounded-xl p-5 md:p-6 mb-5 flex items-center gap-4 md:gap-5">
+                    {user.image ? (
+                        <Image
+                            src={user.image}
+                            alt={user.name ?? "User"}
+                            width={64}
+                            height={64}
+                            className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover flex-shrink-0"
+                        />
+                    ) : (
+                        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#2149A1] flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
+                            {initials}
+                        </div>
+                    )}
+                    <div>
+                        <p className="text-lg font-semibold text-slate-900">{user.name ?? "User"}</p>
+                        <p className="text-sm text-[#868C94]">{user.email}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                            {hasGoogle && (
+                                <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
+                                    <ShieldCheck className="w-3 h-3" />
+                                    Google
+                                </span>
+                            )}
+                            {(hasPassword || providers.length === 0) && (
+                                <span className="flex items-center gap-1.5 text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">
+                                    <ShieldCheck className="w-3 h-3" />
+                                    Email
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Subscription */}
+                <div className="mb-5">
+                    <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3 px-1">
+                        Subscription
+                    </p>
+                    <BillingCard />
+                </div>
+
+                {/* Account details */}
+                <div className="mb-5">
+                    <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3 px-1">
+                        Account details
+                    </p>
+                    <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
+                        <ChangeNameSection currentName={user.name} />
+                        <div className="flex items-center gap-4 px-5 md:px-6 py-4">
+                            <Mail className="w-4 h-4 text-[#868C94] flex-shrink-0" />
+                            <div>
+                                <p className="text-xs text-[#868C94] mb-0.5">Email</p>
+                                <p className="text-sm text-slate-800">{user.email}</p>
+                            </div>
+                        </div>
+                        {/* Show password section for credentials users OR Google-only users who want to add a password */}
+                        <ChangePasswordSection hasPassword={hasPassword} />
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
+                    <div className="px-5 md:px-6 py-4">
+                        <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3">
+                            Account
+                        </p>
+                        <button
+                            onClick={() => void signOut({ callbackUrl: "/" })}
+                            className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-red-600 transition-colors group min-h-[44px]"
+                        >
+                            <LogOut className="w-4 h-4 group-hover:text-red-500 transition-colors" />
+                            Sign out
+                        </button>
+                    </div>
+                    <DeleteAccountSection />
+                </div>
+            </div>
+        </div>
+    );
+}
+==== src/app/_components/BillingCard.tsx ====
+"use client";
+
+import { useState } from "react";
+import { api } from "@/trpc/react";
+import { Crown, Zap, AlertCircle, ExternalLink, Loader2, Calendar } from "lucide-react";
+import UpgradeModal from "@/app/dashboard/_components/UpgradeModal";
+
+export default function BillingCard() {
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [isRedirecting, setIsRedirecting] = useState(false);
+
+    const { data: entitlements, isLoading } = api.entitlements.me.useQuery(undefined, {
+        staleTime: 60_000,
+    });
+    const { data: usage } = api.usage.getToday.useQuery(undefined, {
+        staleTime: 30_000,
+    });
+
+    const createPortal = api.billing.createPortalSession.useMutation({
+        onSuccess: ({ url }) => { window.location.href = url; },
+        onError: (err) => { alert(err.message); setIsRedirecting(false); },
+    });
+
+    const isPro = entitlements?.planSlug === "pro";
+
+    if (isLoading) {
+        return (
+            <div className="bg-white border border-slate-200 rounded-xl p-6 flex items-center justify-center min-h-[80px]">
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                {/* Header */}
+                <div className={`px-6 py-4 border-b border-slate-100 flex items-center justify-between ${isPro ? "bg-gradient-to-r from-blue-50 to-purple-50" : ""}`}>
+                    <div className="flex items-center gap-2.5">
+                        {isPro ? <Crown className="w-4 h-4 text-purple-600" /> : <Zap className="w-4 h-4 text-slate-400" />}
+                        <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                                {isPro ? "Pro Plan" : "Free Plan"}
+                            </p>
+                            {isPro && entitlements?.currentPeriodEnd && (
+                                <p className="text-xs text-[#868C94] flex items-center gap-1 mt-0.5">
+                                    <Calendar className="w-3 h-3" />
+                                    {entitlements.status === "CANCELED" ? "Access until" : "Renews"}{" "}
+                                    {new Date(entitlements.currentPeriodEnd).toLocaleDateString("en-AU", {
+                                        day: "numeric", month: "long", year: "numeric",
+                                    })}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    {isPro ? (
+                        <button
+                            onClick={() => { setIsRedirecting(true); createPortal.mutate(); }}
+                            disabled={isRedirecting || createPortal.isPending}
+                            className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] disabled:opacity-40 transition-colors"
+                        >
+                            {isRedirecting || createPortal.isPending
+                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                : <ExternalLink className="w-3 h-3" />}
+                            Manage billing
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => setShowUpgradeModal(true)}
+                            className="flex items-center gap-1.5 text-xs font-medium bg-[#2149A1] text-white px-3 py-1.5 rounded-lg hover:bg-[#1a3a87] transition-colors"
+                        >
+                            <Crown className="w-3 h-3" />
+                            Upgrade to Pro
+                        </button>
+                    )}
+                </div>
+
+                {/* Usage / features */}
+                <div className="px-6 py-4 space-y-3">
+                    {isPro ? (
+                        <p className="text-xs text-[#868C94] flex items-center gap-1.5">
+                            <Zap className="w-3 h-3 text-purple-500" />
+                            Unlimited transcriptions, custom blocks, and templates
+                        </p>
+                    ) : (
+                        <>
+                            {usage && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <p className="text-xs text-[#868C94]">Daily transcriptions</p>
+                                        <p className="text-xs font-medium text-slate-700">
+                                            {usage.count} / {usage.limit} used
+                                        </p>
+                                    </div>
+                                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-300 ${usage.count >= (usage.limit ?? 3)
+                                                ? "bg-red-500"
+                                                : usage.count >= Math.ceil((usage.limit ?? 3) * 0.67)
+                                                    ? "bg-amber-500"
+                                                    : "bg-[#2149A1]"
+                                                }`}
+                                            style={{ width: `${Math.min(100, (usage.count / (usage.limit ?? 3)) * 100)}%` }}
+                                        />
+                                    </div>
+                                    {!usage.canRecord && (
+                                        <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                                            <AlertCircle className="w-3 h-3" />
+                                            Daily limit reached — resets at midnight UTC.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                            <div className="text-xs text-[#868C94] space-y-0.5 pt-1 border-t border-slate-100">
+                                <ul className="space-y-0.5 mb-1.5">
+                                    <li>• {usage?.limit ?? 3} transcription sessions per day</li>
+                                    <li>• Up to 10 saved templates</li>
+                                    <li>• System blocks only</li>
+                                </ul>
+                                <button onClick={() => setShowUpgradeModal(true)} className="text-[#2149A1] font-medium hover:underline">
+                                    Upgrade to Pro
+                                </button>{" "}for unlimited everything + custom blocks.
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+        </>
+    );
+}
+==== src/app/dashboard/_components/UpgradeModal.tsx ====
+"use client";
+
+import { useState, useEffect } from "react";
+import { X, Loader2 } from "lucide-react";
+import { env } from "@/env";
+import { api } from "@/trpc/react";
+
+interface UpgradeModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
+    // Fix: render the Stripe pricing table only after mount.
+    // <stripe-pricing-table> is a custom element registered by the Stripe script
+    // at runtime. SSR outputs an empty unknown element; the client hydrates it
+    // as a full web component — React #418 hydration mismatch. Guarding with
+    // `mounted` ensures the element only ever renders on the client.
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
+
+    // Fallback: direct Checkout if pricing table ID is missing/broken.
+    const [isRedirecting, setIsRedirecting] = useState(false);
+    const checkout = api.billing.createCheckoutSession.useMutation({
+        onSuccess: ({ url }) => { window.location.href = url; },
+        onError: (err) => { alert(err.message); setIsRedirecting(false); },
+    });
+
+    const pricingTableId = env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID;
+    const publishableKey = env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+    // If no valid pricing table ID is configured, fall back to direct checkout.
+    const usePricingTable = !!pricingTableId && pricingTableId.startsWith("prctbl_");
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="relative w-full max-w-4xl rounded-xl bg-white shadow-lg">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                    <div>
+                        <h2 className="font-semibold text-slate-900">Upgrade to Pro</h2>
+                        <p className="text-sm text-[#868C94] mt-0.5">Unlock custom blocks, unlimited templates and transcriptions</p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="px-6 py-6">
+                    {!mounted ? (
+                        // Skeleton while JS loads — prevents layout shift
+                        <div className="flex items-center justify-center h-48">
+                            <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+                        </div>
+                    ) : usePricingTable ? (
+                        // Stripe Pricing Table — client-only render
+                        /* @ts-expect-error - Stripe Pricing Table is a custom element loaded via script */
+                        <stripe-pricing-table
+                            pricing-table-id={pricingTableId}
+                            publishable-key={publishableKey}
+                        />
+                    ) : (
+                        // Fallback when pricing table isn't configured: direct checkout
+                        <div className="flex flex-col items-center gap-6 py-8">
+                            <div className="text-center">
+                                <p className="text-xl font-bold text-slate-900 mb-1">Pro Plan — $29/month</p>
+                                <ul className="text-sm text-[#868C94] space-y-1 mt-3">
+                                    <li>✓ Unlimited transcriptions</li>
+                                    <li>✓ Unlimited templates</li>
+                                    <li>✓ Create custom blocks</li>
+                                    <li>✓ Priority support</li>
+                                </ul>
+                            </div>
+                            <button
+                                onClick={() => { setIsRedirecting(true); checkout.mutate(); }}
+                                disabled={isRedirecting || checkout.isPending}
+                                className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-50 text-white font-semibold px-8 py-3 rounded-xl transition-all"
+                            >
+                                {(isRedirecting || checkout.isPending) && (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                )}
+                                Continue to checkout
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+==== src/app/api/stripe/webhook/route.ts ====
+import { NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { verifyWebhookSignature, stripe } from "@/server/billing/stripe";
+import { db } from "@/server/db";
+import type Stripe from "stripe";
+import { SubscriptionStatus } from "../../../../../generated/prisma";
+import { PLAN_FEATURES } from "@/server/entitlements/features";
+
+/**
+ * Stripe webhook handler.
+ * Processes subscription events and updates the database accordingly.
+ */
+export async function POST(req: Request) {
+    try {
+        const body = await req.text();
+        const signature = (await headers()).get("stripe-signature");
+
+        if (!signature) {
+            return NextResponse.json(
+                { error: "Missing stripe-signature header" },
+                { status: 400 }
+            );
+        }
+
+        // Verify webhook signature
+        const event = verifyWebhookSignature(body, signature);
+
+        console.log(`[Stripe Webhook] Received event: ${event.type}`);
+
+        // Handle different event types
+        switch (event.type) {
+            case "checkout.session.completed": {
+                const session = event.data.object;
+                await handleCheckoutCompleted(session);
+                break;
+            }
+
+            case "customer.subscription.created":
+            case "customer.subscription.updated": {
+                const subscription = event.data.object;
+                await handleSubscriptionUpdated(subscription);
+                break;
+            }
+
+            case "customer.subscription.deleted": {
+                const subscription = event.data.object;
+                await handleSubscriptionDeleted(subscription);
+                break;
+            }
+
+            default:
+                console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
+        }
+
+        return NextResponse.json({ received: true });
+    } catch (err) {
+        console.error("[Stripe Webhook] Error:", err);
+        return NextResponse.json(
+            { error: "Webhook handler failed" },
+            { status: 400 }
+        );
+    }
+}
+
+/**
+ * Handle checkout.session.completed event.
+ * Creates initial subscription record in the database.
+ */
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+    const userId = session.metadata?.userId;
+    const subscriptionId = session.subscription as string;
+
+    if (!userId || !subscriptionId) {
+        console.error("[Stripe Webhook] Missing userId or subscriptionId");
+        return;
+    }
+
+    // Fetch full subscription details
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    await upsertUserPlan(userId, subscription);
+
+    console.log(`[Stripe Webhook] Checkout completed for user ${userId}`);
+}
+
+/**
+ * Handle subscription.created or subscription.updated events.
+ * Updates or creates the UserPlan record.
+ */
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+    const userId = subscription.metadata?.userId;
+
+    if (!userId) {
+        // Try to find user by customer ID
+        const customer = await db.user.findUnique({
+            where: { stripeCustomerId: subscription.customer as string },
+            select: { id: true },
+        });
+
+        if (!customer) {
+            console.error("[Stripe Webhook] Could not find user for subscription");
+            return;
+        }
+
+        await upsertUserPlan(customer.id, subscription);
+    } else {
+        await upsertUserPlan(userId, subscription);
+    }
+
+    console.log(`[Stripe Webhook] Subscription updated: ${subscription.id}`);
+}
+
+/**
+ * Handle subscription.deleted event.
+ * Sets subscription status to CANCELED.
+ */
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+    await db.userPlan.updateMany({
+        where: { stripeSubscriptionId: subscription.id },
+        data: {
+            status: "CANCELED",
+            cancelAtPeriodEnd: true,
+        },
+    });
+
+    console.log(`[Stripe Webhook] Subscription deleted: ${subscription.id}`);
+}
+
+/**
+ * Upsert UserPlan record based on Stripe subscription data.
+ */
+async function upsertUserPlan(userId: string, subscription: Stripe.Subscription) {
+    // Find or create the PRO plan
+    const proPlan = await db.plan.findUnique({ where: { slug: "pro" } }) ??
+        await db.plan.create({
+            data: {
+                name: "Pro",
+                slug: "pro",
+                featuresJson: JSON.stringify(PLAN_FEATURES.pro ?? []),
+            },
+        });
+
+    // Map Stripe status to our enum
+    const statusMap: Record<string, SubscriptionStatus> = {
+        active: SubscriptionStatus.ACTIVE,
+        trialing: SubscriptionStatus.TRIALING,
+        past_due: SubscriptionStatus.PAST_DUE,
+        canceled: SubscriptionStatus.CANCELED,
+        incomplete: SubscriptionStatus.INCOMPLETE,
+        incomplete_expired: SubscriptionStatus.INCOMPLETE_EXPIRED,
+        unpaid: SubscriptionStatus.UNPAID,
+    };
+
+    const status = statusMap[subscription.status] ?? SubscriptionStatus.INCOMPLETE;
+
+    // Type assertion for subscription properties (Stripe API may have different property names)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    const sub = subscription as any;
+
+    // Upsert UserPlan
+    await db.userPlan.upsert({
+        where: { userId },
+        update: {
+            planId: proPlan.id,
+            status,
+            stripeSubscriptionId: subscription.id,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            currentPeriodStart: sub.current_period_start ? new Date(sub.current_period_start * 1000) : null,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
+        },
+        create: {
+            userId,
+            planId: proPlan.id,
+            status,
+            stripeSubscriptionId: subscription.id,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            currentPeriodStart: sub.current_period_start ? new Date(sub.current_period_start * 1000) : null,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
+        },
+    });
+}
+==== src/app/api/stripe/pro-price/route.ts ====
+import { NextResponse } from "next/server";
+import { stripe } from "@/server/billing/stripe";
+import { env } from "@/env";
+
+// Cache this route for 1 hour — revalidated automatically by Next.js
+export const revalidate = 3600;
+
+export async function GET() {
+    const price = await stripe.prices.retrieve(env.STRIPE_PRO_PRICE_ID);
+    const amount = price.unit_amount ? price.unit_amount / 100 : null;
+    const formatted = amount
+        ? `$${Number.isInteger(amount) ? amount.toString() : amount.toFixed(2)}`
+        : "$9.99";
+    return NextResponse.json({ price: formatted });
+}
+
+==== src/app/dashboard/layout.tsx ====
+import { redirect } from "next/navigation";
+import { auth } from "@/server/auth";
+import DashboardHeader from "./DashboardHeader";
+import { api, HydrateClient } from "@/trpc/server";
+
+export default async function DashboardLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    const session = await auth();
+    if (!session?.user) redirect("/login");
+
+    // Prefetch entitlements server-side so DashboardHeader and TemplateBuilder
+    // both read from the dehydrated cache — zero client-side waterfall for plan checks.
+    void api.entitlements.me.prefetch();
+
+    return (
+        <HydrateClient>
+            <div className="min-h-screen bg-[#FBFBFB] flex flex-col">
+                <DashboardHeader user={session.user} />
+                <main className="flex-1 min-w-0 flex flex-col">{children}</main>
+            </div>
+        </HydrateClient>
+    );
+}
+==== src/env.js ====
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
+
+export const env = createEnv({
+  /**
+   * Specify your server-side environment variables schema here. This way you can ensure the app
+   * isn't built with invalid env vars.
+   */
+  server: {
+    AUTH_SECRET:
+      process.env.NODE_ENV === "production"
+        ? z.string()
+        : z.string().optional(),
+    AUTH_DISCORD_ID: z.string().optional(),
+    AUTH_DISCORD_SECRET: z.string().optional(),
+    AUTH_GOOGLE_ID: z.string(),
+    AUTH_GOOGLE_SECRET: z.string(),
+    DATABASE_URL: z.string().url(),
+    NODE_ENV: z
+      .enum(["development", "test", "production"])
+      .default("development"),
+    STRIPE_SECRET_KEY: z.string(),
+    STRIPE_WEBHOOK_SECRET: z.string(),
+    STRIPE_PRO_PRICE_ID: z.string(),
+  },
+
+  /**
+   * Specify your client-side environment variables schema here. This way you can ensure the app
+   * isn't built with invalid env vars. To expose them to the client, prefix them with
+   * `NEXT_PUBLIC_`.
+   */
+  client: {
+    NEXT_PUBLIC_APP_URL: z.string().url(),
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string(),
+    NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID: z.string(),
+    NEXT_PUBLIC_WS_URL: z.string().url(),
+  },
+
+  /**
+   * You can't destruct `process.env` as a regular object in the Next.js edge runtimes (e.g.
+   * middlewares) or client-side so we need to destruct manually.
+   */
+  runtimeEnv: {
+    AUTH_SECRET: process.env.AUTH_SECRET,
+    AUTH_DISCORD_ID: process.env.AUTH_DISCORD_ID,
+    AUTH_DISCORD_SECRET: process.env.AUTH_DISCORD_SECRET,
+    AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
+    AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
+    DATABASE_URL: process.env.DATABASE_URL,
+    NODE_ENV: process.env.NODE_ENV,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    STRIPE_PRO_PRICE_ID: process.env.STRIPE_PRO_PRICE_ID,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID,
+    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
+  },
+  /**
+   * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
+   * useful for Docker builds.
+   */
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  /**
+   * Makes it so that empty strings are treated as undefined. `SOME_VAR: z.string()` and
+   * `SOME_VAR=''` will throw an error.
+   */
+  emptyStringAsUndefined: true,
+});
+
+==== prisma/seed.ts ====
+import { PrismaClient } from "../generated/prisma/index.js";
+import { PLAN_FEATURES } from "../src/server/entitlements/features.js";
+
+const prisma = new PrismaClient();
+
+async function main() {
+    console.log("Seeding plans...");
+
+    // Free plan — no features, no Stripe price
+    await prisma.plan.upsert({
+        where: { slug: "free" },
+        create: {
+            name: "Free",
+            slug: "free",
+            stripePriceId: null,
+            featuresJson: JSON.stringify(PLAN_FEATURES.free ?? []),
+        },
+        update: {
+            name: "Free",
+            featuresJson: JSON.stringify(PLAN_FEATURES.free ?? []),
+        },
+    });
+
+    // Pro plan — all features, price ID from env
+    await prisma.plan.upsert({
+        where: { slug: "pro" },
+        create: {
+            name: "Pro",
+            slug: "pro",
+            stripePriceId: process.env.STRIPE_PRO_PRICE_ID ?? null,
+            featuresJson: JSON.stringify(PLAN_FEATURES.pro ?? []),
+        },
+        update: {
+            name: "Pro",
+            stripePriceId: process.env.STRIPE_PRO_PRICE_ID ?? null,
+            featuresJson: JSON.stringify(PLAN_FEATURES.pro ?? []),
+        },
+    });
+
+    console.log("Plans seeded successfully.");
+}
+
+main()
+    .then(async () => { await prisma.$disconnect(); })
+    .catch(async (e) => {
+        console.error(e);
+        await prisma.$disconnect();
+        process.exit(1);
+    });
+==== src/trpc/query-client.ts ====
+import {
+  defaultShouldDehydrateQuery,
+  QueryClient,
+} from "@tanstack/react-query";
+import SuperJSON from "superjson";
+
+export const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        // With SSR, we usually want to set some default staleTime
+        // above 0 to avoid refetching immediately on the client.
+        // 5 minutes: entitlements, block library, templates don't change mid-session.
+        staleTime: 5 * 60 * 1000,
+        // Prevents surprise refetches every time the user alt-tabs back.
+        // Data is already fresh from SSR prefetch — no need to re-hit the DB.
+        refetchOnWindowFocus: false,
+        // Don't retry on error by default — fail fast and let the UI show an error state.
+        retry: 1,
+      },
+      dehydrate: {
+        serializeData: SuperJSON.serialize,
+        shouldDehydrateQuery: (query) =>
+          defaultShouldDehydrateQuery(query) ||
+          query.state.status === "pending",
+      },
+      hydrate: {
+        deserializeData: SuperJSON.deserialize,
+      },
+    },
+  });

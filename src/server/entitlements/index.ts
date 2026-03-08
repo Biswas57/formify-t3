@@ -20,20 +20,32 @@ export interface UserEntitlements {
 }
 
 /**
+ * Statuses that grant active feature access.
+ *
+ * PAST_DUE is included intentionally: Stripe retries payment for several days
+ * before moving to UNPAID/CANCELED. Cutting access immediately on first missed
+ * payment is poor UX — keep Pro alive during the retry window.
+ *
+ * CANCELED, INCOMPLETE_EXPIRED, UNPAID → drop to Free immediately.
+ * INCOMPLETE → payment never completed, never grant Pro.
+ */
+const ACTIVE_STATUSES: string[] = ["ACTIVE", "TRIALING", "PAST_DUE"];
+
+/**
  * Get entitlements for a user by ID.
  * Returns the user's current plan and available features.
- * If no subscription exists, defaults to "free".
+ * If no subscription exists, or the subscription is not in an active state,
+ * defaults to Free (empty features array).
  */
 export async function getUserEntitlements(
     userId: string
 ): Promise<UserEntitlements> {
-    // Fetch user's current plan + subscription status
     const userPlan = await db.userPlan.findUnique({
         where: { userId },
         include: { plan: true },
     });
 
-    // Default to free plan if no subscription.
+    // No subscription row at all → Free.
     // features: [] is correct today because the free plan has no features.
     // If the free plan ever gains features, update PLAN_FEATURES.free in
     // features.ts, re-run the seed to write them into the Plan row, and
@@ -49,12 +61,16 @@ export async function getUserEntitlements(
         };
     }
 
-    // Return user's actual plan — features come from the DB row, not hardcoded
-    const planSlug = userPlan.plan.slug;
-    const features = JSON.parse(userPlan.plan.featuresJson) as FeatureKey[];
+    // Gate features on subscription status.
+    // Canceled / expired / incomplete subscriptions get no Pro features —
+    // the plan row still exists (for display/history) but access is revoked.
+    const isActive = ACTIVE_STATUSES.includes(userPlan.status);
+    const features: FeatureKey[] = isActive
+        ? (JSON.parse(userPlan.plan.featuresJson) as FeatureKey[])
+        : [];
 
     return {
-        planSlug,
+        planSlug: userPlan.plan.slug,
         planName: userPlan.plan.name,
         status: userPlan.status,
         features,

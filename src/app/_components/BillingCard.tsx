@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api } from "@/trpc/react";
 import { Crown, Zap, AlertCircle, ExternalLink, Loader2, Calendar } from "lucide-react";
 import UpgradeModal from "@/app/dashboard/_components/UpgradeModal";
+import { hasFeature, FEATURES } from "@/server/entitlements/features";
 
 export default function BillingCard() {
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -21,7 +22,14 @@ export default function BillingCard() {
         onError: (err) => { alert(err.message); setIsRedirecting(false); },
     });
 
-    const isPro = entitlements?.planSlug === "pro";
+    // isPro = user currently has active Pro features.
+    // Using hasFeature() rather than planSlug === "pro" ensures that a canceled
+    // subscription (planSlug still "pro", but features: []) is treated as Free.
+    const isPro = entitlements ? hasFeature(entitlements, FEATURES.CUSTOM_BLOCKS_CREATE) : false;
+
+    // True if the user has a subscription row at all (active or not).
+    // Used to decide whether to show "Manage billing" vs "Upgrade to Pro".
+    const hasSubscription = !!entitlements?.status;
 
     if (isLoading) {
         return (
@@ -54,7 +62,7 @@ export default function BillingCard() {
                         </div>
                     </div>
 
-                    {isPro ? (
+                    {isPro || hasSubscription ? (
                         <button
                             onClick={() => { setIsRedirecting(true); createPortal.mutate(); }}
                             disabled={isRedirecting || createPortal.isPending}
@@ -85,6 +93,13 @@ export default function BillingCard() {
                         </p>
                     ) : (
                         <>
+                            {/* Past subscriber who has canceled — show resubscribe prompt */}
+                            {hasSubscription && !isPro && (
+                                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                                    Your Pro subscription has ended. Resubscribe to restore access.
+                                </p>
+                            )}
+
                             {usage && (
                                 <div>
                                     <div className="flex items-center justify-between mb-1.5">
@@ -96,10 +111,10 @@ export default function BillingCard() {
                                     <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                         <div
                                             className={`h-full rounded-full transition-all duration-300 ${usage.count >= (usage.limit ?? 3)
-                                                ? "bg-red-500"
-                                                : usage.count >= Math.ceil((usage.limit ?? 3) * 0.67)
-                                                    ? "bg-amber-500"
-                                                    : "bg-[#2149A1]"
+                                                    ? "bg-red-500"
+                                                    : usage.count >= Math.ceil((usage.limit ?? 3) * 0.67)
+                                                        ? "bg-amber-500"
+                                                        : "bg-[#2149A1]"
                                                 }`}
                                             style={{ width: `${Math.min(100, (usage.count / (usage.limit ?? 3)) * 100)}%` }}
                                         />
