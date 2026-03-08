@@ -1,4 +1,3 @@
-// CORRECTED VERSION — replace src/app/transcription/TranscriptionClient.tsx
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -251,10 +250,9 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     return;
                 }
 
-                // Transcript: console only, never on page
-                if (msg.corrected_audio !== undefined) {
-                    console.log("[Formify] Transcript update:", msg.corrected_audio);
-                }
+                // Transcript: intentionally not logged — may contain patient/client PII.
+                // The server returns this for debugging but we never surface it in the UI or console.
+                // if (msg.corrected_audio !== undefined) { /* do not log */ }
 
                 if (msg.attributes !== undefined) {
                     setAttributes((prev) => {
@@ -399,100 +397,195 @@ export default function TranscriptionClient({ user }: { user: User }) {
         setBlocksReady(false);
     };
 
+
     // ── PDF Export ────────────────────────────────────────────────────────────
 
     const handleSavePDF = async () => {
-        if (!formContainerRef.current) return;
-
         try {
-            // Dynamically import heavy PDF libraries only when needed
-            const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
-                import("jspdf"),
-                import("html2canvas-pro"),
-            ]);
+            const { default: jsPDF } = await import("jspdf");
 
-            // Clone the form container to avoid modifying the original
-            const clonedContainer = formContainerRef.current.cloneNode(true) as HTMLElement;
+            const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-            // Inline all computed styles to avoid html2canvas parsing modern color functions from stylesheets
-            const inlineAllStyles = (element: HTMLElement, sourceElement: HTMLElement) => {
-                const computedStyle = window.getComputedStyle(sourceElement);
+            // ── Constants ──────────────────────────────────────────────────────
+            const PAGE_W = 210;
+            const PAGE_H = 297;
+            const MARGIN = 14;
+            const CONTENT_W = PAGE_W - MARGIN * 2;
+            const COL_W = (CONTENT_W - 6) / 2; // 6mm gutter
 
-                // Copy all computed styles as inline styles (including RGB-converted colors)
-                // This forces html2canvas to use inline styles instead of parsing CSS
-                const importantStyles = [
-                    'color', 'backgroundColor', 'borderColor', 'borderStyle', 'borderWidth',
-                    'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
-                    'borderTopStyle', 'borderRightStyle', 'borderBottomStyle', 'borderLeftStyle',
-                    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
-                    'borderRadius', 'padding', 'margin', 'width', 'height',
-                    'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'textAlign',
-                    'display', 'position', 'top', 'left', 'right', 'bottom',
-                    'boxShadow', 'opacity', 'transform'
-                ];
+            // Colours
+            const BRAND_BLUE: [number, number, number] = [33, 73, 161];
+            const HEADER_BG: [number, number, number] = [245, 247, 252];
+            const BLOCK_HDR_BG: [number, number, number] = [248, 249, 251];
+            const BORDER_COL: [number, number, number] = [220, 224, 232];
+            const LABEL_COL: [number, number, number] = [134, 140, 148];
+            const VALUE_COL: [number, number, number] = [15, 23, 42];
+            const EMPTY_COL: [number, number, number] = [190, 194, 200];
+            const WHITE: [number, number, number] = [255, 255, 255];
 
-                importantStyles.forEach(prop => {
-                    const value = computedStyle.getPropertyValue(prop);
-                    if (value && value !== '' && value !== 'none') {
-                        element.style.setProperty(prop, value, 'important');
-                    }
-                });
-
-                // Recursively process children
-                const sourceChildren = Array.from(sourceElement.children) as HTMLElement[];
-                const clonedChildren = Array.from(element.children) as HTMLElement[];
-                clonedChildren.forEach((child, index) => {
-                    if (sourceChildren[index]) {
-                        inlineAllStyles(child, sourceChildren[index]);
-                    }
-                });
+            // Helper: filled rounded rect
+            const filledRect = (
+                x: number, y: number, w: number, h: number, r: number,
+                fill: [number, number, number], stroke?: [number, number, number]
+            ) => {
+                pdf.setFillColor(...fill);
+                pdf.setDrawColor(...(stroke ?? fill));
+                pdf.roundedRect(x, y, w, h, r, r, stroke ? "FD" : "F");
             };
 
-            inlineAllStyles(clonedContainer, formContainerRef.current);
-
-            // Temporarily add to DOM for rendering
-            clonedContainer.style.position = 'absolute';
-            clonedContainer.style.left = '-9999px';
-            document.body.appendChild(clonedContainer);
-
-            // Create a clean version of the form for PDF
-            const canvas = await html2canvas(clonedContainer, {
-                scale: 2,
-                backgroundColor: '#ffffff',
-                logging: false,
-                onclone: (clonedDoc) => {
-                    // Force inline styles for better compatibility
-                    const clonedElement = clonedDoc.body.querySelector('[style*="position: absolute"]')!;
-                    if (clonedElement) {
-                        (clonedElement as HTMLElement).style.position = 'relative';
-                        (clonedElement as HTMLElement).style.left = '0';
-                    }
+            // Helper: clamp text to width with ellipsis
+            const clampText = (text: string, maxW: number, fs: number) => {
+                pdf.setFontSize(fs);
+                if (pdf.getTextWidth(text) <= maxW) return text;
+                while (text.length > 1 && pdf.getTextWidth(text + "…") > maxW) {
+                    text = text.slice(0, -1);
                 }
+                return text + "…";
+            };
+
+            let y = 0;
+
+            // Page-break guard — redraws top stripe on new pages
+            const ensureSpace = (needed: number) => {
+                if (y + needed > PAGE_H - 14) {
+                    pdf.addPage();
+                    pdf.setFillColor(...BRAND_BLUE);
+                    pdf.rect(0, 0, PAGE_W, 2, "F");
+                    y = 10;
+                }
+            };
+
+            // ── HEADER ─────────────────────────────────────────────────────────
+            pdf.setFillColor(...BRAND_BLUE);
+            pdf.rect(0, 0, PAGE_W, 2, "F");
+
+            pdf.setFillColor(...HEADER_BG);
+            pdf.rect(0, 2, PAGE_W, 32, "F");
+
+            // Logo mark
+            filledRect(MARGIN, 8, 10, 10, 2, BRAND_BLUE);
+            pdf.setTextColor(...WHITE);
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(8);
+            pdf.text("F", MARGIN + 3.5, 14.8);
+
+            // Brand name
+            pdf.setTextColor(...BRAND_BLUE);
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(13);
+            pdf.text("Formify", MARGIN + 13, 14.2);
+
+            // Tagline
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(7);
+            pdf.setTextColor(...LABEL_COL);
+            pdf.text("Voice-powered form filling", MARGIN + 13, 18.5);
+
+            // Form title (right-aligned)
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(11);
+            pdf.setTextColor(...VALUE_COL);
+            pdf.text(clampText(formTitle, 90, 11), PAGE_W - MARGIN, 13, { align: "right" });
+
+            // Date
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(8);
+            pdf.setTextColor(...LABEL_COL);
+            const dateStr = new Date().toLocaleDateString("en-AU", {
+                day: "numeric", month: "long", year: "numeric",
             });
+            pdf.text(dateStr, PAGE_W - MARGIN, 19, { align: "right" });
 
-            // Remove the temporary clone
-            document.body.removeChild(clonedContainer);
+            // Header divider
+            pdf.setDrawColor(...BORDER_COL);
+            pdf.setLineWidth(0.3);
+            pdf.line(0, 34, PAGE_W, 34);
 
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4',
-            });
+            y = 40;
 
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-            const imgX = (pdfWidth - imgWidth * ratio) / 2;
-            const imgY = 10;
+            // ── BLOCKS ─────────────────────────────────────────────────────────
+            for (const [blockName, fields] of Object.entries(blocks)) {
+                const fieldRows = Math.ceil(fields.length / 2);
+                const bodyH = fieldRows * 16 + 6;
+                const blockTotal = 10 + bodyH;
 
-            pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-            pdf.save(`${formTitle.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+                ensureSpace(blockTotal + 4);
+
+                // Outer border
+                pdf.setDrawColor(...BORDER_COL);
+                pdf.setLineWidth(0.3);
+                pdf.roundedRect(MARGIN, y, CONTENT_W, blockTotal, 3, 3, "S");
+
+                // Block header band
+                filledRect(MARGIN, y, CONTENT_W, 10, 3, BLOCK_HDR_BG);
+                pdf.setDrawColor(...BORDER_COL);
+                pdf.line(MARGIN, y + 10, MARGIN + CONTENT_W, y + 10);
+
+                // Block title
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(8);
+                pdf.setTextColor(...BRAND_BLUE);
+                pdf.text(blockName.toUpperCase(), MARGIN + 5, y + 6.5);
+
+                // Fields — two per row
+                let fieldY = y + 14;
+
+                const drawField = (field: string, fx: number) => {
+                    const rawValue = attributes[field] ?? "";
+                    const label = formatFieldLabel(field);
+                    const BOX_H = 7.5;
+
+                    // Label
+                    pdf.setFont("helvetica", "normal");
+                    pdf.setFontSize(7);
+                    pdf.setTextColor(...LABEL_COL);
+                    pdf.text(label, fx, fieldY);
+
+                    // Input box
+                    const boxY = fieldY + 1.5;
+                    filledRect(fx, boxY, COL_W, BOX_H, 1.5, WHITE, BORDER_COL);
+
+                    // Value — vertically centred inside box
+                    pdf.setFont("helvetica", "normal");
+                    pdf.setFontSize(8.5);
+                    if (rawValue) {
+                        pdf.setTextColor(...VALUE_COL);
+                        pdf.text(clampText(rawValue, COL_W - 6, 8.5), fx + 3, boxY + BOX_H / 2 + 1.5);
+                    } else {
+                        pdf.setTextColor(...EMPTY_COL);
+                        pdf.text("—", fx + 3, boxY + BOX_H / 2 + 1.5);
+                    }
+                };
+
+                for (let i = 0; i < fields.length; i += 2) {
+                    drawField(fields[i]!, MARGIN + 2);
+                    if (fields[i + 1]) drawField(fields[i + 1]!, MARGIN + 2 + COL_W + 6);
+                    fieldY += 16;
+                }
+
+                y += blockTotal + 5;
+            }
+
+            // ── FOOTER on every page ────────────────────────────────────────────
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            const totalPages: number = (pdf as any).internal.getNumberOfPages();
+            for (let p = 1; p <= totalPages; p++) {
+                pdf.setPage(p);
+                pdf.setDrawColor(...BORDER_COL);
+                pdf.setLineWidth(0.2);
+                pdf.line(MARGIN, PAGE_H - 10, PAGE_W - MARGIN, PAGE_H - 10);
+                pdf.setFont("helvetica", "normal");
+                pdf.setFontSize(7);
+                pdf.setTextColor(...LABEL_COL);
+                pdf.text("Generated by Formify · formify-webapp.vercel.app", MARGIN, PAGE_H - 6);
+                pdf.text(`Page ${p} of ${totalPages}`, PAGE_W - MARGIN, PAGE_H - 6, { align: "right" });
+            }
+
+            // ── Save ───────────────────────────────────────────────────────────
+            pdf.save(`${formTitle.replace(/[^a-z0-9]/gi, "_")}_${new Date().toISOString().split("T")[0]}.pdf`);
         } catch (error) {
-            console.error('PDF generation error:', error);
-            alert('Failed to generate PDF. Please try again.');
+            console.error("PDF generation error:", error);
+            alert("Failed to generate PDF. Please try again.");
         }
     };
 
@@ -520,13 +613,16 @@ export default function TranscriptionClient({ user }: { user: User }) {
                             ${fields.map(field => `
                                 <tr>
                                     <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: 500; color: #6b7280; width: 40%;">${formatFieldLabel(field)}</td>
-                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; color: #111827;">${attributes[field] ?? '—'}</td>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; color: #111827;">${(editedValues[field] ?? attributes[field]) ?? '—'}</td>
                                 </tr>
                             `).join('')}
                         </table>
                     </div>
                 `).join('');
 
+            // Privacy: send only the rendered HTML, never raw field values.
+            // formData/attributes is intentionally excluded — it is redundant with
+            // formHTML and would send structured PII in the request payload.
             const response = await fetch('/api/email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -534,7 +630,6 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     to: recipientEmail,
                     formTitle,
                     formHTML,
-                    formData: attributes,
                 }),
             });
 
@@ -718,6 +813,16 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         )
                     )}
 
+                    {/* Local-only disclaimer — visible while editing */}
+                    {isEditing && (
+                        <span className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 3a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4zm0 7.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
+                            </svg>
+                            Edits are local only — not saved to server. Refresh clears form.
+                        </span>
+                    )}
+
                     {/* PDF Export — only show when paused */}
                     {isPaused && (
                         <button
@@ -790,6 +895,15 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                                 type="text"
                                                 value={value}
                                                 readOnly={!isEditing}
+                                                autoComplete="off"
+                                                autoCorrect="off"
+                                                autoCapitalize="off"
+                                                spellCheck={false}
+                                                onPaste={(e) => {
+                                                    // Belt-and-suspenders: readOnly already blocks paste,
+                                                    // but explicit prevention ensures mobile browsers comply.
+                                                    if (!isEditing) e.preventDefault();
+                                                }}
                                                 onChange={(e) =>
                                                     isEditing &&
                                                     setEditedValues((prev) => ({ ...prev, [field]: e.target.value }))
