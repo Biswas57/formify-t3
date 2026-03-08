@@ -23,7 +23,11 @@ export default function HomePage() {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Account for the sticky header height (~73px) so the section
+      // isn't hidden behind it on mobile.
+      const headerHeight = 73;
+      const top = element.getBoundingClientRect().top + window.scrollY - headerHeight;
+      window.scrollTo({ top, behavior: "smooth" });
     }
     setIsMobileMenuOpen(false);
   };

@@ -24,7 +24,7 @@ const BASE_PLANS = [
     {
         name: "Pro",
         slug: "pro",
-        price: "$100.99", // fallback — overwritten with live Stripe price
+        price: "$9.99", // fallback — overwritten with live Stripe price
         period: "/month",
         description: "For professionals who need more power",
         icon: Crown,

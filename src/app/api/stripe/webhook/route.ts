@@ -160,6 +160,7 @@ async function upsertUserPlan(userId: string, subscription: Stripe.Subscription)
     await db.userPlan.upsert({
         where: { userId },
         update: {
+            planId: proPlan.id,
             status,
             stripeSubscriptionId: subscription.id,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
