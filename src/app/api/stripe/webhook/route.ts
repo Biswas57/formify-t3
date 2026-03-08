@@ -166,8 +166,8 @@ async function upsertUserPlan(userId: string, subscription: Stripe.Subscription)
             currentPeriodStart: sub.current_period_start ? new Date(sub.current_period_start * 1000) : null,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-            cancelAtPeriodEnd: (sub as any).cancel_at_period_end ?? false,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+            cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
         },
         create: {
             userId,
@@ -178,8 +178,8 @@ async function upsertUserPlan(userId: string, subscription: Stripe.Subscription)
             currentPeriodStart: sub.current_period_start ? new Date(sub.current_period_start * 1000) : null,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-            cancelAtPeriodEnd: (sub as any).cancel_at_period_end ?? false,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+            cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
         },
     });
 
