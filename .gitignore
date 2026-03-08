@@ -44,6 +44,7 @@ yarn-error.log*
 
 # idea files
 .idea
+output.txt
 
 # stripe
 stripe_backup_code.txt
