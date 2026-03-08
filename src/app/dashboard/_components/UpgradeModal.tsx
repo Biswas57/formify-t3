@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { X, Loader2 } from "lucide-react";
 import { env } from "@/env";
 import { api } from "@/trpc/react";
@@ -18,6 +19,12 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
     // `mounted` ensures the element only ever renders on the client.
     const [mounted, setMounted] = useState(false);
     useEffect(() => { setMounted(true); }, []);
+
+    // The pricing table needs the logged-in user's ID as client-reference-id so
+    // that Stripe includes it in checkout.session.completed. Without this the
+    // webhook cannot identify which user paid and UserPlan is never written.
+    const { data: session } = useSession();
+    const userId = session?.user?.id;
 
     // Fallback: direct Checkout if pricing table ID is missing/broken.
     const [isRedirecting, setIsRedirecting] = useState(false);
@@ -59,11 +66,16 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                             <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
                         </div>
                     ) : usePricingTable ? (
-                        // Stripe Pricing Table — client-only render
+                        // Stripe Pricing Table — client-only render.
+                        // client-reference-id is the Formify user ID — Stripe passes it
+                        // back in checkout.session.completed as session.client_reference_id,
+                        // which the webhook uses to identify the user when
+                        // session.metadata.userId is absent (pricing table flow).
                         /* @ts-expect-error - Stripe Pricing Table is a custom element loaded via script */
                         <stripe-pricing-table
                             pricing-table-id={pricingTableId}
                             publishable-key={publishableKey}
+                            client-reference-id={userId}
                         />
                     ) : (
                         // Fallback when pricing table isn't configured: direct checkout
