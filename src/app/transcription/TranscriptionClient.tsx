@@ -113,6 +113,19 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const [emailStatus, setEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
     const recordSessionMutation = api.usage.recordSession.useMutation();
+    const utils = api.useUtils();
+
+    // Fetch today's usage to enforce the daily limit.
+    // staleTime=0 so we always get a fresh count on page load.
+    const { data: usageData } = api.usage.getToday.useQuery(undefined, {
+        staleTime: 0,
+        refetchOnWindowFocus: false,
+    });
+
+    // Tracks whether this page session has already been counted.
+    // A "session" = one WebSocket connection lifetime (i.e. one page load).
+    // Pause/resume cycles within the same connection do NOT count as new sessions.
+    const hasRecordedThisSession = useRef(false);
 
     // ── Template preload from query param ────────────────────────────────────────
     const searchParams = useSearchParams();
@@ -303,6 +316,13 @@ export default function TranscriptionClient({ user }: { user: User }) {
         const ws = wsRef.current;
         if (ws?.readyState !== WebSocket.OPEN || !blocksReadyRef.current) return;
 
+        // Enforce daily usage limit — check fresh data before allowing mic access.
+        // canRecord is also false for Pro users (limit: null means unlimited).
+        if (usageData && !usageData.canRecord) {
+            setMicError("You've reached your daily transcription limit. Upgrade to Pro for unlimited transcriptions, or try again tomorrow.");
+            return;
+        }
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const recorder = new MediaRecorder(stream, { mimeType: SUPPORTED_MIME });
@@ -330,7 +350,9 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     : `Could not start recording: ${msg}`
             );
         }
-    }, []);
+    }, [usageData]);
+
+    // ── Pause ─────────────────────────────────────────────────────────────────
 
     const pauseRecording = useCallback(() => {
         recorderRef.current?.stop();
@@ -340,9 +362,16 @@ export default function TranscriptionClient({ user }: { user: User }) {
             ws.send(JSON.stringify({ action: "stop" }));
             console.log("[Formify] Paused — awaiting final extraction");
         }
-        // Record usage so the daily counter increments
-        recordSessionMutation.mutate();
-    }, [recordSessionMutation]);
+        // Only count usage once per page load (one WebSocket connection lifetime).
+        // Subsequent pause/resume cycles within the same session don't add to the counter.
+        if (!hasRecordedThisSession.current) {
+            hasRecordedThisSession.current = true;
+            recordSessionMutation.mutate(undefined, {
+                // Refetch usage after recording so the profile page count stays fresh.
+                onSuccess: () => void utils.usage.getToday.invalidate(),
+            });
+        }
+    }, [recordSessionMutation, utils]);
 
     // ── Edit / Save ───────────────────────────────────────────────────────────
 
