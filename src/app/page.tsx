@@ -239,15 +239,6 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Signature */}
-          <div className="absolute bottom-8 right-8 sm:bottom-12 sm:right-12 pointer-events-none z-20">
-            <span
-              className="text-[#2149A1]/30 font-bold italic text-2xl sm:text-3xl overflow-hidden whitespace-nowrap inline-block animate-write-signature"
-              style={{ fontFamily: "cursive" }}
-            >
-              Formify
-            </span>
-          </div>
         </div>
       </section>
 
@@ -471,7 +462,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             <div>
-              <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-[#4a72d4] to-[#2149A1] text-transparent bg-clip-text italic block mb-4">
+              <span className="text-3xl font-extrabold tracking-tight text-white">
                 Formify
               </span>
               <p className="text-slate-400">Voice-powered form filling for modern professionals.</p>
