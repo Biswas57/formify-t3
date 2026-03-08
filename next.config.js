@@ -40,15 +40,21 @@ const config = {
                         key: "Content-Security-Policy",
                         value: [
                             "default-src 'self'",
-                            "script-src 'self' https://js.stripe.com 'unsafe-inline' 'unsafe-eval'",
-                            "style-src 'self' https://js.stripe.com 'unsafe-inline'",
+                            // unsafe-inline + unsafe-eval needed by Next.js itself and Stripe pricing table
+                            "script-src 'self' https://js.stripe.com https://va.vercel-scripts.com 'unsafe-inline' 'unsafe-eval'",
+                            // unsafe-inline needed by Stripe pricing table shadow DOM / constructable stylesheets
+                            "style-src 'self' https://js.stripe.com https://fonts.googleapis.com 'unsafe-inline'",
                             "frame-src 'self' https://js.stripe.com https://*.stripe.com",
-                            "connect-src 'self' https://api.stripe.com https://*.stripe.com",
+                            // wss://* covers the NEXT_PUBLIC_WS_URL transcription WebSocket server.
+                            // vitals.vercel-insights.com + va.vercel-scripts.com are Vercel Analytics/Speed Insights.
+                            "connect-src 'self' https://api.stripe.com https://*.stripe.com wss: ws: https://vitals.vercel-insights.com",
                             "img-src 'self' data: https://*.stripe.com https://*.googleusercontent.com",
-                            "font-src 'self'",
+                            // fonts.gstatic.com: Geist font loaded via next/font/google
+                            "font-src 'self' https://fonts.gstatic.com",
                             "object-src 'none'",
                             "base-uri 'self'",
-                            "form-action 'self'",
+                            // Remove 'self'-only form-action so Google OAuth redirects aren't blocked
+                            "form-action 'self' https://accounts.google.com",
                         ].join("; "),
                     },
                 ],
