@@ -2,8 +2,9 @@
 
 import { Check, Crown, Zap } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
-const plans = [
+const BASE_PLANS = [
     {
         name: "Free",
         slug: "free",
@@ -18,13 +19,12 @@ const plans = [
             "Up to 10 templates",
             "Basic support",
         ],
-        cta: "Get Started",
         highlighted: false,
     },
     {
         name: "Pro",
         slug: "pro",
-        price: "$29",
+        price: "$100.99", // fallback — overwritten with live Stripe price
         period: "/month",
         description: "For professionals who need more power",
         icon: Crown,
@@ -36,12 +36,25 @@ const plans = [
             "Priority support",
             "API access",
         ],
-        cta: "Upgrade to Pro",
         highlighted: true,
     },
 ];
 
 export default function PricingSection() {
+    const [proPrice, setProPrice] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetch("/api/stripe/pro-price")
+            .then((r) => r.json() as Promise<{ price: string }>)
+            .then((data) => setProPrice(data.price))
+            .catch(() => {
+                /* keep fallback */
+            });
+    }, []);
+
+    const plans = BASE_PLANS.map((p) =>
+        p.slug === "pro" && proPrice ? { ...p, price: proPrice } : p,
+    );
     return (
         <section id="pricing" className="py-16 sm:py-20 bg-white">
             <div className="container mx-auto px-4">
@@ -64,8 +77,8 @@ export default function PricingSection() {
                             <div
                                 key={plan.slug}
                                 className={`relative rounded-2xl border-2 p-6 sm:p-8 transition-all duration-300 hover:shadow-xl ${plan.highlighted
-                                        ? "border-[#2149A1] bg-gradient-to-br from-blue-50 to-white"
-                                        : "border-slate-200 bg-white"
+                                    ? "border-[#2149A1] bg-gradient-to-br from-blue-50 to-white"
+                                    : "border-slate-200 bg-white"
                                     } ${idx === 0 ? "animate-slide-in-left" : "animate-slide-in-right"}`}
                                 style={{ animationDelay: `${idx * 100}ms` }}
                             >
@@ -78,8 +91,8 @@ export default function PricingSection() {
                                 <div className="flex items-center gap-3 mb-4">
                                     <div
                                         className={`w-12 h-12 rounded-xl flex items-center justify-center ${plan.highlighted
-                                                ? "bg-gradient-to-r from-[#2149A1] to-[#1a3a87]"
-                                                : "bg-slate-100"
+                                            ? "bg-gradient-to-r from-[#2149A1] to-[#1a3a87]"
+                                            : "bg-slate-100"
                                             }`}
                                     >
                                         <Icon
@@ -110,8 +123,8 @@ export default function PricingSection() {
                                 <Link href={buttonHref}>
                                     <button
                                         className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 ${plan.highlighted
-                                                ? "bg-[#2149A1] hover:bg-[#1a3a87] text-white hover:scale-105"
-                                                : "bg-slate-100 hover:bg-slate-200 text-slate-900"
+                                            ? "bg-[#2149A1] hover:bg-[#1a3a87] text-white hover:scale-105"
+                                            : "bg-slate-100 hover:bg-slate-200 text-slate-900"
                                             }`}
                                     >
                                         {isFreePlan ? "Get Started" : "Sign In to Upgrade"}
