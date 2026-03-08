@@ -41,7 +41,7 @@ const config = {
                         value: [
                             "default-src 'self'",
                             // unsafe-inline + unsafe-eval needed by Next.js itself and Stripe pricing table
-                            "script-src 'self' https://js.stripe.com https://va.vercel-scripts.com 'unsafe-inline' 'unsafe-eval'",
+                            "script-src 'self' https://js.stripe.com https://va.vercel-scripts.com https://vercel.live 'unsafe-inline' 'unsafe-eval'",
                             // unsafe-inline needed by Stripe pricing table shadow DOM / constructable stylesheets
                             "style-src 'self' https://js.stripe.com https://fonts.googleapis.com 'unsafe-inline'",
                             "frame-src 'self' https://js.stripe.com https://*.stripe.com",
