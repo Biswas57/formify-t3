@@ -21,11 +21,12 @@ interface User {
 }
 
 interface ServerMessage {
-    corrected_audio?: string;
+    type?: "started" | "attributes_update" | "final_attributes" | "error";
+    // forms mode
     attributes?: Record<string, string>;
-    error?: string;
-    action?: string;
     template_size?: number;
+    // error
+    error?: string;
 }
 
 type WSStatus = "disconnected" | "connecting" | "connected" | "error";
@@ -87,7 +88,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const [recordStatus, setRecordStatus] = useState<RecordStatus>("idle");
     const [micError, setMicError] = useState<string | null>(null);
     const blocksReadyRef = useRef(false);
-    const [blocksReady, setBlocksReady] = useState(false);
+    const [, setBlocksReady] = useState(false);
 
     // Template
     const [templateRaw, setTemplateRaw] = useState(DEFAULT_TEMPLATE);
@@ -111,20 +112,10 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const [isSendingEmail, setIsSendingEmail] = useState(false);
     const [emailStatus, setEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-    const recordSessionMutation = api.usage.recordSession.useMutation();
+    const getSessionToken = api.transcription.getSessionToken.useMutation();
     const utils = api.useUtils();
 
-    // Fetch today's usage to enforce the daily limit.
-    // staleTime=0 so we always get a fresh count on page load.
-    const { data: usageData } = api.usage.getToday.useQuery(undefined, {
-        staleTime: 0,
-        refetchOnWindowFocus: false,
-    });
-
-    // Tracks whether this page session has already been counted.
-    // A "session" = one WebSocket connection lifetime (i.e. one page load).
-    // Pause/resume cycles within the same connection do NOT count as new sessions.
-    const hasRecordedThisSession = useRef(false);
+    // (Session usage is counted server-side at token mint time)
 
     // ── Template preload from query param ────────────────────────────────────────
     const searchParams = useSearchParams();
@@ -153,7 +144,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const isRecording = recordStatus === "recording";
     const isFinalizing = recordStatus === "finalizing";
     const isPaused = recordStatus === "paused";
-    const canRecord = isConnected && blocksReady && !isFinalizing && templateReady;
+    const canRecord = isConnected && !isFinalizing && templateReady;
     const errorMessage = wsError ?? micError;
 
     useEffect(() => {
@@ -240,39 +231,52 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
                 if (msg.error) {
                     console.warn("[Formify] Server error:", msg.error);
+                    // If token was rejected, surface it clearly
+                    if (msg.error === "invalid-token" || msg.error === "missing-token") {
+                        setMicError("Session expired. Please try starting again.");
+                    }
                     return;
                 }
 
-                if (msg.action === "started") {
+                // Session confirmed by server
+                if (msg.type === "started") {
                     blocksReadyRef.current = true;
                     setBlocksReady(true);
-                    console.log(`[Formify] Blocks accepted — ${msg.template_size ?? "?"} fields`);
+                    console.log(`[Formify] Session started — ${msg.template_size ?? "?"} fields`);
                     return;
                 }
 
-                // Transcript: intentionally not logged — may contain patient/client PII.
-                // The server returns this for debugging but we never surface it in the UI or console.
-                // if (msg.corrected_audio !== undefined) { /* do not log */ }
-
-                if (msg.attributes !== undefined) {
+                // Incremental attribute update
+                if (msg.type === "attributes_update" && msg.attributes !== undefined) {
                     setAttributes((prev) => {
-                        // Build the allowed key set from the current template (already normalized)
                         const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
-
-                        // Normalize incoming keys and drop anything not in the template
                         const normalized: Record<string, string> = {};
                         for (const [rawKey, val] of Object.entries(msg.attributes!)) {
                             const key = normalizeKey(rawKey);
                             if (allowedKeys.has(key) && val) {
                                 normalized[key] = val;
                             } else if (!allowedKeys.has(key)) {
-                                console.warn(`[Formify] Dropping unknown attribute key: "${rawKey}" (normalized: "${key}")`);
+                                console.warn(`[Formify] Dropping unknown key: "${rawKey}"`);
                             }
                         }
                         return { ...prev, ...normalized };
                     });
-                    // Final message after pause → leave finalizing
+                    return;
+                }
+
+                // Final attributes — stop finalizing state
+                if (msg.type === "final_attributes" && msg.attributes !== undefined) {
+                    setAttributes((prev) => {
+                        const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
+                        const normalized: Record<string, string> = {};
+                        for (const [rawKey, val] of Object.entries(msg.attributes!)) {
+                            const key = normalizeKey(rawKey);
+                            if (allowedKeys.has(key) && val) normalized[key] = val;
+                        }
+                        return { ...prev, ...normalized };
+                    });
                     setRecordStatus((s) => (s === "finalizing" ? "paused" : s));
+                    return;
                 }
             } catch {
                 console.warn("[Formify] Non-JSON WS message");
@@ -285,41 +289,55 @@ export default function TranscriptionClient({ user }: { user: User }) {
         return () => { wsRef.current?.close(); };
     }, [connectWS]);
 
+    // Short-lived WS session token minted by the server just before recording starts.
+    // Stored in a ref so sendBlocks can include it without a stale closure.
+    const wsTokenRef = useRef<string | null>(null);
+
     // ── Auto-send blocks once connected AND template is ready ────────────────
 
-    const sendBlocks = useCallback(() => {
+    const sendBlocks = useCallback((token: string) => {
         const ws = wsRef.current;
         if (ws?.readyState !== WebSocket.OPEN) return;
         const parsed = parseBlocks(templateRaw);
         if (Object.keys(parsed).length === 0) return;
-        ws.send(JSON.stringify({ action: "start", blocks: parsed }));
+        ws.send(JSON.stringify({ action: "start", mode: "forms", blocks: parsed, token }));
         console.log("[Formify] Blocks sent:", Object.keys(parsed).join(", "),
             `(${Object.values(parsed).flat().length} fields)`);
     }, [templateRaw]);
 
-    useEffect(() => {
-        // Only send once connected AND the correct template is ready.
-        // If templateId is in the URL, wait for the query to settle before sending —
-        // this prevents sending DEFAULT_TEMPLATE and then a second start with the real
-        // template, which the server used to silently ignore.
-        if (wsStatus === "connected" && !blocksReadyRef.current && templateReady) {
-            sendBlocks();
-        }
-    }, [wsStatus, sendBlocks, templateReady]);
+    // Note: sendBlocks is no longer called automatically on connect.
+    // It is called inside startRecording after a session token is minted.
+    // This ensures the server only receives a start payload from authenticated,
+    // usage-checked sessions.
 
     // ── Recording ─────────────────────────────────────────────────────────────
 
     const startRecording = useCallback(async () => {
         setMicError(null);
         const ws = wsRef.current;
-        if (ws?.readyState !== WebSocket.OPEN || !blocksReadyRef.current) return;
+        if (ws?.readyState !== WebSocket.OPEN) return;
 
-        // Enforce daily usage limit — check fresh data before allowing mic access.
-        // canRecord is also false for Pro users (limit: null means unlimited).
-        if (usageData && !usageData.canRecord) {
-            setMicError("You've reached your daily transcription limit. Upgrade to Pro for unlimited transcriptions, or try again tomorrow.");
+        // ── Mint session token (enforces auth + usage limits server-side) ──
+        // This is the single enforcement point. If the server returns FORBIDDEN,
+        // the daily limit has been reached. No client-side limit check needed.
+        let token: string;
+        try {
+            const result = await getSessionToken.mutateAsync({ mode: "forms" });
+            token = result.token;
+            wsTokenRef.current = token;
+            // Refresh usage display so the profile page count stays fresh
+            void utils.usage.getToday.invalidate();
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : "Failed to start session";
+            setMicError(msg);
             return;
         }
+
+        // ── Send start payload with token ──────────────────────────────────
+        // Reset and send blocks now that we have a valid token
+        blocksReadyRef.current = false;
+        setBlocksReady(false);
+        sendBlocks(token);
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -348,7 +366,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     : `Could not start recording: ${msg}`
             );
         }
-    }, [usageData]);
+    }, [getSessionToken, sendBlocks, utils]);
 
     // ── Pause ─────────────────────────────────────────────────────────────────
 
@@ -360,16 +378,9 @@ export default function TranscriptionClient({ user }: { user: User }) {
             ws.send(JSON.stringify({ action: "stop" }));
             console.log("[Formify] Paused — awaiting final extraction");
         }
-        // Only count usage once per page load (one WebSocket connection lifetime).
-        // Subsequent pause/resume cycles within the same session don't add to the counter.
-        if (!hasRecordedThisSession.current) {
-            hasRecordedThisSession.current = true;
-            recordSessionMutation.mutate(undefined, {
-                // Refetch usage after recording so the profile page count stays fresh.
-                onSuccess: () => void utils.usage.getToday.invalidate(),
-            });
-        }
-    }, [recordSessionMutation, utils]);
+        // Usage was already counted when the session token was minted in startRecording.
+        // No additional mutation needed here.
+    }, []);
 
     // ── Edit / Save ───────────────────────────────────────────────────────────
 
@@ -776,11 +787,13 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     {!isRecording ? (
                         <button
                             onClick={startRecording}
-                            disabled={!canRecord}
+                            disabled={!canRecord || getSessionToken.isPending}
                             className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-all duration-200 hover:scale-[1.02]"
                         >
-                            <Mic className="w-4 h-4" />
-                            {isPaused ? "Resume Recording" : "Start Recording"}
+                            {getSessionToken.isPending
+                                ? <><Loader2 className="w-4 h-4 animate-spin" />Starting…</>
+                                : <><Mic className="w-4 h-4" />{isPaused ? "Resume Recording" : "Start Recording"}</>
+                            }
                         </button>
                     ) : (
                         <button
@@ -953,7 +966,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                     Changes reset the form fields.
                                 </p>
                                 <button
-                                    onClick={() => { setTemplateOpen(false); sendBlocks(); }}
+                                    onClick={() => { setTemplateOpen(false); blocksReadyRef.current = false; setBlocksReady(false); }}
                                     disabled={!isConnected || isRecording}
                                     className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >

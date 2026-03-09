@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { FileText, Plus, LogOut, User, ChevronDown, Mic, Menu, X } from "lucide-react";
+import { FileText, Plus, LogOut, User, ChevronDown, Mic, Menu, X, NotebookPen } from "lucide-react";
 import { api } from "@/trpc/react";
 import PlanBadge from "@/app/_components/PlanBadge";
 import { hasFeature, FEATURES } from "@/server/entitlements/features";
@@ -19,6 +19,7 @@ interface HeaderUser {
 const NAV = [
     { label: "My Templates", href: "/dashboard/formbank", icon: FileText },
     { label: "New Template", href: "/dashboard/create", icon: Plus },
+    { label: "Notes", href: "/dashboard/notes", icon: NotebookPen },
 ];
 
 export default function DashboardHeader({ user }: { user: HeaderUser }) {
@@ -199,9 +200,6 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                 aria-hidden={!mobileMenuOpen}
                 style={{
                     visibility: mobileMenuOpen ? "visible" : "hidden",
-                    // On close: delay visibility:hidden by 200ms so the slide-up
-                    // transform animation is visible before the element disappears.
-                    // On open: no delay — visibility becomes visible immediately.
                     transition: mobileMenuOpen
                         ? undefined
                         : "transform 200ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 200ms",
