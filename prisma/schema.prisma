@@ -29,6 +29,17 @@ model Account {
     @@unique([provider, providerAccountId])
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 model Session {
     id           String   @id @default(cuid())
     sessionToken String   @unique
@@ -56,13 +67,14 @@ model User {
     passwordHash     String?
     stripeCustomerId String?   @unique
 
-    accounts            Account[]
-    sessions            Session[]
-    templates           Template[]
-    blockDefinitions    BlockDefinition[]
-    customBlocks        CustomBlock[]
-    transcriptionUsages TranscriptionUsage[]
-    userPlan            UserPlan?
+    accounts              Account[]
+    sessions              Session[]
+    templates             Template[]
+    blockDefinitions      BlockDefinition[]
+    customBlocks          CustomBlock[]
+    transcriptionUsages   TranscriptionUsage[]
+    userPlan              UserPlan?
+    passwordResetTokens   PasswordResetToken[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

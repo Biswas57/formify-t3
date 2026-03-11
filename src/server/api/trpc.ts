@@ -45,7 +45,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     // The previous module-level Map was not truly request-scoped: under load,
     // Request A's cached value could be read by Request B before queueMicrotask
     // fired to clear it.
-    entitlementsCache: new Map<string, Promise<import("@/server/entitlements").UserEntitlements>>(),
+    entitlementsCache: new Map<string, Promise<import("@/server/entitlements").UserEntitlements>>(), // eslint-disable-line @typescript-eslint/consistent-type-imports
     ...opts,
   };
 };

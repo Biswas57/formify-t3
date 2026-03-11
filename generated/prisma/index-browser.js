@@ -136,6 +136,14 @@ exports.Prisma.AccountScalarFieldEnum = {
   session_state: 'session_state'
 };
 
+exports.Prisma.PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  token: 'token',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SessionScalarFieldEnum = {
   id: 'id',
   sessionToken: 'sessionToken',
@@ -290,6 +298,7 @@ exports.SubscriptionStatus = exports.$Enums.SubscriptionStatus = {
 
 exports.Prisma.ModelName = {
   Account: 'Account',
+  PasswordResetToken: 'PasswordResetToken',
   Session: 'Session',
   VerificationToken: 'VerificationToken',
   User: 'User',

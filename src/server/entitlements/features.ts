@@ -7,6 +7,9 @@ export const FEATURES = {
     CUSTOM_BLOCKS_DELETE: "custom_blocks:delete",
     TEMPLATES_UNLIMITED: "templates:unlimited",
     TRANSCRIPTION_UNLIMITED: "transcription:unlimited",
+    // Gate for notes mode. Set to true once notes stability work is solid.
+    // Flip NOTES_IS_PRO_ONLY=true in your .env to activate gating without a code deploy.
+    NOTES_ACCESS: "notes:access",
 } as const;
 
 export type FeatureKey = (typeof FEATURES)[keyof typeof FEATURES];
@@ -25,6 +28,7 @@ export const PLAN_FEATURES: Record<string, FeatureKey[]> = {
         FEATURES.CUSTOM_BLOCKS_DELETE,
         FEATURES.TEMPLATES_UNLIMITED,
         FEATURES.TRANSCRIPTION_UNLIMITED,
+        FEATURES.NOTES_ACCESS,
     ],
 };
 

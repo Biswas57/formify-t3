@@ -25,7 +25,7 @@ interface ServerMessage {
     notes_markdown?: string;
 }
 
-type WSStatus = "disconnected" | "connecting" | "connected" | "error";
+type WSStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "error";
 type RecordStatus = "idle" | "recording" | "finalizing" | "paused";
 type NoteStyle = "general" | "clinical" | "meeting" | "study";
 
@@ -202,18 +202,44 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
     // ── WebSocket ─────────────────────────────────────────────────────────────
 
-    const connectWS = useCallback(() => {
-        if (wsRef.current?.readyState === WebSocket.OPEN) return;
-        setWsStatus("connecting");
-        setWsError(null);
+    // Auto-reconnect state
+    const reconnectAttemptsRef = useRef(0);
+    const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const recordStatusRef = useRef<RecordStatus>("idle");
+    const MAX_RECONNECT_ATTEMPTS = 4;
+
+    const connectWS = useCallback((isReconnect = false) => {
+        if (
+            wsRef.current?.readyState === WebSocket.OPEN ||
+            wsRef.current?.readyState === WebSocket.CONNECTING
+        ) return;
+
+        if (isReconnect) {
+            setWsStatus("reconnecting");
+        } else {
+            setWsStatus("connecting");
+            setWsError(null);
+            reconnectAttemptsRef.current = 0;
+        }
 
         const ws = new WebSocket(getWSUrl());
         wsRef.current = ws;
 
+        // 8s connection timeout — gives enough time for slow cold-starts
+        const connectionTimeout = setTimeout(() => {
+            if (ws.readyState !== WebSocket.OPEN) ws.close();
+        }, 8000);
+
         ws.onopen = () => {
+            clearTimeout(connectionTimeout);
             setWsStatus("connected");
-            // Do NOT send start here — start is sent in startRecording after token is minted.
-            // This ensures config (style, sections) is locked at record time, not connect time.
+            setWsError(null);
+            reconnectAttemptsRef.current = 0;
+            if (reconnectTimerRef.current) {
+                clearTimeout(reconnectTimerRef.current);
+                reconnectTimerRef.current = null;
+            }
+            // Do NOT send start here — deferred to startRecording after token mint.
         };
 
         ws.onmessage = (event) => {
@@ -228,27 +254,24 @@ export default function NotesClient({ user: _user }: { user: User }) {
                     return;
                 }
 
-                // Session confirmed
                 if (msg.type === "started") {
                     sessionReadyRef.current = true;
                     setSessionReady(true);
-                    console.log("[Notes] Session started");
                     return;
                 }
 
-                // Live notes update
                 if (msg.type === "notes_update") {
                     const md = msg.notesMarkdown ?? "";
                     if (md) setNotesMarkdown(md);
                     return;
                 }
 
-                // Final notes
                 if (msg.type === "notes_final") {
                     const md = msg.notesMarkdown ?? "";
                     if (md) setNotesMarkdown(md);
                     setIsFinal(true);
                     setRecordStatus("paused");
+                    recordStatusRef.current = "paused";
                     return;
                 }
             } catch {
@@ -257,20 +280,45 @@ export default function NotesClient({ user: _user }: { user: User }) {
         };
 
         ws.onerror = () => {
-            setWsStatus("error");
-            setWsError("Connection failed — check that the transcription server is running.");
+            // onerror always fires before onclose — don't set error state here.
+            // onclose handles all state transitions so we only act once.
         };
 
-        ws.onclose = () => {
-            setWsStatus("disconnected");
+        ws.onclose = (event) => {
+            clearTimeout(connectionTimeout);
             sessionReadyRef.current = false;
             setSessionReady(false);
+
+            const currentStatus = recordStatusRef.current;
+
+            // A disconnect during active recording is a real failure — surface it.
+            if (currentStatus === "recording") {
+                setWsError("Connection lost during recording. Please stop and try again.");
+                setWsStatus("error");
+                return;
+            }
+
+            // 1001 = idle going-away (server-side idle timeout), 1000 = clean close.
+            // Both are expected for pre-connected idle sockets — attempt quiet reconnect.
+            const attempt = ++reconnectAttemptsRef.current;
+            if (attempt <= MAX_RECONNECT_ATTEMPTS) {
+                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 16000);
+                console.log(`[Notes] WS closed (code ${event.code}) — reconnect attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
+                reconnectTimerRef.current = setTimeout(() => connectWS(true), delay);
+            } else {
+                // Exhausted retries — show a manual retry option
+                setWsStatus("error");
+                setWsError("Connection lost. Click Retry to reconnect.");
+            }
         };
     }, []);
 
     useEffect(() => {
         connectWS();
-        return () => { wsRef.current?.close(); };
+        return () => {
+            if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+            wsRef.current?.close();
+        };
     }, [connectWS]);
 
     // ── Recording ─────────────────────────────────────────────────────────────
@@ -322,8 +370,9 @@ export default function NotesClient({ user: _user }: { user: User }) {
                 }
             };
 
-            recorder.start(3000); // 3s chunks
+            recorder.start(2000); // 2s chunks — combined with MIN_CHUNK_NUM=6, first GPT pass fires after ~12s
             setRecordStatus("recording");
+            recordStatusRef.current = "recording";
         } catch (err) {
             const msg = err instanceof Error ? err.message : "Microphone access denied";
             setMicError(
@@ -342,6 +391,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
         recorder.stream.getTracks().forEach((t) => t.stop());
         recorderRef.current = null;
         setRecordStatus("finalizing");
+        recordStatusRef.current = "finalizing";
         setIsFinal(false);
 
         if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -355,7 +405,13 @@ export default function NotesClient({ user: _user }: { user: User }) {
             recorderRef.current.stream.getTracks().forEach((t) => t.stop());
             recorderRef.current = null;
         }
+        if (reconnectTimerRef.current) {
+            clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+        }
+        reconnectAttemptsRef.current = 0;
         setRecordStatus("idle");
+        recordStatusRef.current = "idle";
         setNotesMarkdown("");
         setIsFinal(false);
         setMicError(null);
@@ -363,7 +419,6 @@ export default function NotesClient({ user: _user }: { user: User }) {
         sessionReadyRef.current = false;
         setSessionReady(false);
 
-        // Reconnect + re-send start
         wsRef.current?.close();
         setTimeout(() => connectWS(), 100);
     };
@@ -405,12 +460,12 @@ export default function NotesClient({ user: _user }: { user: User }) {
                 {/* WS status pill */}
                 <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border flex-shrink-0 transition-colors ${isConnected
                     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : wsStatus === "connecting"
+                    : (wsStatus === "connecting" || wsStatus === "reconnecting")
                         ? "bg-yellow-50 text-yellow-700 border-yellow-200"
                         : "bg-red-50 text-red-600 border-red-200"
                     }`}>
                     {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-                    {wsStatus === "connecting" ? "Connecting…" : isConnected ? "Connected" : "Disconnected"}
+                    {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
                 </div>
             </div>
 

@@ -159,13 +159,26 @@ export default function TemplateBuilder({ initialTemplate, userId }: Props) {
             setSaved(true);
             setTimeout(() => router.push(`/dashboard/templates/${t.id}`), 600);
         },
+        onError: (err) => {
+            // FORBIDDEN = free template limit reached — show upgrade modal instead of raw error
+            if (err.data?.code === "FORBIDDEN") {
+                setUpgradeModalOpen(true);
+            } else {
+                // Surface other unexpected errors clearly
+                console.error("[TemplateBuilder] Create failed:", err.message);
+            }
+        },
     });
 
     const updateMutation = api.template.update.useMutation({
         onSuccess: () => {
             setSaved(true);
             void utils.template.list.invalidate();
-            setTimeout(() => setSaved(false), 2000);
+            void utils.template.listSummary.invalidate();
+            setTimeout(() => setSaved(false), 2500);
+        },
+        onError: (err) => {
+            console.error("[TemplateBuilder] Update failed:", err.message);
         },
     });
 
@@ -361,7 +374,10 @@ export default function TemplateBuilder({ initialTemplate, userId }: Props) {
                 <button
                     onClick={handleSave}
                     disabled={isSaving || blocks.length === 0 || !templateName.trim()}
-                    className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 flex-shrink-0"
+                    className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 flex-shrink-0 ${saved
+                        ? "bg-emerald-600 hover:bg-emerald-700"
+                        : "bg-[#2149A1] hover:bg-[#1a3a87]"
+                        }`}
                 >
                     {isSaving ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -370,7 +386,7 @@ export default function TemplateBuilder({ initialTemplate, userId }: Props) {
                     ) : (
                         <Save className="w-4 h-4" />
                     )}
-                    {isSaving ? "Saving…" : saved ? "Saved" : "Save"}
+                    {isSaving ? "Saving…" : saved ? "Saved!" : "Save"}
                 </button>
             </header>
 

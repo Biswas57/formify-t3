@@ -29,7 +29,7 @@ interface ServerMessage {
     error?: string;
 }
 
-type WSStatus = "disconnected" | "connecting" | "connected" | "error";
+type WSStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "error";
 type RecordStatus = "idle" | "recording" | "finalizing" | "paused";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -184,45 +184,82 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
     // ── WebSocket ─────────────────────────────────────────────────────────────
 
-    const connectWS = useCallback(() => {
-        if (wsRef.current?.readyState === WebSocket.OPEN) return;
-        setWsStatus("connecting");
-        setWsError(null);
-        console.log("[Formify] WebSocket connecting to:", getWSUrl());
+    // Auto-reconnect state — mirrors NotesClient pattern
+    const reconnectAttemptsRef = useRef(0);
+    const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const recordStatusRef = useRef<RecordStatus>("idle");
+    const MAX_RECONNECT_ATTEMPTS = 4;
+
+    const connectWS = useCallback((isReconnect = false) => {
+        if (
+            wsRef.current?.readyState === WebSocket.OPEN ||
+            wsRef.current?.readyState === WebSocket.CONNECTING
+        ) return;
+
+        if (isReconnect) {
+            setWsStatus("reconnecting");
+        } else {
+            setWsStatus("connecting");
+            setWsError(null);
+            reconnectAttemptsRef.current = 0;
+        }
+
+        console.log(`[Formify] WS ${isReconnect ? "re" : ""}connecting to:`, getWSUrl());
 
         const ws = new WebSocket(getWSUrl());
         ws.binaryType = "arraybuffer";
         wsRef.current = ws;
 
-        // Timeout to detect if connection truly fails
+        // 8s connection timeout — gives enough time for slow cold-starts
         const connectionTimeout = setTimeout(() => {
             if (ws.readyState !== WebSocket.OPEN) {
-                console.error("[Formify] WebSocket connection timeout");
-                setWsStatus("error");
-                setWsError("Could not connect to the transcription server. Make sure it is running and try again.");
+                console.error("[Formify] WS connection timeout");
                 ws.close();
+                // onclose will handle reconnect logic
             }
-        }, 3000); // 3 second timeout
+        }, 8000);
 
         ws.onopen = () => {
             clearTimeout(connectionTimeout);
             setWsStatus("connected");
-            setWsError(null); // Clear any previous errors
-            console.log("[Formify] WebSocket connected");
+            setWsError(null);
+            reconnectAttemptsRef.current = 0;
+            if (reconnectTimerRef.current) {
+                clearTimeout(reconnectTimerRef.current);
+                reconnectTimerRef.current = null;
+            }
+            console.log("[Formify] WS connected");
         };
 
         ws.onclose = (event) => {
             clearTimeout(connectionTimeout);
-            setWsStatus("disconnected");
             blocksReadyRef.current = false;
             setBlocksReady(false);
-            console.log("[Formify] WebSocket disconnected", event.code, event.reason);
+            console.log(`[Formify] WS closed — code: ${event.code}`);
+
+            const currentStatus = recordStatusRef.current;
+
+            // Disconnect during active recording is a real failure
+            if (currentStatus === "recording") {
+                setWsStatus("error");
+                setWsError("Connection lost during recording. Please pause and try again.");
+                return;
+            }
+
+            // Otherwise attempt quiet auto-reconnect
+            const attempt = ++reconnectAttemptsRef.current;
+            if (attempt <= MAX_RECONNECT_ATTEMPTS) {
+                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 16000);
+                console.log(`[Formify] Reconnect attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
+                reconnectTimerRef.current = setTimeout(() => connectWS(true), delay);
+            } else {
+                setWsStatus("error");
+                setWsError("Could not reconnect. Click Retry to try again.");
+            }
         };
 
         ws.onerror = () => {
-            // Don't set error state or log here - let the timeout handle it
-            // WebSocket onerror fires even on successful connections, causing false positives
-            // The connectionTimeout will catch true connection failures
+            // onerror always fires before onclose — let onclose handle transitions
         };
 
         ws.onmessage = (ev: MessageEvent) => {
@@ -275,7 +312,11 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         }
                         return { ...prev, ...normalized };
                     });
-                    setRecordStatus((s) => (s === "finalizing" ? "paused" : s));
+                    setRecordStatus((s) => {
+                        const next = s === "finalizing" ? "paused" : s;
+                        recordStatusRef.current = next;
+                        return next;
+                    });
                     return;
                 }
             } catch {
@@ -286,7 +327,10 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
     useEffect(() => {
         connectWS();
-        return () => { wsRef.current?.close(); };
+        return () => {
+            if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+            wsRef.current?.close();
+        };
     }, [connectWS]);
 
     // Short-lived WS session token minted by the server just before recording starts.
@@ -352,12 +396,13 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
             recorder.onstart = () => {
                 setRecordStatus("recording");
+                recordStatusRef.current = "recording";
                 setIsEditing(false);
             };
 
             recorder.onstop = () => stream.getTracks().forEach((t) => t.stop());
 
-            recorder.start(3000);
+            recorder.start(3000); // 3s chunks — aligns with notes mode, reduces WS message overhead
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             setMicError(
@@ -373,6 +418,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const pauseRecording = useCallback(() => {
         recorderRef.current?.stop();
         setRecordStatus("finalizing");
+        recordStatusRef.current = "finalizing";
         const ws = wsRef.current;
         if (ws?.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ action: "stop" }));
@@ -393,7 +439,13 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
     const handleReset = () => {
         recorderRef.current?.stop();
+        if (reconnectTimerRef.current) {
+            clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+        }
+        reconnectAttemptsRef.current = 0;
         setRecordStatus("idle");
+        recordStatusRef.current = "idle";
         setIsEditing(false);
         setMicError(null);
         setWsError(null);
@@ -401,8 +453,9 @@ export default function TranscriptionClient({ user }: { user: User }) {
         allFields.forEach((f) => { empty[f] = ""; });
         setAttributes(empty);
         setEditedValues(empty);
-        // Reset blocks state — startRecording will send a fresh start payload
-        // with a new session token the next time the user clicks Start Recording.
+        // Setting blocksReadyRef to false is enough — the useEffect watching
+        // wsStatus + blocksReady will fire and call sendBlocks() once.
+        // Calling sendBlocks() directly here would send a second start action.
         blocksReadyRef.current = false;
         setBlocksReady(false);
     };
@@ -707,12 +760,12 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         {/* WS pill */}
                         <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${isConnected
                             ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : wsStatus === "connecting"
+                            : (wsStatus === "connecting" || wsStatus === "reconnecting")
                                 ? "bg-yellow-50 text-yellow-700 border-yellow-200"
                                 : "bg-red-50 text-red-600 border-red-200"
                             }`}>
                             {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-                            {wsStatus === "connecting" ? "Connecting…" : isConnected ? "Connected" : "Disconnected"}
+                            {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
                         </div>
 
                         {/* User */}
