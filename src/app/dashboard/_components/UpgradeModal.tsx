@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { X, Loader2 } from "lucide-react";
 import { env } from "@/env";
 import { api } from "@/trpc/react";
@@ -9,9 +8,12 @@ import { api } from "@/trpc/react";
 interface UpgradeModalProps {
     isOpen: boolean;
     onClose: () => void;
+    /** The logged-in user's ID — passed from the server component so UpgradeModal
+     *  doesn't need useSession() and avoids a redundant /api/auth/session call. */
+    userId?: string;
 }
 
-export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
+export default function UpgradeModal({ isOpen, onClose, userId }: UpgradeModalProps) {
     // Fix: render the Stripe pricing table only after mount.
     // <stripe-pricing-table> is a custom element registered by the Stripe script
     // at runtime. SSR outputs an empty unknown element; the client hydrates it
@@ -20,11 +22,9 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
     const [mounted, setMounted] = useState(false);
     useEffect(() => { setMounted(true); }, []);
 
-    // The pricing table needs the logged-in user's ID as client-reference-id so
-    // that Stripe includes it in checkout.session.completed. Without this the
-    // webhook cannot identify which user paid and UserPlan is never written.
-    const { data: session } = useSession();
-    const userId = session?.user?.id;
+    // userId is passed as a prop from the parent (server-component-derived).
+    // This avoids calling useSession() here, which would trigger a redundant
+    // /api/auth/session fetch every time the modal is rendered.
 
     // Fallback: direct Checkout if pricing table ID is missing/broken.
     const [isRedirecting, setIsRedirecting] = useState(false);

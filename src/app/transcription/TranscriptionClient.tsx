@@ -357,7 +357,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
             recorder.onstop = () => stream.getTracks().forEach((t) => t.stop());
 
-            recorder.start(500);
+            recorder.start(3000);
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             setMicError(

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { auth } from "@/server/auth";
 import { api, HydrateClient } from "@/trpc/server";
 import TemplateBuilderLazy from "../../TemplateBuilderLazy";
 
@@ -10,6 +11,13 @@ export default async function EditTemplatePage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
+
+    // auth() is called by the wrapping dashboard/layout.tsx already.
+    // We call it here too for the userId — it's a cheap JWT decode (no DB hit)
+    // since Next-Auth uses JWT strategy. We need the userId to pass to
+    // TemplateBuilderLazy so UpgradeModal doesn't call useSession().
+    const session = await auth();
+    const userId = session?.user?.id;
 
     // Prefetch block library in parallel — dehydrates into the page shell.
     void api.block.listLibrary.prefetch();
@@ -26,6 +34,7 @@ export default async function EditTemplatePage({
             <TemplateBuilderLazy
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
                 initialTemplate={template as any}
+                userId={userId}
             />
         </HydrateClient>
     );

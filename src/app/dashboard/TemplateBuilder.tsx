@@ -116,9 +116,12 @@ function canvasToSavePayload(name: string, blocks: CanvasBlock[]) {
 
 interface Props {
     initialTemplate?: DBTemplate;
+    /** The authenticated user's ID — passed from the server page component.
+     *  Threaded down to UpgradeModal so it doesn't need useSession(). */
+    userId?: string;
 }
 
-export default function TemplateBuilder({ initialTemplate }: Props) {
+export default function TemplateBuilder({ initialTemplate, userId }: Props) {
     const router = useRouter();
 
     // Canvas state
@@ -144,7 +147,11 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
     const utils = api.useUtils();
 
     // Check user entitlements — reads from server-prefetched cache, no waterfall.
-    const { data: entitlements } = api.entitlements.me.useQuery();
+    // staleTime=5min prevents a background refetch on every mount.
+    const { data: entitlements } = api.entitlements.me.useQuery(undefined, {
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
     const isPro = entitlements ? hasFeature(entitlements, FEATURES.CUSTOM_BLOCKS_CREATE) : false;
 
     const createMutation = api.template.create.useMutation({
@@ -669,7 +676,7 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
             )}
 
             {/* ── Upgrade Modal ── */}
-            <UpgradeModal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
+            <UpgradeModal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} userId={userId} />
 
             {/* ── Mobile sticky bottom bar ── */}
             <div
