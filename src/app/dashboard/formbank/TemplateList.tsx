@@ -57,12 +57,31 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
 
     const utils = api.useUtils();
 
-    // No initialData — reads directly from the server-prefetched cache.
-    // staleTime=5min means no background refetch unless data is actually stale.
-    const { data: templates = [], isLoading } = api.template.list.useQuery();
+    // staleTime=5min: the server prefetch dehydrates fresh data into the page HTML.
+    // Without this, React Query treats prefetched data as immediately stale and
+    // fires a redundant client-side refetch on every mount — the cause of duplicate
+    // template.list calls in the logs. Mutations call invalidate() explicitly so
+    // the list stays correct; the staleTime only blocks the no-op background refetch.
+    const { data: templates = [], isLoading } = api.template.list.useQuery(undefined, {
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
 
     const deleteMutation = api.template.delete.useMutation({
-        onSuccess: () => void utils.template.list.invalidate(),
+        // Optimistic: remove from cache immediately so the UI responds at click-speed.
+        // On error, roll back by restoring the previous data then invalidating.
+        onMutate: async ({ id }) => {
+            await utils.template.list.cancel();
+            const prev = utils.template.list.getData();
+            utils.template.list.setData(undefined, (old) =>
+                old ? old.filter((t) => t.id !== id) : old
+            );
+            return { prev };
+        },
+        onError: (_err, _vars, ctx) => {
+            if (ctx?.prev !== undefined) utils.template.list.setData(undefined, ctx.prev);
+        },
+        onSettled: () => void utils.template.list.invalidate(),
     });
 
     const duplicateMutation = api.template.duplicate.useMutation({
@@ -70,10 +89,10 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
     });
 
     const createFromExample = api.template.create.useMutation({
-        onSuccess: (t: Template) => router.push(`/dashboard/templates/${t.id}`),
+        onSuccess: (t) => router.push(`/dashboard/templates/${t.id}`),
     });
 
-    const filtered = templates.filter((t: Template) =>
+    const filtered = templates.filter((t) =>
         t.name.toLowerCase().includes(search.toLowerCase())
     );
 

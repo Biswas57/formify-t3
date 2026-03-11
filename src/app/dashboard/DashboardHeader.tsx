@@ -28,7 +28,15 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const { data: entitlements } = api.entitlements.me.useQuery();
+    // staleTime=5min: dashboard layout prefetches this server-side, so the client
+    // reads from the dehydrated cache on first render. Without staleTime the cache
+    // is treated as immediately stale and a redundant round-trip fires on every mount.
+    // refetchOnWindowFocus is also disabled globally in query-client.ts but explicit
+    // here to document that plan status does not need to be live-refreshed.
+    const { data: entitlements } = api.entitlements.me.useQuery(undefined, {
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
     const isPro = entitlements ? hasFeature(entitlements, FEATURES.TEMPLATES_UNLIMITED) : false;
 
     const isActive = (href: string) => {

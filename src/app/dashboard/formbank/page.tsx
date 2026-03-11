@@ -5,9 +5,18 @@ import TemplateList from "./TemplateList";
 export const metadata = { title: "Formify" };
 
 export default async function TemplatesPage() {
-    // Prefetch in parallel — HTML streams immediately, data dehydrates into it.
-    // The client reads from the hydrated cache, no extra round-trips.
-    void api.template.list.prefetch();
+    // Prefetch all three in parallel so the page dehydrates a complete cache
+    // snapshot into the HTML stream. Without this, each useQuery on the client
+    // fires a separate round-trip on mount, causing the waterfall seen in logs.
+    //
+    // entitlements.me  → feeds Pro badge + feature gates in TemplateList
+    // usage.getToday   → warms cache for profile/billing card navigation
+    // template.list    → primary page data
+    void Promise.all([
+        api.template.list.prefetch(),
+        api.entitlements.me.prefetch(),
+        api.usage.getToday.prefetch(),
+    ]);
 
     return (
         <HydrateClient>

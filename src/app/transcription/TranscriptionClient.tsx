@@ -401,9 +401,8 @@ export default function TranscriptionClient({ user }: { user: User }) {
         allFields.forEach((f) => { empty[f] = ""; });
         setAttributes(empty);
         setEditedValues(empty);
-        // Setting blocksReadyRef to false is enough — the useEffect watching
-        // wsStatus + blocksReady will fire and call sendBlocks() once.
-        // Calling sendBlocks() directly here would send a second start action.
+        // Reset blocks state — startRecording will send a fresh start payload
+        // with a new session token the next time the user clicks Start Recording.
         blocksReadyRef.current = false;
         setBlocksReady(false);
     };

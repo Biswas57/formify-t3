@@ -8,15 +8,27 @@ export const createQueryClient = () =>
   new QueryClient({
     defaultOptions: {
       queries: {
-        // With SSR, we usually want to set some default staleTime
-        // above 0 to avoid refetching immediately on the client.
-        // 5 minutes: entitlements, block library, templates don't change mid-session.
-        staleTime: 5 * 60 * 1000,
-        // Prevents surprise refetches every time the user alt-tabs back.
-        // Data is already fresh from SSR prefetch — no need to re-hit the DB.
+        // 30s global staleTime: with SSR prefetching, data arrives fresh in the
+        // HTML. Without a staleTime > 0, React Query immediately treats it as
+        // stale and fires a redundant client-side refetch on every mount.
+        staleTime: 30 * 1000,
+
+        // Disable window-focus refetching globally.
+        //
+        // Problem: refetchOnWindowFocus defaults to true, which means every
+        // mounted query (entitlements, usage, template list, etc.) refires
+        // whenever the user alt-tabs back to the app. In the logs this shows up
+        // as repeated auth/session + entitlements.me + template.list calls at
+        // 728–2029ms each, often in bursts of 3–5.
+        //
+        // This is the primary cause of the repeated /api/auth/session hits:
+        // tRPC procedures re-validate the session cookie on each request, so
+        // every refetchOnWindowFocus burst produces a matching auth round-trip.
+        //
+        // Queries that genuinely need fresh data on focus (e.g. usage.getToday
+        // on the transcription page) should opt back in explicitly:
+        //   useQuery(key, { refetchOnWindowFocus: true })
         refetchOnWindowFocus: false,
-        // Don't retry on error by default — fail fast and let the UI show an error state.
-        retry: 1,
       },
       dehydrate: {
         serializeData: SuperJSON.serialize,
