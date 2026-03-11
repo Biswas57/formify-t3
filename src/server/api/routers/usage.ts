@@ -8,7 +8,7 @@ function todayUTC(): string {
 
 export const usageRouter = createTRPCRouter({
     getToday: protectedProcedure.query(async ({ ctx }) => {
-        const entitlements = await getUserEntitlements(ctx.session.user.id);
+        const entitlements = await getUserEntitlements(ctx.session.user.id, ctx.entitlementsCache);
         const isPro = hasFeature(entitlements, FEATURES.TRANSCRIPTION_UNLIMITED);
 
         if (isPro) {

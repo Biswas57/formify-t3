@@ -46,7 +46,7 @@ export const blockRouter = createTRPCRouter({
         }))
         .mutation(async ({ ctx, input }) => {
             // ── PRO GATE ─────────────────────────────────────────────────────
-            await requireFeature(ctx.session.user.id, FEATURES.CUSTOM_BLOCKS_CREATE);
+            await requireFeature(ctx.session.user.id, ctx.entitlementsCache, FEATURES.CUSTOM_BLOCKS_CREATE);
 
             return ctx.db.blockDefinition.create({
                 data: {
@@ -71,7 +71,7 @@ export const blockRouter = createTRPCRouter({
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {
             // ── PRO GATE ─────────────────────────────────────────────────────
-            await requireFeature(ctx.session.user.id, FEATURES.CUSTOM_BLOCKS_DELETE);
+            await requireFeature(ctx.session.user.id, ctx.entitlementsCache, FEATURES.CUSTOM_BLOCKS_DELETE);
 
             await ctx.db.blockDefinition.deleteMany({
                 where: { id: input.id, ownerId: ctx.session.user.id },

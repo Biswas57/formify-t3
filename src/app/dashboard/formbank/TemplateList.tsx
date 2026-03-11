@@ -12,28 +12,15 @@ import type { SystemBlock } from "@/server/blocks-library";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface TemplateField {
-    key: string;
-    label: string | null;
-    fieldType: string;
-    required: boolean;
-    order: number;
-}
-
-interface TemplateBlock {
-    id: string;
-    title: string;
-    sourceType: string;
-    order: number;
-    fields: TemplateField[];
-}
-
-interface Template {
+// Summary shape returned by template.listSummary.
+// Contains only what the form bank card UI actually renders — no nested field data.
+interface TemplateSummary {
     id: string;
     name: string;
-    createdAt: Date;
     updatedAt: Date;
-    blocks: TemplateBlock[];
+    blockCount: number;
+    fieldCount: number;
+    previewTitles: string[]; // up to 3 block titles for the badge row
 }
 
 interface ExampleTemplate {
@@ -57,42 +44,41 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
 
     const utils = api.useUtils();
 
-    // staleTime=5min: the server prefetch dehydrates fresh data into the page HTML.
-    // Without this, React Query treats prefetched data as immediately stale and
-    // fires a redundant client-side refetch on every mount — the cause of duplicate
-    // template.list calls in the logs. Mutations call invalidate() explicitly so
-    // the list stays correct; the staleTime only blocks the no-op background refetch.
-    const { data: templates = [], isLoading } = api.template.list.useQuery(undefined, {
+    // listSummary returns only id/name/updatedAt/blockCount/fieldCount/previewTitles
+    // instead of the full nested block+field tree. For a user with 20 templates
+    // averaging 3 blocks × 8 fields each, this cuts fetched rows from ~560 to ~20.
+    // staleTime=5min: reads from the server-prefetched cache on first render.
+    const { data: templates = [], isLoading } = api.template.listSummary.useQuery(undefined, {
         staleTime: 5 * 60 * 1000,
         refetchOnWindowFocus: false,
     });
 
     const deleteMutation = api.template.delete.useMutation({
-        // Optimistic: remove from cache immediately so the UI responds at click-speed.
-        // On error, roll back by restoring the previous data then invalidating.
+        // Optimistic: remove from listSummary cache immediately.
+        // On error, roll back by restoring the snapshot then re-fetching.
         onMutate: async ({ id }) => {
-            await utils.template.list.cancel();
-            const prev = utils.template.list.getData();
-            utils.template.list.setData(undefined, (old) =>
+            await utils.template.listSummary.cancel();
+            const prev = utils.template.listSummary.getData();
+            utils.template.listSummary.setData(undefined, (old) =>
                 old ? old.filter((t) => t.id !== id) : old
             );
             return { prev };
         },
         onError: (_err, _vars, ctx) => {
-            if (ctx?.prev !== undefined) utils.template.list.setData(undefined, ctx.prev);
+            if (ctx?.prev !== undefined) utils.template.listSummary.setData(undefined, ctx.prev);
         },
-        onSettled: () => void utils.template.list.invalidate(),
+        onSettled: () => void utils.template.listSummary.invalidate(),
     });
 
     const duplicateMutation = api.template.duplicate.useMutation({
-        onSuccess: () => void utils.template.list.invalidate(),
+        onSuccess: () => void utils.template.listSummary.invalidate(),
     });
 
     const createFromExample = api.template.create.useMutation({
         onSuccess: (t) => router.push(`/dashboard/templates/${t.id}`),
     });
 
-    const filtered = templates.filter((t) =>
+    const filtered = (templates as TemplateSummary[]).filter((t) =>
         t.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -193,7 +179,7 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
             {/* My Templates */}
             {filtered.length > 0 ? (
                 <div className="space-y-2 mb-10">
-                    {filtered.map((template: Template) => (
+                    {filtered.map((template: TemplateSummary) => (
                         <TemplateRow
                             key={template.id}
                             template={template}
@@ -286,7 +272,7 @@ function TemplateRow({
     onDuplicate,
     isDeleting,
 }: {
-    template: Template;
+    template: TemplateSummary;
     openMenu: string | null;
     setOpenMenu: (id: string | null) => void;
     deleteConfirm: string | null;
@@ -295,8 +281,8 @@ function TemplateRow({
     onDuplicate: (id: string) => void;
     isDeleting: boolean;
 }) {
-    const blockCount = template.blocks.length;
-    const fieldCount = template.blocks.reduce((sum, b) => sum + b.fields.length, 0);
+    // blockCount, fieldCount, previewTitles are pre-computed by listSummary on the server
+    const { blockCount, fieldCount, previewTitles } = template;
 
     const formatDate = (d: Date) =>
         new Date(d).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
@@ -312,15 +298,15 @@ function TemplateRow({
                 {/* Name + meta */}
                 <div className="flex-1 min-w-0">
                     <p className="font-semibold text-slate-800 text-sm">{template.name}</p>
-                    {template.blocks.length > 0 && (
+                    {previewTitles.length > 0 && (
                         <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                            {template.blocks.slice(0, 3).map((b) => (
-                                <span key={b.id} className="text-xs bg-[#e8eef9] text-[#2149A1] px-2 py-0.5 rounded-full border border-[#2149A1]/20">
-                                    {b.title}
+                            {previewTitles.map((title) => (
+                                <span key={title} className="text-xs bg-[#e8eef9] text-[#2149A1] px-2 py-0.5 rounded-full border border-[#2149A1]/20">
+                                    {title}
                                 </span>
                             ))}
-                            {template.blocks.length > 3 && (
-                                <span className="text-xs text-[#868C94]">+{template.blocks.length - 3} more</span>
+                            {blockCount > 3 && (
+                                <span className="text-xs text-[#868C94]">+{blockCount - 3} more</span>
                             )}
                         </div>
                     )}

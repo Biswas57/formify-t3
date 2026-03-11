@@ -5,18 +5,19 @@ import TemplateList from "./TemplateList";
 export const metadata = { title: "Formify" };
 
 export default async function TemplatesPage() {
-    // Prefetch all three in parallel so the page dehydrates a complete cache
-    // snapshot into the HTML stream. Without this, each useQuery on the client
-    // fires a separate round-trip on mount, causing the waterfall seen in logs.
+    // Prefetch only what this page actually uses.
     //
-    // entitlements.me  → feeds Pro badge + feature gates in TemplateList
-    // usage.getToday   → warms cache for profile/billing card navigation
-    // template.list    → primary page data
-    void Promise.all([
-        api.template.list.prefetch(),
-        api.entitlements.me.prefetch(),
-        api.usage.getToday.prefetch(),
-    ]);
+    // Removed: entitlements.me — already prefetched by dashboard/layout.tsx,
+    //   which wraps this page. Prefetching it again issues a duplicate DB query.
+    //
+    // Removed: usage.getToday — not used on the form bank page. Was being
+    //   prefetched speculatively "in case the user navigates to profile", which
+    //   adds server work to an already-slow page for a navigation that may never
+    //   happen.
+    //
+    // Kept: template.listSummary — primary data for this page, now using the
+    //   lightweight summary query instead of the full nested list.
+    void api.template.listSummary.prefetch();
 
     return (
         <HydrateClient>

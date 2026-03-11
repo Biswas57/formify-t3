@@ -44,7 +44,7 @@ export const transcriptionRouter = createTRPCRouter({
             const today = todayUTC();
 
             // Check entitlements — Pro users skip limit check
-            const entitlements = await getUserEntitlements(userId);
+            const entitlements = await getUserEntitlements(userId, ctx.entitlementsCache);
             const isPro = hasFeature(entitlements, FEATURES.TRANSCRIPTION_UNLIMITED);
 
             if (!isPro) {

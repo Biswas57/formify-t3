@@ -39,7 +39,7 @@ export const customBlockRouter = createTRPCRouter({
         )
         .mutation(async ({ ctx, input }) => {
             // Enforce PRO feature requirement
-            await requireFeature(ctx.session.user.id, FEATURES.CUSTOM_BLOCKS_CREATE);
+            await requireFeature(ctx.session.user.id, ctx.entitlementsCache, FEATURES.CUSTOM_BLOCKS_CREATE);
 
             const block = await ctx.db.customBlock.create({
                 data: {
@@ -64,7 +64,7 @@ export const customBlockRouter = createTRPCRouter({
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {
             // Enforce PRO feature requirement
-            await requireFeature(ctx.session.user.id, FEATURES.CUSTOM_BLOCKS_DELETE);
+            await requireFeature(ctx.session.user.id, ctx.entitlementsCache, FEATURES.CUSTOM_BLOCKS_DELETE);
 
             // Verify ownership
             const block = await ctx.db.customBlock.findFirst({

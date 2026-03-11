@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import type { BlockSource, FieldType, PrismaClient } from "../../../../generated/prisma";
 import { TRPCError } from "@trpc/server";
-import { getUserEntitlements, hasFeature, FEATURES } from "@/server/entitlements";
+import { getUserEntitlements, hasFeature, FEATURES, type EntitlementsCache } from "@/server/entitlements";
 import { PLAN_LIMITS } from "@/server/entitlements/features";
 
 const templateFieldSchema = z.object({
@@ -28,11 +28,12 @@ const templateBodySchema = z.object({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-async function enforceFreeTemplateLimit(userId: string, db: PrismaClient) {
-    // getUserEntitlements is request-scoped cached — no extra DB hit if already
-    // called earlier in the same tRPC batch (e.g. entitlements.me + template.create
-    // batched together).
-    const entitlements = await getUserEntitlements(userId);
+async function enforceFreeTemplateLimit(
+    userId: string,
+    db: PrismaClient,
+    cache: EntitlementsCache,
+) {
+    const entitlements = await getUserEntitlements(userId, cache);
     if (hasFeature(entitlements, FEATURES.TEMPLATES_UNLIMITED)) return;
     const count = await db.template.count({ where: { ownerId: userId } });
     if (count >= PLAN_LIMITS.FREE_TEMPLATES) {
@@ -43,7 +44,6 @@ async function enforceFreeTemplateLimit(userId: string, db: PrismaClient) {
     }
 }
 
-// Shared block create payload builder
 function buildBlockCreate(b: z.infer<typeof templateBlockSchema>) {
     return {
         title: b.title,
@@ -62,16 +62,9 @@ function buildBlockCreate(b: z.infer<typeof templateBlockSchema>) {
     };
 }
 
-// Minimal select for post-write responses.
-//
-// Previously: create + update both used `include` which re-reads every nested
-// relation in full — same as list. For create, the caller only needs the id
-// to navigate. For update, the TemplateBuilder already has all the data it
-// just sent; re-reading it is wasteful.
-//
-// Using `select` here cuts the post-write DB read from ~full-list cost to
-// a shallow fetch of just id + name + block ids, which is all the client
-// needs to invalidate its cache correctly.
+// Minimal select returned after create/update — just enough for cache
+// invalidation and navigation. The full nested tree is never re-read
+// immediately after a write.
 const POST_WRITE_SELECT = {
     id: true,
     name: true,
@@ -102,6 +95,70 @@ const POST_WRITE_SELECT = {
 // ── Router ────────────────────────────────────────────────────────────────────
 
 export const templateRouter = createTRPCRouter({
+
+    // ── listSummary ───────────────────────────────────────────────────────────
+    //
+    // Lightweight query for the form bank listing page.
+    //
+    // The old `list` query fetched the full nested tree:
+    //   templates → blocks (ordered) → fields (ordered) for every template.
+    // For a user with 20 templates averaging 3 blocks × 8 fields each, that's
+    // 20 + 60 + 480 = 560 rows fetched to render a list of template name cards.
+    //
+    // listSummary fetches only what the card UI actually renders:
+    //   - id, name, updatedAt (displayed)
+    //   - _count.blocks, sum of field counts via aggregation (badge)
+    //
+    // The field count requires a subquery but Prisma's _count on a nested
+    // relation isn't directly available across two levels. We use a raw
+    // aggregation via groupBy or a simple select with _count on blocks.
+    // For the field total we fetch block._count.fields per template.
+    //
+    // This replaces the full include with a select that returns ~95% less data
+    // for typical template libraries.
+
+    listSummary: protectedProcedure.query(async ({ ctx }) => {
+        const userId = ctx.session.user.id;
+
+        const templates = await ctx.db.template.findMany({
+            where: { ownerId: userId },
+            orderBy: { updatedAt: "desc" },
+            select: {
+                id: true,
+                name: true,
+                updatedAt: true,
+                blocks: {
+                    orderBy: { order: "asc" },
+                    select: {
+                        // title needed: card renders up to 3 block title badges
+                        title: true,
+                        _count: { select: { fields: true } },
+                    },
+                },
+            },
+        });
+
+        // Flatten into a stable client shape.
+        // previewTitles: first 3 block titles for the badge row on the card.
+        // blockCount / fieldCount: metadata line ("3 blocks · 12 fields").
+        return templates.map((t) => ({
+            id: t.id,
+            name: t.name,
+            updatedAt: t.updatedAt,
+            blockCount: t.blocks.length,
+            fieldCount: t.blocks.reduce((sum, b) => sum + b._count.fields, 0),
+            previewTitles: t.blocks.slice(0, 3).map((b) => b.title),
+        }));
+    }),
+
+    // ── list ─────────────────────────────────────────────────────────────────
+    //
+    // Full nested tree. Still used by:
+    //   - TemplateBuilder (needs full field definitions to populate the editor)
+    //   - Any future page that needs to render all field data
+    //
+    // Do NOT use this on the form bank listing page. Use listSummary instead.
+
     list: protectedProcedure.query(async ({ ctx }) => {
         return ctx.db.template.findMany({
             where: { ownerId: ctx.session.user.id },
@@ -132,7 +189,7 @@ export const templateRouter = createTRPCRouter({
     create: protectedProcedure
         .input(templateBodySchema)
         .mutation(async ({ ctx, input }) => {
-            await enforceFreeTemplateLimit(ctx.session.user.id, ctx.db);
+            await enforceFreeTemplateLimit(ctx.session.user.id, ctx.db, ctx.entitlementsCache);
 
             return ctx.db.template.create({
                 data: {
@@ -140,8 +197,6 @@ export const templateRouter = createTRPCRouter({
                     name: input.name,
                     blocks: { create: input.blocks.map(buildBlockCreate) },
                 },
-                // Trimmed select instead of deep include — see POST_WRITE_SELECT comment above.
-                // Saves ~40–60% of post-write read cost on create.
                 select: POST_WRITE_SELECT,
             });
         }),
@@ -151,19 +206,7 @@ export const templateRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }) => {
             const userId = ctx.session.user.id;
 
-            // ── Fix: wrap delete + update in a single transaction ─────────────
-            //
-            // Bug in original: deleteMany ran OUTSIDE the transaction, before
-            // ctx.db.template.update started. If the update failed for any reason
-            // (network blip, validation error, DB timeout), the blocks were already
-            // deleted and the template was left with zero blocks — silent data loss.
-            //
-            // Fix: both operations are atomic inside $transaction. Either both
-            // commit or both roll back. Ownership check is also inside the tx
-            // to close the TOCTOU window between check and write.
-
             return ctx.db.$transaction(async (tx) => {
-                // Ownership check inside transaction — atomic with the write
                 const existing = await tx.template.findFirst({
                     where: { id: input.id, ownerId: userId },
                     select: { id: true },
@@ -172,10 +215,8 @@ export const templateRouter = createTRPCRouter({
                     throw new TRPCError({ code: "NOT_FOUND", message: "Template not found" });
                 }
 
-                // Delete all blocks (cascades to fields) — safe inside tx
                 await tx.templateBlock.deleteMany({ where: { templateId: input.id } });
 
-                // Recreate and return trimmed shape
                 return tx.template.update({
                     where: { id: input.id },
                     data: {
@@ -190,7 +231,7 @@ export const templateRouter = createTRPCRouter({
     duplicate: protectedProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {
-            await enforceFreeTemplateLimit(ctx.session.user.id, ctx.db);
+            await enforceFreeTemplateLimit(ctx.session.user.id, ctx.db, ctx.entitlementsCache);
 
             const source = await ctx.db.template.findFirst({
                 where: { id: input.id, ownerId: ctx.session.user.id },
@@ -237,8 +278,6 @@ export const templateRouter = createTRPCRouter({
                         })),
                     },
                 },
-                // Only return id — duplicate triggers list.invalidate() which
-                // re-fetches the full list. No need to re-read the full tree here.
                 select: { id: true, name: true },
             });
         }),

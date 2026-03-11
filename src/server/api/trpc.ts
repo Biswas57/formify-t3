@@ -32,6 +32,20 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   return {
     db,
     session,
+    // ── Request-scoped entitlements dedup cache ────────────────────────────
+    // This Map is created fresh per request (it lives on the ctx object, which
+    // is instantiated once per tRPC HTTP request and then discarded).
+    //
+    // We store the in-flight Promise, not the resolved value. This means:
+    //   - Two procedures in the same batch calling getUserEntitlements(userId)
+    //     concurrently share one DB query — the second gets the same Promise.
+    //   - No cross-request bleed: each request has its own Map instance.
+    //   - No timing dependency on queueMicrotask or tick boundaries.
+    //
+    // The previous module-level Map was not truly request-scoped: under load,
+    // Request A's cached value could be read by Request B before queueMicrotask
+    // fired to clear it.
+    entitlementsCache: new Map<string, Promise<import("@/server/entitlements").UserEntitlements>>(),
     ...opts,
   };
 };
