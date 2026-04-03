@@ -402,7 +402,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
             recorder.onstop = () => stream.getTracks().forEach((t) => t.stop());
 
-            recorder.start(3000); // 3s chunks — aligns with notes mode, reduces WS message overhead
+            recorder.start(1000); // 1s chunks — aligns with notes mode, reduces WS message overhead
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             setMicError(

@@ -361,7 +361,7 @@ export default function ProfileClient({ user }: Props) {
                     <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3 px-1">
                         Subscription
                     </p>
-                    <BillingCard />
+                    <BillingCard userId={user.id} />
                 </div>
 
                 {/* Account details */}

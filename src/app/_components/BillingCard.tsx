@@ -6,7 +6,11 @@ import { Crown, Zap, AlertCircle, ExternalLink, Loader2, Calendar } from "lucide
 import UpgradeModal from "@/app/dashboard/_components/UpgradeModal";
 import { hasFeature, FEATURES } from "@/server/entitlements/features";
 
-export default function BillingCard() {
+interface BillingCardProps {
+    userId: string;
+}
+
+export default function BillingCard({ userId }: BillingCardProps) {
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -142,7 +146,11 @@ export default function BillingCard() {
                 </div>
             </div>
 
-            <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                userId={userId}
+            />
         </>
     );
 }

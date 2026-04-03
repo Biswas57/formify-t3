@@ -9,6 +9,7 @@
     "db:generate": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
+    "db:repair-pro-entitlements": "tsx scripts/repair-pro-entitlements.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "dev": "next dev --turbo",

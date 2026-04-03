@@ -6,6 +6,10 @@ import type Stripe from "stripe";
 import { SubscriptionStatus } from "../../../../../generated/prisma";
 import { PLAN_FEATURES } from "@/server/entitlements/features";
 
+/**
+ * Stripe webhook handler.
+ * Processes subscription events and updates the database accordingly.
+ */
 export async function POST(req: Request) {
     try {
         const body = await req.text();
@@ -18,23 +22,32 @@ export async function POST(req: Request) {
             );
         }
 
+        // Verify webhook signature
         const event = verifyWebhookSignature(body, signature);
+
         console.log(`[Stripe Webhook] Received event: ${event.type}`);
 
+        // Handle different event types
         switch (event.type) {
             case "checkout.session.completed": {
-                await handleCheckoutCompleted(event.data.object);
+                const session = event.data.object;
+                await handleCheckoutCompleted(session);
                 break;
             }
+
             case "customer.subscription.created":
             case "customer.subscription.updated": {
-                await handleSubscriptionUpdated(event.data.object);
+                const subscription = event.data.object;
+                await handleSubscriptionUpdated(subscription);
                 break;
             }
+
             case "customer.subscription.deleted": {
-                await handleSubscriptionDeleted(event.data.object);
+                const subscription = event.data.object;
+                await handleSubscriptionDeleted(subscription);
                 break;
             }
+
             default:
                 console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
         }
@@ -42,65 +55,78 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true });
     } catch (err) {
         console.error("[Stripe Webhook] Error:", err);
-        return NextResponse.json({ error: "Webhook handler failed" }, { status: 400 });
+        return NextResponse.json(
+            { error: "Webhook handler failed" },
+            { status: 400 }
+        );
     }
 }
 
+/**
+ * Handle checkout.session.completed event.
+ * Creates initial subscription record in the database.
+ */
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-    // Pricing table flow: userId lands in client_reference_id (Stripe never
-    // touches metadata for pricing table checkouts).
-    // Direct checkout flow: userId is in metadata.userId (set by createCheckoutSession).
-    // Fall through both so either path activates the account.
     const userId =
         session.metadata?.userId ??
         session.client_reference_id ??
         null;
-
     const subscriptionId = session.subscription as string | null;
 
     if (!userId || !subscriptionId) {
-        console.error(
-            "[Stripe Webhook] handleCheckoutCompleted: missing userId or subscriptionId",
-            { userId, subscriptionId, sessionId: session.id }
-        );
+        console.error("[Stripe Webhook] Missing checkout user mapping", {
+            sessionId: session.id,
+            userId,
+            subscriptionId,
+            hasMetadataUserId: !!session.metadata?.userId,
+            clientReferenceId: session.client_reference_id,
+        });
         return;
     }
 
-    // --- Fix for pricing table flow ---
-    // The pricing table creates a new Stripe customer automatically.
-    // Our direct-checkout path writes stripeCustomerId during createCheckoutSession,
-    // but the pricing table bypasses that. If we don't write it here, every future
-    // customer.subscription.* event will fail the stripeCustomerId lookup and log
-    // "Could not find user for subscription".
-    if (session.customer) {
-        const customerId = session.customer as string;
-        await db.user.updateMany({
+    const customerId =
+        typeof session.customer === "string"
+            ? session.customer
+            : session.customer?.id ?? null;
+
+    if (customerId) {
+        const linkedCustomer = await db.user.updateMany({
             where: {
                 id: userId,
-                // Only write if not already set — avoids overwriting a previously
-                // linked customer if someone somehow completes checkout twice.
                 stripeCustomerId: null,
             },
             data: { stripeCustomerId: customerId },
         });
-        console.log(
-            `[Stripe Webhook] Linked stripeCustomerId ${customerId} → userId ${userId}`
-        );
+
+        if (linkedCustomer.count > 0) {
+            console.log("[Stripe Webhook] Linked customer to user", {
+                userId,
+                customerId,
+                source: session.metadata?.userId ? "metadata" : "client_reference_id",
+            });
+        }
     }
 
+    // Fetch full subscription details
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     await upsertUserPlan(userId, subscription);
 
-    console.log(
-        `[Stripe Webhook] Checkout completed — userId: ${userId}, source: ${session.metadata?.userId ? "metadata" : "client_reference_id"
-        }`
-    );
+    console.log("[Stripe Webhook] Checkout completed", {
+        userId,
+        subscriptionId,
+        source: session.metadata?.userId ? "metadata" : "client_reference_id",
+    });
 }
 
+/**
+ * Handle subscription.created or subscription.updated events.
+ * Updates or creates the UserPlan record.
+ */
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     const userId = subscription.metadata?.userId;
 
     if (!userId) {
+        // Try to find user by customer ID
         const customer = await db.user.findUnique({
             where: { stripeCustomerId: subscription.customer as string },
             select: { id: true },
@@ -122,25 +148,44 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     console.log(`[Stripe Webhook] Subscription updated: ${subscription.id}`);
 }
 
+/**
+ * Handle subscription.deleted event.
+ * Sets subscription status to CANCELED.
+ */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     await db.userPlan.updateMany({
         where: { stripeSubscriptionId: subscription.id },
-        data: { status: "CANCELED", cancelAtPeriodEnd: true },
+        data: {
+            status: "CANCELED",
+            cancelAtPeriodEnd: true,
+        },
     });
+
     console.log(`[Stripe Webhook] Subscription deleted: ${subscription.id}`);
 }
 
+/**
+ * Upsert UserPlan record based on Stripe subscription data.
+ */
 async function upsertUserPlan(userId: string, subscription: Stripe.Subscription) {
-    const proPlan =
-        (await db.plan.findUnique({ where: { slug: "pro" } })) ??
-        (await db.plan.create({
-            data: {
-                name: "Pro",
-                slug: "pro",
-                featuresJson: JSON.stringify(PLAN_FEATURES.pro ?? []),
-            },
-        }));
+    // Get-or-create the Pro plan atomically.
+    // The old findUnique ?? create pattern is not safe under concurrent webhooks —
+    // two simultaneous events can both see null and both try to create, crashing
+    // on the unique constraint for slug. upsert is a single atomic operation.
+    // The update side also keeps featuresJson in sync with the code definition.
+    const proPlan = await db.plan.upsert({
+        where: { slug: "pro" },
+        update: {
+            featuresJson: JSON.stringify(PLAN_FEATURES.pro ?? []),
+        },
+        create: {
+            name: "Pro",
+            slug: "pro",
+            featuresJson: JSON.stringify(PLAN_FEATURES.pro ?? []),
+        },
+    });
 
+    // Map Stripe status to our enum
     const statusMap: Record<string, SubscriptionStatus> = {
         active: SubscriptionStatus.ACTIVE,
         trialing: SubscriptionStatus.TRIALING,
@@ -153,9 +198,17 @@ async function upsertUserPlan(userId: string, subscription: Stripe.Subscription)
 
     const status = statusMap[subscription.status] ?? SubscriptionStatus.INCOMPLETE;
 
+    // Type assertion for subscription properties (Stripe API may have different property names)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     const sub = subscription as any;
 
+    // Upsert UserPlan.
+    // planId MUST appear in the update block as well as create.
+    // Without it, users who already have a UserPlan row (e.g. anyone who
+    // existed before subscribing) never get their planId switched to pro —
+    // their row stays pointing at whatever plan it was before, so
+    // getUserEntitlements reads the wrong featuresJson and returns [] features,
+    // causing Pro subscribers to incorrectly hit the free-tier daily limit.
     await db.userPlan.upsert({
         where: { userId },
         update: {
@@ -166,7 +219,7 @@ async function upsertUserPlan(userId: string, subscription: Stripe.Subscription)
             currentPeriodStart: sub.current_period_start ? new Date(sub.current_period_start * 1000) : null,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
         },
         create: {
@@ -178,12 +231,15 @@ async function upsertUserPlan(userId: string, subscription: Stripe.Subscription)
             currentPeriodStart: sub.current_period_start ? new Date(sub.current_period_start * 1000) : null,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
         },
     });
 
-    console.log(
-        `[Stripe Webhook] UserPlan upserted — userId: ${userId}, status: ${status}`
-    );
+    console.log("[Stripe Webhook] Activated Pro entitlements", {
+        userId,
+        subscriptionId: subscription.id,
+        status,
+        planSlug: proPlan.slug,
+    });
 }

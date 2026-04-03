@@ -36,8 +36,12 @@ export default function UpgradeModal({ isOpen, onClose, userId }: UpgradeModalPr
     const pricingTableId = env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID;
     const publishableKey = env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
-    // If no valid pricing table ID is configured, fall back to direct checkout.
-    const usePricingTable = !!pricingTableId && pricingTableId.startsWith("prctbl_");
+    // If no valid pricing table ID or user identity is available, fall back to
+    // direct checkout so the server can attach metadata.userId reliably.
+    const usePricingTable =
+        !!pricingTableId &&
+        pricingTableId.startsWith("prctbl_") &&
+        !!userId;
 
     if (!isOpen) return null;
 

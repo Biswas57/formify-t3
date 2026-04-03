@@ -206,26 +206,27 @@ export const templateRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }) => {
             const userId = ctx.session.user.id;
 
-            return ctx.db.$transaction(async (tx) => {
-                const existing = await tx.template.findFirst({
-                    where: { id: input.id, ownerId: userId },
-                    select: { id: true },
-                });
-                if (!existing) {
-                    throw new TRPCError({ code: "NOT_FOUND", message: "Template not found" });
-                }
+            const existing = await ctx.db.template.findFirst({
+                where: { id: input.id, ownerId: userId },
+                select: { id: true },
+            });
+            if (!existing) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "Template not found" });
+            }
 
-                await tx.templateBlock.deleteMany({ where: { templateId: input.id } });
-
-                return tx.template.update({
+            const [, updatedTemplate] = await ctx.db.$transaction([
+                ctx.db.templateBlock.deleteMany({ where: { templateId: input.id } }),
+                ctx.db.template.update({
                     where: { id: input.id },
                     data: {
                         name: input.name,
                         blocks: { create: input.blocks.map(buildBlockCreate) },
                     },
                     select: POST_WRITE_SELECT,
-                });
-            });
+                }),
+            ]);
+
+            return updatedTemplate;
         }),
 
     duplicate: protectedProcedure

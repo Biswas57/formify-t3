@@ -56,6 +56,14 @@ export const transcriptionRouter = createTRPCRouter({
                 const limit = PLAN_LIMITS.FREE_DAILY_TRANSCRIPTIONS;
 
                 if (count >= limit) {
+                    console.warn("[Transcription] Free-tier limit denied", {
+                        userId,
+                        planSlug: entitlements.planSlug,
+                        status: entitlements.status,
+                        isPro,
+                        count,
+                        limit,
+                    });
                     throw new TRPCError({
                         code: "FORBIDDEN",
                         message: `Daily transcription limit reached (${limit}/day on Free plan). Upgrade to Pro for unlimited sessions.`,
