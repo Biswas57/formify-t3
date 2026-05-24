@@ -10,6 +10,9 @@ const fieldDefSchema = z.object({
 });
 
 export const customBlockRouter = createTRPCRouter({
+    // TODO: Legacy custom-block API. The active template builder uses
+    // blockRouter + BlockDefinition; keep this unmounted until the old
+    // CustomBlock model can be retired with a migration plan.
     /**
      * List all custom blocks owned by the current user.
      */

@@ -1,4 +1,3 @@
-import { postRouter } from "@/server/api/routers/post";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { blockRouter } from "@/server/api/routers/block";
 import { templateRouter } from "@/server/api/routers/template";
@@ -15,7 +14,6 @@ import { transcriptionRouter } from "./routers/transcription";
  */
 
 export const appRouter = createTRPCRouter({
-  post: postRouter,
   template: templateRouter,
   block: blockRouter,
   billing: billingRouter,
@@ -31,7 +29,7 @@ export type AppRouter = typeof appRouter;
  * Create a server-side caller for the tRPC API.
  * @example
  * const trpc = createCaller(createContext);
- * const res = await trpc.post.all();
- *       ^? Post[]
+ * const res = await trpc.template.list();
+ *       ^? Template[]
  */
 export const createCaller = createCallerFactory(appRouter);

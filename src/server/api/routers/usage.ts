@@ -25,6 +25,9 @@ export const usageRouter = createTRPCRouter({
         return { count, limit, isPro: false, canRecord: count < limit };
     }),
 
+    // TODO: Legacy mutation. Recording usage is now counted when
+    // transcription.getSessionToken mints a WS token; keep uncalled for now
+    // until older clients are confirmed gone.
     recordSession: protectedProcedure.mutation(async ({ ctx }) => {
         const today = todayUTC();
         await ctx.db.transcriptionUsage.upsert({

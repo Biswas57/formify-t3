@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
         const titleStr = String(formTitle);
         const htmlStr = typeof formHTML === "string" ? formHTML : "";
 
+        // TODO(security): this endpoint trusts Formify's own client-rendered
+        // formHTML. Escape or sanitize here before accepting richer/untrusted
+        // HTML sources or allowing arbitrary saved HTML templates.
         if (!toStr || !titleStr) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }

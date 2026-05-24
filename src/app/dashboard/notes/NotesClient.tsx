@@ -284,7 +284,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
             // onclose handles all state transitions so we only act once.
         };
 
-        ws.onclose = (event) => {
+        ws.onclose = () => {
             clearTimeout(connectionTimeout);
             sessionReadyRef.current = false;
             setSessionReady(false);
@@ -303,7 +303,6 @@ export default function NotesClient({ user: _user }: { user: User }) {
             const attempt = ++reconnectAttemptsRef.current;
             if (attempt <= MAX_RECONNECT_ATTEMPTS) {
                 const delay = Math.min(1000 * Math.pow(2, attempt - 1), 16000);
-                console.log(`[Notes] WS closed (code ${event.code}) — reconnect attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
                 reconnectTimerRef.current = setTimeout(() => connectWS(true), delay);
             } else {
                 // Exhausted retries — show a manual retry option

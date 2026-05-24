@@ -6,7 +6,7 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import {
     Mic, Square, Wifi, WifiOff, RotateCcw, ChevronDown,
-    Pencil, Check, AlertCircle, RefreshCw, Loader2,
+    Lock, AlertCircle, RefreshCw, Loader2,
     Download, Mail, X
 } from "lucide-react";
 import { formatFieldLabel } from "@/lib/format-field-label";
@@ -101,8 +101,11 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
     // Form data
     const [attributes, setAttributes] = useState<Record<string, string>>({});
-    const [editedValues, setEditedValues] = useState<Record<string, string>>({});
-    const [isEditing, setIsEditing] = useState(false);
+    // lockedFields: keys the user has manually edited — AI updates must not overwrite these.
+    // A ref mirror is kept so the WS onmessage closure ([] deps) always reads the current set.
+    const [lockedFields, setLockedFields] = useState<Set<string>>(new Set());
+    const lockedFieldsRef = useRef<Set<string>>(new Set());
+    useEffect(() => { lockedFieldsRef.current = lockedFields; }, [lockedFields]);
 
     // Export features
     const formContainerRef = useRef<HTMLDivElement>(null);
@@ -163,20 +166,13 @@ export default function TranscriptionClient({ user }: { user: User }) {
         setTemplateRaw(raw);
     }, [preloadedTemplate]);
 
-    // ── Sync attributes → editedValues when not editing ──────────────────────
-
-    useEffect(() => {
-        if (!isEditing) setEditedValues(attributes);
-    }, [attributes, isEditing]);
-
     // ── Re-initialise fields when template changes ────────────────────────────
 
     useEffect(() => {
         const empty: Record<string, string> = {};
         allFields.forEach((f) => { empty[f] = ""; });
         setAttributes(empty);
-        setEditedValues(empty);
-        setIsEditing(false);
+        setLockedFields(new Set());
         blocksReadyRef.current = false;
         setBlocksReady(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -204,8 +200,6 @@ export default function TranscriptionClient({ user }: { user: User }) {
             reconnectAttemptsRef.current = 0;
         }
 
-        console.log(`[Formify] WS ${isReconnect ? "re" : ""}connecting to:`, getWSUrl());
-
         const ws = new WebSocket(getWSUrl());
         ws.binaryType = "arraybuffer";
         wsRef.current = ws;
@@ -213,7 +207,6 @@ export default function TranscriptionClient({ user }: { user: User }) {
         // 8s connection timeout — gives enough time for slow cold-starts
         const connectionTimeout = setTimeout(() => {
             if (ws.readyState !== WebSocket.OPEN) {
-                console.error("[Formify] WS connection timeout");
                 ws.close();
                 // onclose will handle reconnect logic
             }
@@ -228,14 +221,12 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 clearTimeout(reconnectTimerRef.current);
                 reconnectTimerRef.current = null;
             }
-            console.log("[Formify] WS connected");
         };
 
-        ws.onclose = (event) => {
+        ws.onclose = () => {
             clearTimeout(connectionTimeout);
             blocksReadyRef.current = false;
             setBlocksReady(false);
-            console.log(`[Formify] WS closed — code: ${event.code}`);
 
             const currentStatus = recordStatusRef.current;
 
@@ -250,7 +241,6 @@ export default function TranscriptionClient({ user }: { user: User }) {
             const attempt = ++reconnectAttemptsRef.current;
             if (attempt <= MAX_RECONNECT_ATTEMPTS) {
                 const delay = Math.min(1000 * Math.pow(2, attempt - 1), 16000);
-                console.log(`[Formify] Reconnect attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
                 reconnectTimerRef.current = setTimeout(() => connectWS(true), delay);
             } else {
                 setWsStatus("error");
@@ -279,7 +269,6 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 if (msg.type === "started") {
                     blocksReadyRef.current = true;
                     setBlocksReady(true);
-                    console.log(`[Formify] Session started — ${msg.template_size ?? "?"} fields`);
                     return;
                 }
 
@@ -287,13 +276,14 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 if (msg.type === "attributes_update" && msg.attributes !== undefined) {
                     setAttributes((prev) => {
                         const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
+                        const locked = lockedFieldsRef.current;
                         const normalized: Record<string, string> = {};
                         for (const [rawKey, val] of Object.entries(msg.attributes!)) {
                             const key = normalizeKey(rawKey);
+                            // Skip locked fields — user correction takes precedence over AI
+                            if (locked.has(key)) continue;
                             if (allowedKeys.has(key) && val) {
                                 normalized[key] = val;
-                            } else if (!allowedKeys.has(key)) {
-                                console.warn(`[Formify] Dropping unknown key: "${rawKey}"`);
                             }
                         }
                         return { ...prev, ...normalized };
@@ -305,9 +295,12 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 if (msg.type === "final_attributes" && msg.attributes !== undefined) {
                     setAttributes((prev) => {
                         const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
+                        const locked = lockedFieldsRef.current;
                         const normalized: Record<string, string> = {};
                         for (const [rawKey, val] of Object.entries(msg.attributes!)) {
                             const key = normalizeKey(rawKey);
+                            // Skip locked fields — user correction takes precedence over AI
+                            if (locked.has(key)) continue;
                             if (allowedKeys.has(key) && val) normalized[key] = val;
                         }
                         return { ...prev, ...normalized };
@@ -344,9 +337,20 @@ export default function TranscriptionClient({ user }: { user: User }) {
         if (ws?.readyState !== WebSocket.OPEN) return;
         const parsed = parseBlocks(templateRaw);
         if (Object.keys(parsed).length === 0) return;
-        ws.send(JSON.stringify({ action: "start", mode: "forms", blocks: parsed, token }));
-        console.log("[Formify] Blocks sent:", Object.keys(parsed).join(", "),
-            `(${Object.values(parsed).flat().length} fields)`);
+
+        // Filter out locked field keys — do not ask the server to fill user-corrected fields.
+        // Values are never included in this payload; only field keys are sent.
+        const locked = lockedFieldsRef.current;
+        const filtered: Record<string, string[]> = {};
+        for (const [block, fields] of Object.entries(parsed)) {
+            const unlocked = fields.filter((f) => !locked.has(f));
+            if (unlocked.length > 0) filtered[block] = unlocked;
+        }
+
+        // If every field in the template is locked, there is nothing for the server to fill.
+        if (Object.keys(filtered).length === 0) return;
+
+        ws.send(JSON.stringify({ action: "start", mode: "forms", blocks: filtered, token }));
     }, [templateRaw]);
 
     // Note: sendBlocks is no longer called automatically on connect.
@@ -397,7 +401,6 @@ export default function TranscriptionClient({ user }: { user: User }) {
             recorder.onstart = () => {
                 setRecordStatus("recording");
                 recordStatusRef.current = "recording";
-                setIsEditing(false);
             };
 
             recorder.onstop = () => stream.getTracks().forEach((t) => t.stop());
@@ -422,18 +425,34 @@ export default function TranscriptionClient({ user }: { user: User }) {
         const ws = wsRef.current;
         if (ws?.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ action: "stop" }));
-            console.log("[Formify] Paused — awaiting final extraction");
         }
         // Usage was already counted when the session token was minted in startRecording.
         // No additional mutation needed here.
     }, []);
 
-    // ── Edit / Save ───────────────────────────────────────────────────────────
+    // ── Per-field edit and lock ────────────────────────────────────────────────
 
-    const handleSave = () => {
-        setAttributes(editedValues);
-        setIsEditing(false);
-    };
+    // Called on every input change. Updates the displayed value immediately and
+    // locks the field so AI updates cannot overwrite the user's correction.
+    const handleFieldChange = useCallback((field: string, value: string) => {
+        setAttributes((prev) => ({ ...prev, [field]: value }));
+        setLockedFields((prev) => {
+            if (prev.has(field)) return prev; // already locked — avoid creating a new Set
+            const next = new Set(prev);
+            next.add(field);
+            return next;
+        });
+    }, []);
+
+    // Removes a field from the locked set so AI updates can fill it again.
+    const unlockField = useCallback((field: string) => {
+        setLockedFields((prev) => {
+            if (!prev.has(field)) return prev;
+            const next = new Set(prev);
+            next.delete(field);
+            return next;
+        });
+    }, []);
 
     // ── Reset ─────────────────────────────────────────────────────────────────
 
@@ -446,16 +465,14 @@ export default function TranscriptionClient({ user }: { user: User }) {
         reconnectAttemptsRef.current = 0;
         setRecordStatus("idle");
         recordStatusRef.current = "idle";
-        setIsEditing(false);
         setMicError(null);
         setWsError(null);
         const empty: Record<string, string> = {};
         allFields.forEach((f) => { empty[f] = ""; });
         setAttributes(empty);
-        setEditedValues(empty);
+        setLockedFields(new Set());
         // Setting blocksReadyRef to false is enough — the useEffect watching
         // wsStatus + blocksReady will fire and call sendBlocks() once.
-        // Calling sendBlocks() directly here would send a second start action.
         blocksReadyRef.current = false;
         setBlocksReady(false);
     };
@@ -676,7 +693,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                             ${fields.map(field => `
                                 <tr>
                                     <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: 500; color: #6b7280; width: 40%;">${formatFieldLabel(field)}</td>
-                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; color: #111827;">${(editedValues[field] ?? attributes[field]) ?? '—'}</td>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; color: #111827;">${attributes[field] ?? '—'}</td>
                                 </tr>
                             `).join('')}
                         </table>
@@ -857,37 +874,6 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         </button>
                     )}
 
-                    {/* Edit / Save — only visible after at least one pause */}
-                    {isPaused && (
-                        !isEditing ? (
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200"
-                            >
-                                <Pencil className="w-3.5 h-3.5" />
-                                Edit
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleSave}
-                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200"
-                            >
-                                <Check className="w-3.5 h-3.5" />
-                                Save
-                            </button>
-                        )
-                    )}
-
-                    {/* Local-only disclaimer — visible while editing */}
-                    {isEditing && (
-                        <span className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 3a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4zm0 7.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
-                            </svg>
-                            Edits are local only — not saved to server. Refresh clears form.
-                        </span>
-                    )}
-
                     {/* PDF Export — only show when paused */}
                     {isPaused && (
                         <button
@@ -946,40 +932,41 @@ export default function TranscriptionClient({ user }: { user: User }) {
                             {/* Fields grid */}
                             <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                                 {fields.map((field) => {
-                                    const value = isEditing
-                                        ? (editedValues[field] ?? "")
-                                        : (attributes[field] ?? "");
-                                    const isFilled = Boolean(attributes[field]);
+                                    const isLocked = lockedFields.has(field);
+                                    const value = attributes[field] ?? "";
+                                    const isFilled = Boolean(value);
 
                                     return (
                                         <div key={field}>
-                                            <label className="block text-xs font-medium text-[#868C94] mb-1.5">
-                                                {formatFieldLabel(field)}
-                                            </label>
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <label className="text-xs font-medium text-[#868C94]">
+                                                    {formatFieldLabel(field)}
+                                                </label>
+                                                {isLocked && (
+                                                    <button
+                                                        onClick={() => unlockField(field)}
+                                                        title="Locked — click to allow AI to fill again"
+                                                        className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 transition-colors"
+                                                    >
+                                                        <Lock className="w-3 h-3" />
+                                                    </button>
+                                                )}
+                                            </div>
                                             <input
                                                 type="text"
                                                 value={value}
-                                                readOnly={!isEditing}
                                                 autoComplete="off"
                                                 autoCorrect="off"
                                                 autoCapitalize="off"
                                                 spellCheck={false}
-                                                onPaste={(e) => {
-                                                    // Belt-and-suspenders: readOnly already blocks paste,
-                                                    // but explicit prevention ensures mobile browsers comply.
-                                                    if (!isEditing) e.preventDefault();
-                                                }}
-                                                onChange={(e) =>
-                                                    isEditing &&
-                                                    setEditedValues((prev) => ({ ...prev, [field]: e.target.value }))
-                                                }
+                                                onChange={(e) => handleFieldChange(field, e.target.value)}
                                                 placeholder={isRecording ? "" : "—"}
                                                 className={`w-full text-sm px-3 py-2.5 rounded-lg border outline-none transition-all duration-200
-                          ${isEditing
-                                                        ? "border-[#2149A1] bg-white text-slate-900 focus:ring-2 focus:ring-[#2149A1]/20 cursor-text"
+                                                    ${isLocked
+                                                        ? "border-amber-300 bg-amber-50/50 text-slate-900 focus:ring-2 focus:ring-amber-200"
                                                         : isFilled
-                                                            ? "border-slate-200 bg-white text-slate-900 cursor-default select-text"
-                                                            : "border-slate-200 bg-slate-50 text-slate-400 cursor-default"
+                                                            ? "border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1]"
+                                                            : "border-slate-200 bg-slate-50 text-slate-400 focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1]"
                                                     }`}
                                             />
                                         </div>

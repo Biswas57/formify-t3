@@ -295,7 +295,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/biswas.simk/Desktop/github_shi/formify-web/generated/prisma",
+      "value": "/Users/biswas.simkhada/Desktop/github_projects/formify-t3/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -309,7 +309,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/biswas.simk/Desktop/github_shi/formify-web/prisma/schema.prisma",
+    "sourceFilePath": "/Users/biswas.simkhada/Desktop/github_projects/formify-t3/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -323,6 +323,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
