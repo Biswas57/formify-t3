@@ -5,6 +5,7 @@ import { billingRouter } from "@/server/api/routers/billing";
 import { entitlementsRouter } from "@/server/api/routers/entitlements";
 import { usageRouter } from "@/server/api/routers/usage";
 import { transcriptionRouter } from "./routers/transcription";
+import { noteTemplateRouter } from "./routers/noteTemplate";
 
 
 /**
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
   entitlements: entitlementsRouter,
   usage: usageRouter,
   transcription: transcriptionRouter,
+  noteTemplate: noteTemplateRouter,
 });
 
 // export type definition of API

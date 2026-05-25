@@ -83,6 +83,11 @@ export type CustomBlock = $Result.DefaultSelection<Prisma.$CustomBlockPayload>
  * 
  */
 export type TranscriptionUsage = $Result.DefaultSelection<Prisma.$TranscriptionUsagePayload>
+/**
+ * Model NoteTemplate
+ * 
+ */
+export type NoteTemplate = $Result.DefaultSelection<Prisma.$NoteTemplatePayload>
 
 /**
  * Enums
@@ -393,6 +398,16 @@ export class PrismaClient<
     * ```
     */
   get transcriptionUsage(): Prisma.TranscriptionUsageDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.noteTemplate`: Exposes CRUD operations for the **NoteTemplate** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more NoteTemplates
+    * const noteTemplates = await prisma.noteTemplate.findMany()
+    * ```
+    */
+  get noteTemplate(): Prisma.NoteTemplateDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -847,7 +862,8 @@ export namespace Prisma {
     Plan: 'Plan',
     UserPlan: 'UserPlan',
     CustomBlock: 'CustomBlock',
-    TranscriptionUsage: 'TranscriptionUsage'
+    TranscriptionUsage: 'TranscriptionUsage',
+    NoteTemplate: 'NoteTemplate'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -866,7 +882,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "account" | "passwordResetToken" | "session" | "verificationToken" | "user" | "template" | "templateBlock" | "templateField" | "blockDefinition" | "blockFieldDefinition" | "plan" | "userPlan" | "customBlock" | "transcriptionUsage"
+      modelProps: "account" | "passwordResetToken" | "session" | "verificationToken" | "user" | "template" | "templateBlock" | "templateField" | "blockDefinition" | "blockFieldDefinition" | "plan" | "userPlan" | "customBlock" | "transcriptionUsage" | "noteTemplate"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1906,6 +1922,80 @@ export namespace Prisma {
           }
         }
       }
+      NoteTemplate: {
+        payload: Prisma.$NoteTemplatePayload<ExtArgs>
+        fields: Prisma.NoteTemplateFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NoteTemplateFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteTemplatePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NoteTemplateFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteTemplatePayload>
+          }
+          findFirst: {
+            args: Prisma.NoteTemplateFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteTemplatePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NoteTemplateFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteTemplatePayload>
+          }
+          findMany: {
+            args: Prisma.NoteTemplateFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteTemplatePayload>[]
+          }
+          create: {
+            args: Prisma.NoteTemplateCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteTemplatePayload>
+          }
+          createMany: {
+            args: Prisma.NoteTemplateCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NoteTemplateCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteTemplatePayload>[]
+          }
+          delete: {
+            args: Prisma.NoteTemplateDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteTemplatePayload>
+          }
+          update: {
+            args: Prisma.NoteTemplateUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteTemplatePayload>
+          }
+          deleteMany: {
+            args: Prisma.NoteTemplateDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NoteTemplateUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.NoteTemplateUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteTemplatePayload>[]
+          }
+          upsert: {
+            args: Prisma.NoteTemplateUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteTemplatePayload>
+          }
+          aggregate: {
+            args: Prisma.NoteTemplateAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNoteTemplate>
+          }
+          groupBy: {
+            args: Prisma.NoteTemplateGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NoteTemplateGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NoteTemplateCountArgs<ExtArgs>
+            result: $Utils.Optional<NoteTemplateCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2016,6 +2106,7 @@ export namespace Prisma {
     userPlan?: UserPlanOmit
     customBlock?: CustomBlockOmit
     transcriptionUsage?: TranscriptionUsageOmit
+    noteTemplate?: NoteTemplateOmit
   }
 
   /* Types for Logging */
@@ -2103,6 +2194,7 @@ export namespace Prisma {
     customBlocks: number
     transcriptionUsages: number
     passwordResetTokens: number
+    noteTemplates: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2113,6 +2205,7 @@ export namespace Prisma {
     customBlocks?: boolean | UserCountOutputTypeCountCustomBlocksArgs
     transcriptionUsages?: boolean | UserCountOutputTypeCountTranscriptionUsagesArgs
     passwordResetTokens?: boolean | UserCountOutputTypeCountPasswordResetTokensArgs
+    noteTemplates?: boolean | UserCountOutputTypeCountNoteTemplatesArgs
   }
 
   // Custom InputTypes
@@ -2173,6 +2266,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountPasswordResetTokensArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PasswordResetTokenWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountNoteTemplatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NoteTemplateWhereInput
   }
 
 
@@ -6763,6 +6863,7 @@ export namespace Prisma {
     transcriptionUsages?: boolean | User$transcriptionUsagesArgs<ExtArgs>
     userPlan?: boolean | User$userPlanArgs<ExtArgs>
     passwordResetTokens?: boolean | User$passwordResetTokensArgs<ExtArgs>
+    noteTemplates?: boolean | User$noteTemplatesArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -6812,6 +6913,7 @@ export namespace Prisma {
     transcriptionUsages?: boolean | User$transcriptionUsagesArgs<ExtArgs>
     userPlan?: boolean | User$userPlanArgs<ExtArgs>
     passwordResetTokens?: boolean | User$passwordResetTokensArgs<ExtArgs>
+    noteTemplates?: boolean | User$noteTemplatesArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -6828,6 +6930,7 @@ export namespace Prisma {
       transcriptionUsages: Prisma.$TranscriptionUsagePayload<ExtArgs>[]
       userPlan: Prisma.$UserPlanPayload<ExtArgs> | null
       passwordResetTokens: Prisma.$PasswordResetTokenPayload<ExtArgs>[]
+      noteTemplates: Prisma.$NoteTemplatePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -7241,6 +7344,7 @@ export namespace Prisma {
     transcriptionUsages<T extends User$transcriptionUsagesArgs<ExtArgs> = {}>(args?: Subset<T, User$transcriptionUsagesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     userPlan<T extends User$userPlanArgs<ExtArgs> = {}>(args?: Subset<T, User$userPlanArgs<ExtArgs>>): Prisma__UserPlanClient<$Result.GetResult<Prisma.$UserPlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     passwordResetTokens<T extends User$passwordResetTokensArgs<ExtArgs> = {}>(args?: Subset<T, User$passwordResetTokensArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PasswordResetTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    noteTemplates<T extends User$noteTemplatesArgs<ExtArgs> = {}>(args?: Subset<T, User$noteTemplatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -7851,6 +7955,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: PasswordResetTokenScalarFieldEnum | PasswordResetTokenScalarFieldEnum[]
+  }
+
+  /**
+   * User.noteTemplates
+   */
+  export type User$noteTemplatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateInclude<ExtArgs> | null
+    where?: NoteTemplateWhereInput
+    orderBy?: NoteTemplateOrderByWithRelationInput | NoteTemplateOrderByWithRelationInput[]
+    cursor?: NoteTemplateWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: NoteTemplateScalarFieldEnum | NoteTemplateScalarFieldEnum[]
   }
 
   /**
@@ -17855,6 +17983,1090 @@ export namespace Prisma {
 
 
   /**
+   * Model NoteTemplate
+   */
+
+  export type AggregateNoteTemplate = {
+    _count: NoteTemplateCountAggregateOutputType | null
+    _min: NoteTemplateMinAggregateOutputType | null
+    _max: NoteTemplateMaxAggregateOutputType | null
+  }
+
+  export type NoteTemplateMinAggregateOutputType = {
+    id: string | null
+    ownerId: string | null
+    title: string | null
+    noteStyle: string | null
+    sections: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NoteTemplateMaxAggregateOutputType = {
+    id: string | null
+    ownerId: string | null
+    title: string | null
+    noteStyle: string | null
+    sections: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NoteTemplateCountAggregateOutputType = {
+    id: number
+    ownerId: number
+    title: number
+    noteStyle: number
+    sections: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type NoteTemplateMinAggregateInputType = {
+    id?: true
+    ownerId?: true
+    title?: true
+    noteStyle?: true
+    sections?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NoteTemplateMaxAggregateInputType = {
+    id?: true
+    ownerId?: true
+    title?: true
+    noteStyle?: true
+    sections?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NoteTemplateCountAggregateInputType = {
+    id?: true
+    ownerId?: true
+    title?: true
+    noteStyle?: true
+    sections?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type NoteTemplateAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NoteTemplate to aggregate.
+     */
+    where?: NoteTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoteTemplates to fetch.
+     */
+    orderBy?: NoteTemplateOrderByWithRelationInput | NoteTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NoteTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoteTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoteTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned NoteTemplates
+    **/
+    _count?: true | NoteTemplateCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NoteTemplateMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NoteTemplateMaxAggregateInputType
+  }
+
+  export type GetNoteTemplateAggregateType<T extends NoteTemplateAggregateArgs> = {
+        [P in keyof T & keyof AggregateNoteTemplate]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNoteTemplate[P]>
+      : GetScalarType<T[P], AggregateNoteTemplate[P]>
+  }
+
+
+
+
+  export type NoteTemplateGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NoteTemplateWhereInput
+    orderBy?: NoteTemplateOrderByWithAggregationInput | NoteTemplateOrderByWithAggregationInput[]
+    by: NoteTemplateScalarFieldEnum[] | NoteTemplateScalarFieldEnum
+    having?: NoteTemplateScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NoteTemplateCountAggregateInputType | true
+    _min?: NoteTemplateMinAggregateInputType
+    _max?: NoteTemplateMaxAggregateInputType
+  }
+
+  export type NoteTemplateGroupByOutputType = {
+    id: string
+    ownerId: string
+    title: string
+    noteStyle: string
+    sections: string
+    createdAt: Date
+    updatedAt: Date
+    _count: NoteTemplateCountAggregateOutputType | null
+    _min: NoteTemplateMinAggregateOutputType | null
+    _max: NoteTemplateMaxAggregateOutputType | null
+  }
+
+  type GetNoteTemplateGroupByPayload<T extends NoteTemplateGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NoteTemplateGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NoteTemplateGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NoteTemplateGroupByOutputType[P]>
+            : GetScalarType<T[P], NoteTemplateGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NoteTemplateSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    title?: boolean
+    noteStyle?: boolean
+    sections?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["noteTemplate"]>
+
+  export type NoteTemplateSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    title?: boolean
+    noteStyle?: boolean
+    sections?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["noteTemplate"]>
+
+  export type NoteTemplateSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ownerId?: boolean
+    title?: boolean
+    noteStyle?: boolean
+    sections?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["noteTemplate"]>
+
+  export type NoteTemplateSelectScalar = {
+    id?: boolean
+    ownerId?: boolean
+    title?: boolean
+    noteStyle?: boolean
+    sections?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type NoteTemplateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ownerId" | "title" | "noteStyle" | "sections" | "createdAt" | "updatedAt", ExtArgs["result"]["noteTemplate"]>
+  export type NoteTemplateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type NoteTemplateIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type NoteTemplateIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $NoteTemplatePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "NoteTemplate"
+    objects: {
+      owner: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      ownerId: string
+      title: string
+      noteStyle: string
+      sections: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["noteTemplate"]>
+    composites: {}
+  }
+
+  type NoteTemplateGetPayload<S extends boolean | null | undefined | NoteTemplateDefaultArgs> = $Result.GetResult<Prisma.$NoteTemplatePayload, S>
+
+  type NoteTemplateCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<NoteTemplateFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: NoteTemplateCountAggregateInputType | true
+    }
+
+  export interface NoteTemplateDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['NoteTemplate'], meta: { name: 'NoteTemplate' } }
+    /**
+     * Find zero or one NoteTemplate that matches the filter.
+     * @param {NoteTemplateFindUniqueArgs} args - Arguments to find a NoteTemplate
+     * @example
+     * // Get one NoteTemplate
+     * const noteTemplate = await prisma.noteTemplate.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NoteTemplateFindUniqueArgs>(args: SelectSubset<T, NoteTemplateFindUniqueArgs<ExtArgs>>): Prisma__NoteTemplateClient<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one NoteTemplate that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {NoteTemplateFindUniqueOrThrowArgs} args - Arguments to find a NoteTemplate
+     * @example
+     * // Get one NoteTemplate
+     * const noteTemplate = await prisma.noteTemplate.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NoteTemplateFindUniqueOrThrowArgs>(args: SelectSubset<T, NoteTemplateFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NoteTemplateClient<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NoteTemplate that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteTemplateFindFirstArgs} args - Arguments to find a NoteTemplate
+     * @example
+     * // Get one NoteTemplate
+     * const noteTemplate = await prisma.noteTemplate.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NoteTemplateFindFirstArgs>(args?: SelectSubset<T, NoteTemplateFindFirstArgs<ExtArgs>>): Prisma__NoteTemplateClient<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NoteTemplate that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteTemplateFindFirstOrThrowArgs} args - Arguments to find a NoteTemplate
+     * @example
+     * // Get one NoteTemplate
+     * const noteTemplate = await prisma.noteTemplate.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NoteTemplateFindFirstOrThrowArgs>(args?: SelectSubset<T, NoteTemplateFindFirstOrThrowArgs<ExtArgs>>): Prisma__NoteTemplateClient<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more NoteTemplates that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteTemplateFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all NoteTemplates
+     * const noteTemplates = await prisma.noteTemplate.findMany()
+     * 
+     * // Get first 10 NoteTemplates
+     * const noteTemplates = await prisma.noteTemplate.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const noteTemplateWithIdOnly = await prisma.noteTemplate.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends NoteTemplateFindManyArgs>(args?: SelectSubset<T, NoteTemplateFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a NoteTemplate.
+     * @param {NoteTemplateCreateArgs} args - Arguments to create a NoteTemplate.
+     * @example
+     * // Create one NoteTemplate
+     * const NoteTemplate = await prisma.noteTemplate.create({
+     *   data: {
+     *     // ... data to create a NoteTemplate
+     *   }
+     * })
+     * 
+     */
+    create<T extends NoteTemplateCreateArgs>(args: SelectSubset<T, NoteTemplateCreateArgs<ExtArgs>>): Prisma__NoteTemplateClient<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many NoteTemplates.
+     * @param {NoteTemplateCreateManyArgs} args - Arguments to create many NoteTemplates.
+     * @example
+     * // Create many NoteTemplates
+     * const noteTemplate = await prisma.noteTemplate.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NoteTemplateCreateManyArgs>(args?: SelectSubset<T, NoteTemplateCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many NoteTemplates and returns the data saved in the database.
+     * @param {NoteTemplateCreateManyAndReturnArgs} args - Arguments to create many NoteTemplates.
+     * @example
+     * // Create many NoteTemplates
+     * const noteTemplate = await prisma.noteTemplate.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many NoteTemplates and only return the `id`
+     * const noteTemplateWithIdOnly = await prisma.noteTemplate.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NoteTemplateCreateManyAndReturnArgs>(args?: SelectSubset<T, NoteTemplateCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a NoteTemplate.
+     * @param {NoteTemplateDeleteArgs} args - Arguments to delete one NoteTemplate.
+     * @example
+     * // Delete one NoteTemplate
+     * const NoteTemplate = await prisma.noteTemplate.delete({
+     *   where: {
+     *     // ... filter to delete one NoteTemplate
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NoteTemplateDeleteArgs>(args: SelectSubset<T, NoteTemplateDeleteArgs<ExtArgs>>): Prisma__NoteTemplateClient<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one NoteTemplate.
+     * @param {NoteTemplateUpdateArgs} args - Arguments to update one NoteTemplate.
+     * @example
+     * // Update one NoteTemplate
+     * const noteTemplate = await prisma.noteTemplate.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NoteTemplateUpdateArgs>(args: SelectSubset<T, NoteTemplateUpdateArgs<ExtArgs>>): Prisma__NoteTemplateClient<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more NoteTemplates.
+     * @param {NoteTemplateDeleteManyArgs} args - Arguments to filter NoteTemplates to delete.
+     * @example
+     * // Delete a few NoteTemplates
+     * const { count } = await prisma.noteTemplate.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NoteTemplateDeleteManyArgs>(args?: SelectSubset<T, NoteTemplateDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NoteTemplates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteTemplateUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many NoteTemplates
+     * const noteTemplate = await prisma.noteTemplate.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NoteTemplateUpdateManyArgs>(args: SelectSubset<T, NoteTemplateUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NoteTemplates and returns the data updated in the database.
+     * @param {NoteTemplateUpdateManyAndReturnArgs} args - Arguments to update many NoteTemplates.
+     * @example
+     * // Update many NoteTemplates
+     * const noteTemplate = await prisma.noteTemplate.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more NoteTemplates and only return the `id`
+     * const noteTemplateWithIdOnly = await prisma.noteTemplate.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends NoteTemplateUpdateManyAndReturnArgs>(args: SelectSubset<T, NoteTemplateUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one NoteTemplate.
+     * @param {NoteTemplateUpsertArgs} args - Arguments to update or create a NoteTemplate.
+     * @example
+     * // Update or create a NoteTemplate
+     * const noteTemplate = await prisma.noteTemplate.upsert({
+     *   create: {
+     *     // ... data to create a NoteTemplate
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the NoteTemplate we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NoteTemplateUpsertArgs>(args: SelectSubset<T, NoteTemplateUpsertArgs<ExtArgs>>): Prisma__NoteTemplateClient<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of NoteTemplates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteTemplateCountArgs} args - Arguments to filter NoteTemplates to count.
+     * @example
+     * // Count the number of NoteTemplates
+     * const count = await prisma.noteTemplate.count({
+     *   where: {
+     *     // ... the filter for the NoteTemplates we want to count
+     *   }
+     * })
+    **/
+    count<T extends NoteTemplateCountArgs>(
+      args?: Subset<T, NoteTemplateCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NoteTemplateCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a NoteTemplate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteTemplateAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NoteTemplateAggregateArgs>(args: Subset<T, NoteTemplateAggregateArgs>): Prisma.PrismaPromise<GetNoteTemplateAggregateType<T>>
+
+    /**
+     * Group by NoteTemplate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteTemplateGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NoteTemplateGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NoteTemplateGroupByArgs['orderBy'] }
+        : { orderBy?: NoteTemplateGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NoteTemplateGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNoteTemplateGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the NoteTemplate model
+   */
+  readonly fields: NoteTemplateFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for NoteTemplate.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NoteTemplateClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    owner<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the NoteTemplate model
+   */
+  interface NoteTemplateFieldRefs {
+    readonly id: FieldRef<"NoteTemplate", 'String'>
+    readonly ownerId: FieldRef<"NoteTemplate", 'String'>
+    readonly title: FieldRef<"NoteTemplate", 'String'>
+    readonly noteStyle: FieldRef<"NoteTemplate", 'String'>
+    readonly sections: FieldRef<"NoteTemplate", 'String'>
+    readonly createdAt: FieldRef<"NoteTemplate", 'DateTime'>
+    readonly updatedAt: FieldRef<"NoteTemplate", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * NoteTemplate findUnique
+   */
+  export type NoteTemplateFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which NoteTemplate to fetch.
+     */
+    where: NoteTemplateWhereUniqueInput
+  }
+
+  /**
+   * NoteTemplate findUniqueOrThrow
+   */
+  export type NoteTemplateFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which NoteTemplate to fetch.
+     */
+    where: NoteTemplateWhereUniqueInput
+  }
+
+  /**
+   * NoteTemplate findFirst
+   */
+  export type NoteTemplateFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which NoteTemplate to fetch.
+     */
+    where?: NoteTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoteTemplates to fetch.
+     */
+    orderBy?: NoteTemplateOrderByWithRelationInput | NoteTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NoteTemplates.
+     */
+    cursor?: NoteTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoteTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoteTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NoteTemplates.
+     */
+    distinct?: NoteTemplateScalarFieldEnum | NoteTemplateScalarFieldEnum[]
+  }
+
+  /**
+   * NoteTemplate findFirstOrThrow
+   */
+  export type NoteTemplateFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which NoteTemplate to fetch.
+     */
+    where?: NoteTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoteTemplates to fetch.
+     */
+    orderBy?: NoteTemplateOrderByWithRelationInput | NoteTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NoteTemplates.
+     */
+    cursor?: NoteTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoteTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoteTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NoteTemplates.
+     */
+    distinct?: NoteTemplateScalarFieldEnum | NoteTemplateScalarFieldEnum[]
+  }
+
+  /**
+   * NoteTemplate findMany
+   */
+  export type NoteTemplateFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which NoteTemplates to fetch.
+     */
+    where?: NoteTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoteTemplates to fetch.
+     */
+    orderBy?: NoteTemplateOrderByWithRelationInput | NoteTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing NoteTemplates.
+     */
+    cursor?: NoteTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoteTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoteTemplates.
+     */
+    skip?: number
+    distinct?: NoteTemplateScalarFieldEnum | NoteTemplateScalarFieldEnum[]
+  }
+
+  /**
+   * NoteTemplate create
+   */
+  export type NoteTemplateCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateInclude<ExtArgs> | null
+    /**
+     * The data needed to create a NoteTemplate.
+     */
+    data: XOR<NoteTemplateCreateInput, NoteTemplateUncheckedCreateInput>
+  }
+
+  /**
+   * NoteTemplate createMany
+   */
+  export type NoteTemplateCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many NoteTemplates.
+     */
+    data: NoteTemplateCreateManyInput | NoteTemplateCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NoteTemplate createManyAndReturn
+   */
+  export type NoteTemplateCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * The data used to create many NoteTemplates.
+     */
+    data: NoteTemplateCreateManyInput | NoteTemplateCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * NoteTemplate update
+   */
+  export type NoteTemplateUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateInclude<ExtArgs> | null
+    /**
+     * The data needed to update a NoteTemplate.
+     */
+    data: XOR<NoteTemplateUpdateInput, NoteTemplateUncheckedUpdateInput>
+    /**
+     * Choose, which NoteTemplate to update.
+     */
+    where: NoteTemplateWhereUniqueInput
+  }
+
+  /**
+   * NoteTemplate updateMany
+   */
+  export type NoteTemplateUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update NoteTemplates.
+     */
+    data: XOR<NoteTemplateUpdateManyMutationInput, NoteTemplateUncheckedUpdateManyInput>
+    /**
+     * Filter which NoteTemplates to update
+     */
+    where?: NoteTemplateWhereInput
+    /**
+     * Limit how many NoteTemplates to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * NoteTemplate updateManyAndReturn
+   */
+  export type NoteTemplateUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * The data used to update NoteTemplates.
+     */
+    data: XOR<NoteTemplateUpdateManyMutationInput, NoteTemplateUncheckedUpdateManyInput>
+    /**
+     * Filter which NoteTemplates to update
+     */
+    where?: NoteTemplateWhereInput
+    /**
+     * Limit how many NoteTemplates to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * NoteTemplate upsert
+   */
+  export type NoteTemplateUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateInclude<ExtArgs> | null
+    /**
+     * The filter to search for the NoteTemplate to update in case it exists.
+     */
+    where: NoteTemplateWhereUniqueInput
+    /**
+     * In case the NoteTemplate found by the `where` argument doesn't exist, create a new NoteTemplate with this data.
+     */
+    create: XOR<NoteTemplateCreateInput, NoteTemplateUncheckedCreateInput>
+    /**
+     * In case the NoteTemplate was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NoteTemplateUpdateInput, NoteTemplateUncheckedUpdateInput>
+  }
+
+  /**
+   * NoteTemplate delete
+   */
+  export type NoteTemplateDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateInclude<ExtArgs> | null
+    /**
+     * Filter which NoteTemplate to delete.
+     */
+    where: NoteTemplateWhereUniqueInput
+  }
+
+  /**
+   * NoteTemplate deleteMany
+   */
+  export type NoteTemplateDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NoteTemplates to delete
+     */
+    where?: NoteTemplateWhereInput
+    /**
+     * Limit how many NoteTemplates to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * NoteTemplate without action
+   */
+  export type NoteTemplateDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteTemplate
+     */
+    select?: NoteTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteTemplate
+     */
+    omit?: NoteTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteTemplateInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -18043,6 +19255,19 @@ export namespace Prisma {
   };
 
   export type TranscriptionUsageScalarFieldEnum = (typeof TranscriptionUsageScalarFieldEnum)[keyof typeof TranscriptionUsageScalarFieldEnum]
+
+
+  export const NoteTemplateScalarFieldEnum: {
+    id: 'id',
+    ownerId: 'ownerId',
+    title: 'title',
+    noteStyle: 'noteStyle',
+    sections: 'sections',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type NoteTemplateScalarFieldEnum = (typeof NoteTemplateScalarFieldEnum)[keyof typeof NoteTemplateScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -18444,6 +19669,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageListRelationFilter
     userPlan?: XOR<UserPlanNullableScalarRelationFilter, UserPlanWhereInput> | null
     passwordResetTokens?: PasswordResetTokenListRelationFilter
+    noteTemplates?: NoteTemplateListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -18464,6 +19690,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageOrderByRelationAggregateInput
     userPlan?: UserPlanOrderByWithRelationInput
     passwordResetTokens?: PasswordResetTokenOrderByRelationAggregateInput
+    noteTemplates?: NoteTemplateOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -18487,6 +19714,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageListRelationFilter
     userPlan?: XOR<UserPlanNullableScalarRelationFilter, UserPlanWhereInput> | null
     passwordResetTokens?: PasswordResetTokenListRelationFilter
+    noteTemplates?: NoteTemplateListRelationFilter
   }, "id" | "email" | "stripeCustomerId">
 
   export type UserOrderByWithAggregationInput = {
@@ -19110,6 +20338,71 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"TranscriptionUsage"> | Date | string
   }
 
+  export type NoteTemplateWhereInput = {
+    AND?: NoteTemplateWhereInput | NoteTemplateWhereInput[]
+    OR?: NoteTemplateWhereInput[]
+    NOT?: NoteTemplateWhereInput | NoteTemplateWhereInput[]
+    id?: StringFilter<"NoteTemplate"> | string
+    ownerId?: StringFilter<"NoteTemplate"> | string
+    title?: StringFilter<"NoteTemplate"> | string
+    noteStyle?: StringFilter<"NoteTemplate"> | string
+    sections?: StringFilter<"NoteTemplate"> | string
+    createdAt?: DateTimeFilter<"NoteTemplate"> | Date | string
+    updatedAt?: DateTimeFilter<"NoteTemplate"> | Date | string
+    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type NoteTemplateOrderByWithRelationInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    title?: SortOrder
+    noteStyle?: SortOrder
+    sections?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    owner?: UserOrderByWithRelationInput
+  }
+
+  export type NoteTemplateWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: NoteTemplateWhereInput | NoteTemplateWhereInput[]
+    OR?: NoteTemplateWhereInput[]
+    NOT?: NoteTemplateWhereInput | NoteTemplateWhereInput[]
+    ownerId?: StringFilter<"NoteTemplate"> | string
+    title?: StringFilter<"NoteTemplate"> | string
+    noteStyle?: StringFilter<"NoteTemplate"> | string
+    sections?: StringFilter<"NoteTemplate"> | string
+    createdAt?: DateTimeFilter<"NoteTemplate"> | Date | string
+    updatedAt?: DateTimeFilter<"NoteTemplate"> | Date | string
+    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type NoteTemplateOrderByWithAggregationInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    title?: SortOrder
+    noteStyle?: SortOrder
+    sections?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: NoteTemplateCountOrderByAggregateInput
+    _max?: NoteTemplateMaxOrderByAggregateInput
+    _min?: NoteTemplateMinOrderByAggregateInput
+  }
+
+  export type NoteTemplateScalarWhereWithAggregatesInput = {
+    AND?: NoteTemplateScalarWhereWithAggregatesInput | NoteTemplateScalarWhereWithAggregatesInput[]
+    OR?: NoteTemplateScalarWhereWithAggregatesInput[]
+    NOT?: NoteTemplateScalarWhereWithAggregatesInput | NoteTemplateScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"NoteTemplate"> | string
+    ownerId?: StringWithAggregatesFilter<"NoteTemplate"> | string
+    title?: StringWithAggregatesFilter<"NoteTemplate"> | string
+    noteStyle?: StringWithAggregatesFilter<"NoteTemplate"> | string
+    sections?: StringWithAggregatesFilter<"NoteTemplate"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"NoteTemplate"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"NoteTemplate"> | Date | string
+  }
+
   export type AccountCreateInput = {
     id?: string
     type: string
@@ -19377,6 +20670,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     userPlan?: UserPlanCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -19397,6 +20691,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUpdateInput = {
@@ -19417,6 +20712,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -19437,6 +20733,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -20091,6 +21388,75 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type NoteTemplateCreateInput = {
+    id?: string
+    title: string
+    noteStyle: string
+    sections: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    owner: UserCreateNestedOneWithoutNoteTemplatesInput
+  }
+
+  export type NoteTemplateUncheckedCreateInput = {
+    id?: string
+    ownerId: string
+    title: string
+    noteStyle: string
+    sections: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NoteTemplateUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    noteStyle?: StringFieldUpdateOperationsInput | string
+    sections?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    owner?: UserUpdateOneRequiredWithoutNoteTemplatesNestedInput
+  }
+
+  export type NoteTemplateUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    noteStyle?: StringFieldUpdateOperationsInput | string
+    sections?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteTemplateCreateManyInput = {
+    id?: string
+    ownerId: string
+    title: string
+    noteStyle: string
+    sections: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NoteTemplateUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    noteStyle?: StringFieldUpdateOperationsInput | string
+    sections?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteTemplateUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    noteStyle?: StringFieldUpdateOperationsInput | string
+    sections?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -20403,6 +21769,12 @@ export namespace Prisma {
     none?: PasswordResetTokenWhereInput
   }
 
+  export type NoteTemplateListRelationFilter = {
+    every?: NoteTemplateWhereInput
+    some?: NoteTemplateWhereInput
+    none?: NoteTemplateWhereInput
+  }
+
   export type AccountOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -20428,6 +21800,10 @@ export namespace Prisma {
   }
 
   export type PasswordResetTokenOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type NoteTemplateOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -20935,6 +22311,36 @@ export namespace Prisma {
     count?: SortOrder
   }
 
+  export type NoteTemplateCountOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    title?: SortOrder
+    noteStyle?: SortOrder
+    sections?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NoteTemplateMaxOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    title?: SortOrder
+    noteStyle?: SortOrder
+    sections?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NoteTemplateMinOrderByAggregateInput = {
+    id?: SortOrder
+    ownerId?: SortOrder
+    title?: SortOrder
+    noteStyle?: SortOrder
+    sections?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
   export type UserCreateNestedOneWithoutAccountsInput = {
     create?: XOR<UserCreateWithoutAccountsInput, UserUncheckedCreateWithoutAccountsInput>
     connectOrCreate?: UserCreateOrConnectWithoutAccountsInput
@@ -21052,6 +22458,13 @@ export namespace Prisma {
     connect?: PasswordResetTokenWhereUniqueInput | PasswordResetTokenWhereUniqueInput[]
   }
 
+  export type NoteTemplateCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<NoteTemplateCreateWithoutOwnerInput, NoteTemplateUncheckedCreateWithoutOwnerInput> | NoteTemplateCreateWithoutOwnerInput[] | NoteTemplateUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: NoteTemplateCreateOrConnectWithoutOwnerInput | NoteTemplateCreateOrConnectWithoutOwnerInput[]
+    createMany?: NoteTemplateCreateManyOwnerInputEnvelope
+    connect?: NoteTemplateWhereUniqueInput | NoteTemplateWhereUniqueInput[]
+  }
+
   export type AccountUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<AccountCreateWithoutUserInput, AccountUncheckedCreateWithoutUserInput> | AccountCreateWithoutUserInput[] | AccountUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccountCreateOrConnectWithoutUserInput | AccountCreateOrConnectWithoutUserInput[]
@@ -21105,6 +22518,13 @@ export namespace Prisma {
     connectOrCreate?: PasswordResetTokenCreateOrConnectWithoutUserInput | PasswordResetTokenCreateOrConnectWithoutUserInput[]
     createMany?: PasswordResetTokenCreateManyUserInputEnvelope
     connect?: PasswordResetTokenWhereUniqueInput | PasswordResetTokenWhereUniqueInput[]
+  }
+
+  export type NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<NoteTemplateCreateWithoutOwnerInput, NoteTemplateUncheckedCreateWithoutOwnerInput> | NoteTemplateCreateWithoutOwnerInput[] | NoteTemplateUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: NoteTemplateCreateOrConnectWithoutOwnerInput | NoteTemplateCreateOrConnectWithoutOwnerInput[]
+    createMany?: NoteTemplateCreateManyOwnerInputEnvelope
+    connect?: NoteTemplateWhereUniqueInput | NoteTemplateWhereUniqueInput[]
   }
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -21219,6 +22639,20 @@ export namespace Prisma {
     deleteMany?: PasswordResetTokenScalarWhereInput | PasswordResetTokenScalarWhereInput[]
   }
 
+  export type NoteTemplateUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<NoteTemplateCreateWithoutOwnerInput, NoteTemplateUncheckedCreateWithoutOwnerInput> | NoteTemplateCreateWithoutOwnerInput[] | NoteTemplateUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: NoteTemplateCreateOrConnectWithoutOwnerInput | NoteTemplateCreateOrConnectWithoutOwnerInput[]
+    upsert?: NoteTemplateUpsertWithWhereUniqueWithoutOwnerInput | NoteTemplateUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: NoteTemplateCreateManyOwnerInputEnvelope
+    set?: NoteTemplateWhereUniqueInput | NoteTemplateWhereUniqueInput[]
+    disconnect?: NoteTemplateWhereUniqueInput | NoteTemplateWhereUniqueInput[]
+    delete?: NoteTemplateWhereUniqueInput | NoteTemplateWhereUniqueInput[]
+    connect?: NoteTemplateWhereUniqueInput | NoteTemplateWhereUniqueInput[]
+    update?: NoteTemplateUpdateWithWhereUniqueWithoutOwnerInput | NoteTemplateUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: NoteTemplateUpdateManyWithWhereWithoutOwnerInput | NoteTemplateUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: NoteTemplateScalarWhereInput | NoteTemplateScalarWhereInput[]
+  }
+
   export type AccountUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<AccountCreateWithoutUserInput, AccountUncheckedCreateWithoutUserInput> | AccountCreateWithoutUserInput[] | AccountUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccountCreateOrConnectWithoutUserInput | AccountCreateOrConnectWithoutUserInput[]
@@ -21325,6 +22759,20 @@ export namespace Prisma {
     update?: PasswordResetTokenUpdateWithWhereUniqueWithoutUserInput | PasswordResetTokenUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: PasswordResetTokenUpdateManyWithWhereWithoutUserInput | PasswordResetTokenUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: PasswordResetTokenScalarWhereInput | PasswordResetTokenScalarWhereInput[]
+  }
+
+  export type NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<NoteTemplateCreateWithoutOwnerInput, NoteTemplateUncheckedCreateWithoutOwnerInput> | NoteTemplateCreateWithoutOwnerInput[] | NoteTemplateUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: NoteTemplateCreateOrConnectWithoutOwnerInput | NoteTemplateCreateOrConnectWithoutOwnerInput[]
+    upsert?: NoteTemplateUpsertWithWhereUniqueWithoutOwnerInput | NoteTemplateUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: NoteTemplateCreateManyOwnerInputEnvelope
+    set?: NoteTemplateWhereUniqueInput | NoteTemplateWhereUniqueInput[]
+    disconnect?: NoteTemplateWhereUniqueInput | NoteTemplateWhereUniqueInput[]
+    delete?: NoteTemplateWhereUniqueInput | NoteTemplateWhereUniqueInput[]
+    connect?: NoteTemplateWhereUniqueInput | NoteTemplateWhereUniqueInput[]
+    update?: NoteTemplateUpdateWithWhereUniqueWithoutOwnerInput | NoteTemplateUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: NoteTemplateUpdateManyWithWhereWithoutOwnerInput | NoteTemplateUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: NoteTemplateScalarWhereInput | NoteTemplateScalarWhereInput[]
   }
 
   export type TemplateBlockCreateNestedManyWithoutTemplateInput = {
@@ -21647,6 +23095,20 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTranscriptionUsagesInput, UserUpdateWithoutTranscriptionUsagesInput>, UserUncheckedUpdateWithoutTranscriptionUsagesInput>
   }
 
+  export type UserCreateNestedOneWithoutNoteTemplatesInput = {
+    create?: XOR<UserCreateWithoutNoteTemplatesInput, UserUncheckedCreateWithoutNoteTemplatesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutNoteTemplatesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutNoteTemplatesNestedInput = {
+    create?: XOR<UserCreateWithoutNoteTemplatesInput, UserUncheckedCreateWithoutNoteTemplatesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutNoteTemplatesInput
+    upsert?: UserUpsertWithoutNoteTemplatesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutNoteTemplatesInput, UserUpdateWithoutNoteTemplatesInput>, UserUncheckedUpdateWithoutNoteTemplatesInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -21916,6 +23378,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     userPlan?: UserPlanCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutAccountsInput = {
@@ -21935,6 +23398,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutAccountsInput = {
@@ -21970,6 +23434,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -21989,6 +23454,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserCreateWithoutPasswordResetTokensInput = {
@@ -22008,6 +23474,7 @@ export namespace Prisma {
     customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     userPlan?: UserPlanCreateNestedOneWithoutUserInput
+    noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
@@ -22027,6 +23494,7 @@ export namespace Prisma {
     customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
+    noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutPasswordResetTokensInput = {
@@ -22062,6 +23530,7 @@ export namespace Prisma {
     customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUpdateOneWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
@@ -22081,6 +23550,7 @@ export namespace Prisma {
     customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserCreateWithoutSessionsInput = {
@@ -22100,6 +23570,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     userPlan?: UserPlanCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -22119,6 +23590,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -22154,6 +23626,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -22173,6 +23646,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type AccountCreateWithoutUserInput = {
@@ -22391,6 +23865,34 @@ export namespace Prisma {
 
   export type PasswordResetTokenCreateManyUserInputEnvelope = {
     data: PasswordResetTokenCreateManyUserInput | PasswordResetTokenCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type NoteTemplateCreateWithoutOwnerInput = {
+    id?: string
+    title: string
+    noteStyle: string
+    sections: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NoteTemplateUncheckedCreateWithoutOwnerInput = {
+    id?: string
+    title: string
+    noteStyle: string
+    sections: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NoteTemplateCreateOrConnectWithoutOwnerInput = {
+    where: NoteTemplateWhereUniqueInput
+    create: XOR<NoteTemplateCreateWithoutOwnerInput, NoteTemplateUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type NoteTemplateCreateManyOwnerInputEnvelope = {
+    data: NoteTemplateCreateManyOwnerInput | NoteTemplateCreateManyOwnerInput[]
     skipDuplicates?: boolean
   }
 
@@ -22627,6 +24129,35 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PasswordResetToken"> | Date | string
   }
 
+  export type NoteTemplateUpsertWithWhereUniqueWithoutOwnerInput = {
+    where: NoteTemplateWhereUniqueInput
+    update: XOR<NoteTemplateUpdateWithoutOwnerInput, NoteTemplateUncheckedUpdateWithoutOwnerInput>
+    create: XOR<NoteTemplateCreateWithoutOwnerInput, NoteTemplateUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type NoteTemplateUpdateWithWhereUniqueWithoutOwnerInput = {
+    where: NoteTemplateWhereUniqueInput
+    data: XOR<NoteTemplateUpdateWithoutOwnerInput, NoteTemplateUncheckedUpdateWithoutOwnerInput>
+  }
+
+  export type NoteTemplateUpdateManyWithWhereWithoutOwnerInput = {
+    where: NoteTemplateScalarWhereInput
+    data: XOR<NoteTemplateUpdateManyMutationInput, NoteTemplateUncheckedUpdateManyWithoutOwnerInput>
+  }
+
+  export type NoteTemplateScalarWhereInput = {
+    AND?: NoteTemplateScalarWhereInput | NoteTemplateScalarWhereInput[]
+    OR?: NoteTemplateScalarWhereInput[]
+    NOT?: NoteTemplateScalarWhereInput | NoteTemplateScalarWhereInput[]
+    id?: StringFilter<"NoteTemplate"> | string
+    ownerId?: StringFilter<"NoteTemplate"> | string
+    title?: StringFilter<"NoteTemplate"> | string
+    noteStyle?: StringFilter<"NoteTemplate"> | string
+    sections?: StringFilter<"NoteTemplate"> | string
+    createdAt?: DateTimeFilter<"NoteTemplate"> | Date | string
+    updatedAt?: DateTimeFilter<"NoteTemplate"> | Date | string
+  }
+
   export type TemplateBlockCreateWithoutTemplateInput = {
     id?: string
     order: number
@@ -22672,6 +24203,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     userPlan?: UserPlanCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutTemplatesInput = {
@@ -22691,6 +24223,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutTemplatesInput = {
@@ -22754,6 +24287,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTemplatesInput = {
@@ -22773,6 +24307,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type TemplateFieldCreateWithoutTemplateBlockInput = {
@@ -22977,6 +24512,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     userPlan?: UserPlanCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutBlockDefinitionsInput = {
@@ -22996,6 +24532,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutBlockDefinitionsInput = {
@@ -23060,6 +24597,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutBlockDefinitionsInput = {
@@ -23079,6 +24617,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type BlockDefinitionCreateWithoutFieldsInput = {
@@ -23212,6 +24751,7 @@ export namespace Prisma {
     customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutUserPlanInput = {
@@ -23231,6 +24771,7 @@ export namespace Prisma {
     customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutUserPlanInput = {
@@ -23291,6 +24832,7 @@ export namespace Prisma {
     customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutUserPlanInput = {
@@ -23310,6 +24852,7 @@ export namespace Prisma {
     customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type PlanUpsertWithoutUserPlansInput = {
@@ -23360,6 +24903,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     userPlan?: UserPlanCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutCustomBlocksInput = {
@@ -23379,6 +24923,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutCustomBlocksInput = {
@@ -23414,6 +24959,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCustomBlocksInput = {
@@ -23433,6 +24979,7 @@ export namespace Prisma {
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserCreateWithoutTranscriptionUsagesInput = {
@@ -23452,6 +24999,7 @@ export namespace Prisma {
     customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
     userPlan?: UserPlanCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutTranscriptionUsagesInput = {
@@ -23471,6 +25019,7 @@ export namespace Prisma {
     customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
     userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutTranscriptionUsagesInput = {
@@ -23506,6 +25055,7 @@ export namespace Prisma {
     customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
     userPlan?: UserPlanUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTranscriptionUsagesInput = {
@@ -23523,6 +25073,103 @@ export namespace Prisma {
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
     customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
+    userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type UserCreateWithoutNoteTemplatesInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    stripeCustomerId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    templates?: TemplateCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanCreateNestedOneWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutNoteTemplatesInput = {
+    id?: string
+    name?: string | null
+    email?: string | null
+    emailVerified?: Date | string | null
+    image?: string | null
+    passwordHash?: string | null
+    stripeCustomerId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
+    blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
+    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
+    transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
+    userPlan?: UserPlanUncheckedCreateNestedOneWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutNoteTemplatesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutNoteTemplatesInput, UserUncheckedCreateWithoutNoteTemplatesInput>
+  }
+
+  export type UserUpsertWithoutNoteTemplatesInput = {
+    update: XOR<UserUpdateWithoutNoteTemplatesInput, UserUncheckedUpdateWithoutNoteTemplatesInput>
+    create: XOR<UserCreateWithoutNoteTemplatesInput, UserUncheckedCreateWithoutNoteTemplatesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutNoteTemplatesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutNoteTemplatesInput, UserUncheckedUpdateWithoutNoteTemplatesInput>
+  }
+
+  export type UserUpdateWithoutNoteTemplatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    templates?: TemplateUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
+    userPlan?: UserPlanUpdateOneWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutNoteTemplatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
+    blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
+    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
+    transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     userPlan?: UserPlanUncheckedUpdateOneWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   }
@@ -23583,6 +25230,15 @@ export namespace Prisma {
     token: string
     expiresAt: Date | string
     createdAt?: Date | string
+  }
+
+  export type NoteTemplateCreateManyOwnerInput = {
+    id?: string
+    title: string
+    noteStyle: string
+    sections: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type AccountUpdateWithoutUserInput = {
@@ -23761,6 +25417,33 @@ export namespace Prisma {
     token?: StringFieldUpdateOperationsInput | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteTemplateUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    noteStyle?: StringFieldUpdateOperationsInput | string
+    sections?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteTemplateUncheckedUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    noteStyle?: StringFieldUpdateOperationsInput | string
+    sections?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteTemplateUncheckedUpdateManyWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    noteStyle?: StringFieldUpdateOperationsInput | string
+    sections?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type TemplateBlockCreateManyTemplateInput = {

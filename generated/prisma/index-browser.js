@@ -256,6 +256,16 @@ exports.Prisma.TranscriptionUsageScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.NoteTemplateScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  title: 'title',
+  noteStyle: 'noteStyle',
+  sections: 'sections',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -310,7 +320,8 @@ exports.Prisma.ModelName = {
   Plan: 'Plan',
   UserPlan: 'UserPlan',
   CustomBlock: 'CustomBlock',
-  TranscriptionUsage: 'TranscriptionUsage'
+  TranscriptionUsage: 'TranscriptionUsage',
+  NoteTemplate: 'NoteTemplate'
 };
 
 /**

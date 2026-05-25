@@ -37,6 +37,8 @@ export const PLAN_LIMITS = {
     FREE_TEMPLATES: 10,
     // Aligned with BillingCard copy: "3 transcription sessions per day"
     FREE_DAILY_TRANSCRIPTIONS: 3,
+    // Note templates — same initial limit as form templates; applies to all users for now
+    FREE_NOTE_TEMPLATES: 10,
 } as const;
 
 /**

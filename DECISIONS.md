@@ -31,3 +31,17 @@ Email export currently accepts Formify-generated rendered HTML. The endpoint doc
 ## D-008 Keep WebSocket Logs PII-Safe
 
 Client recording/WebSocket paths should not log tokens, transcript text, notes markdown, form values, raw attributes, or unknown field names. User-facing error state should carry operational feedback instead.
+
+## D-009 NoteTemplate Schema Uses Plain Strings For noteStyle And sections
+
+`NoteTemplate.noteStyle` is stored as a plain `String` (not a Prisma enum). The four valid values (`general`, `clinical`, `meeting`, `study`) are validated at the tRPC boundary with a Zod enum. This avoids a DB enum migration every time a new style is added.
+
+`NoteTemplate.sections` is stored as a raw comma-separated `String`, matching the `sectionsRaw` state in `NotesClient.tsx`. No join table is used. This keeps the schema minimal and the client-side data format unchanged.
+
+## D-010 Note Templates Are Capped At 10 For All Users (Initial Implementation)
+
+`FREE_NOTE_TEMPLATES: 10` is added to `PLAN_LIMITS`. In the initial pass all users share this cap. A Pro-unlimited note-templates feature flag can be added later (same pattern as `TEMPLATES_UNLIMITED`) without a schema change.
+
+## D-011 Note Templates Use Sidebar/Drawer Placement
+
+Notes templates are shown as a persistent left sidebar on desktop and a slide-in drawer from the sub-header on mobile. This keeps the main notes form unchanged, follows the dashboard mobile drawer pattern, and avoids new layout dependencies.

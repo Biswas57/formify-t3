@@ -75,6 +75,7 @@ model User {
   transcriptionUsages TranscriptionUsage[]
   userPlan            UserPlan?
   passwordResetTokens PasswordResetToken[]
+  noteTemplates       NoteTemplate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -242,4 +243,22 @@ model TranscriptionUsage {
 
   @@unique([userId, date])
   @@index([userId])
+}
+
+// ── Note Templates ────────────────────────────────────────────────────────────
+// Stores reusable note session configurations (title, style, sections).
+// Does NOT store generated notes or transcripts.
+
+model NoteTemplate {
+  id        String   @id @default(cuid())
+  ownerId   String
+  title     String
+  noteStyle String // "general" | "clinical" | "meeting" | "study"
+  sections  String // comma-separated raw string, mirrors NotesClient sectionsRaw
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
 }

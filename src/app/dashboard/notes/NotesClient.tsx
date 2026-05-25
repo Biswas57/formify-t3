@@ -4,9 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Mic, Square, Wifi, WifiOff, RotateCcw, Loader2,
     NotebookPen, Copy, Check, Download, AlertCircle,
+    BookMarked,
 } from "lucide-react";
 import { env } from "@/env";
 import { api } from "@/trpc/react";
+import NoteTemplateSidebar from "./NoteTemplateSidebar";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -173,6 +175,8 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
     // UI
     const [copied, setCopied] = useState(false);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const notesEndRef = useRef<HTMLDivElement>(null);
 
     const isConnected = wsStatus === "connected";
@@ -180,6 +184,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const isFinalizing = recordStatus === "finalizing";
     const isPaused = recordStatus === "paused";
     const canRecord = isConnected && !isFinalizing;
+    const canSelectTemplate = recordStatus === "idle";
     const errorMessage = wsError ?? micError;
 
     const hasNotes = notesMarkdown.trim().length > 0;
@@ -198,6 +203,13 @@ export default function NotesClient({ user: _user }: { user: User }) {
         if (!userEditedSections.current) {
             setSectionsRaw(DEFAULT_SECTIONS[style]);
         }
+    };
+
+    const handleTemplateSelect = (title: string, style: NoteStyle, sections: string) => {
+        setSessionTitle(title);
+        setNoteStyle(style);
+        setSectionsRaw(sections);
+        userEditedSections.current = sections.trim().length > 0;
     };
 
     // ── WebSocket ─────────────────────────────────────────────────────────────
@@ -422,24 +434,324 @@ export default function NotesClient({ user: _user }: { user: User }) {
         setTimeout(() => connectWS(), 100);
     };
 
-    // ── Copy / Download ───────────────────────────────────────────────────────
+    // ── PDF Export ────────────────────────────────────────────────────────────
+    // Client-side only — note content never leaves the browser.
+    // Uses the same jsPDF approach as the forms PDF export.
+
+    const handleSavePDF = async () => {
+        if (!notesMarkdown.trim()) return;
+        setIsGeneratingPDF(true);
+        try {
+            const { default: jsPDF } = await import("jspdf");
+
+            const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+            // ── Constants ──────────────────────────────────────────────────────
+            const PAGE_W = 210;
+            const PAGE_H = 297;
+            const MARGIN = 14;
+            const CONTENT_W = PAGE_W - MARGIN * 2;
+
+            const BRAND_BLUE: [number, number, number] = [33, 73, 161];
+            const HEADER_BG: [number, number, number] = [245, 247, 252];
+            const BORDER_COL: [number, number, number] = [220, 224, 232];
+            const LABEL_COL: [number, number, number] = [134, 140, 148];
+            const VALUE_COL: [number, number, number] = [15, 23, 42];
+            const H2_COL: [number, number, number] = [33, 73, 161];
+            const H3_COL: [number, number, number] = [51, 65, 85];
+            const BODY_COL: [number, number, number] = [71, 85, 105];
+            const WHITE: [number, number, number] = [255, 255, 255];
+
+            // Strip ** markers — used when a line is too long for inline bold rendering
+            const stripBold = (text: string) => text.replace(/\*\*([^*]+)\*\*/g, "$1");
+
+            // Print a line with inline bold/normal segments at a fixed y.
+            // Only call this when the full stripped text is known to fit on one line.
+            const printMixedLine = (text: string, x: number, y: number, size: number) => {
+                const parts = text.split(/(\*\*[^*]+\*\*)/g);
+                let cx = x;
+                pdf.setFontSize(size);
+                for (const part of parts) {
+                    const bold = part.startsWith("**") && part.endsWith("**");
+                    const content = bold ? part.slice(2, -2) : part;
+                    pdf.setFont("helvetica", bold ? "bold" : "normal");
+                    pdf.text(content, cx, y);
+                    cx += pdf.getTextWidth(content);
+                }
+            };
+
+            let y = 0;
+
+            // Page-break guard — redraws top stripe on new pages
+            const ensureSpace = (needed: number) => {
+                if (y + needed > PAGE_H - 14) {
+                    pdf.addPage();
+                    pdf.setFillColor(...BRAND_BLUE);
+                    pdf.rect(0, 0, PAGE_W, 2, "F");
+                    y = 10;
+                }
+            };
+
+            const drawPlainLines = (lines: string[], x: number, lineHeight: number) => {
+                for (const textLine of lines) {
+                    ensureSpace(lineHeight);
+                    pdf.text(textLine, x, y);
+                    y += lineHeight;
+                }
+            };
+
+            const splitLines = (text: string, width: number): string[] => {
+                const lines: unknown = pdf.splitTextToSize(text, width);
+                return Array.isArray(lines) ? lines.map(String) : [String(lines)];
+            };
+
+            // ── HEADER ────────────────────────────────────────────────────────
+            pdf.setFillColor(...BRAND_BLUE);
+            pdf.rect(0, 0, PAGE_W, 2, "F");
+
+            pdf.setFillColor(...HEADER_BG);
+            pdf.rect(0, 2, PAGE_W, 32, "F");
+
+            // Logo mark
+            pdf.setFillColor(...BRAND_BLUE);
+            pdf.setDrawColor(...BRAND_BLUE);
+            pdf.roundedRect(MARGIN, 8, 10, 10, 2, 2, "F");
+            pdf.setTextColor(...WHITE);
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(8);
+            pdf.text("F", MARGIN + 3.5, 14.8);
+
+            // Brand name
+            pdf.setTextColor(...BRAND_BLUE);
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(13);
+            pdf.text("Formify", MARGIN + 13, 14.2);
+
+            // Tagline
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(7);
+            pdf.setTextColor(...LABEL_COL);
+            pdf.text("Voice notes", MARGIN + 13, 18.5);
+
+            // Session title (right-aligned, clamped to 90mm)
+            const docTitle = sessionTitle.trim() || "Voice Notes";
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(11);
+            pdf.setTextColor(...VALUE_COL);
+            let titleText = docTitle;
+            while (titleText.length > 1 && pdf.getTextWidth(titleText) > 90) {
+                titleText = titleText.slice(0, -1);
+            }
+            if (titleText !== docTitle) titleText += "…";
+            pdf.text(titleText, PAGE_W - MARGIN, 13, { align: "right" });
+
+            // Date
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(8);
+            pdf.setTextColor(...LABEL_COL);
+            const dateStr = new Date().toLocaleDateString("en-AU", {
+                day: "numeric", month: "long", year: "numeric",
+            });
+            pdf.text(dateStr, PAGE_W - MARGIN, 19, { align: "right" });
+
+            // Note style label
+            pdf.setFontSize(7);
+            pdf.text(NOTE_STYLE_LABELS[noteStyle].toUpperCase(), PAGE_W - MARGIN, 24.5, { align: "right" });
+
+            // Header divider
+            pdf.setDrawColor(...BORDER_COL);
+            pdf.setLineWidth(0.3);
+            pdf.line(0, 34, PAGE_W, 34);
+
+            y = 42;
+
+            // ── CONTENT ───────────────────────────────────────────────────────
+            for (const line of notesMarkdown.split("\n")) {
+
+                // H1 — large bold with left accent bar
+                if (line.startsWith("# ")) {
+                    const text = stripBold(line.slice(2));
+                    const wrapped = splitLines(text, CONTENT_W - 6);
+                    pdf.setFont("helvetica", "bold");
+                    pdf.setFontSize(13);
+                    pdf.setTextColor(...VALUE_COL);
+                    for (const textLine of wrapped) {
+                        ensureSpace(10);
+                        pdf.setFillColor(...BRAND_BLUE);
+                        pdf.rect(MARGIN, y - 4.5, 2.5, 7, "F");
+                        pdf.text(textLine, MARGIN + 5.5, y);
+                        y += 6;
+                    }
+                    y += 4;
+                    continue;
+                }
+
+                // H2 — medium bold, brand blue, underline
+                if (line.startsWith("## ")) {
+                    const text = stripBold(line.slice(3));
+                    const wrapped = splitLines(text, CONTENT_W);
+                    ensureSpace(7);
+                    y += 2;
+                    pdf.setFont("helvetica", "bold");
+                    pdf.setFontSize(10);
+                    pdf.setTextColor(...H2_COL);
+                    drawPlainLines(wrapped, MARGIN, 5);
+                    y += 2;
+                    ensureSpace(3);
+                    pdf.setDrawColor(...BORDER_COL);
+                    pdf.setLineWidth(0.2);
+                    pdf.line(MARGIN, y, MARGIN + CONTENT_W, y);
+                    y += 3;
+                    continue;
+                }
+
+                // H3 — small bold, slate
+                if (line.startsWith("### ")) {
+                    const text = stripBold(line.slice(4));
+                    const wrapped = splitLines(text, CONTENT_W);
+                    ensureSpace(5.5);
+                    y += 1;
+                    pdf.setFont("helvetica", "bold");
+                    pdf.setFontSize(9);
+                    pdf.setTextColor(...H3_COL);
+                    drawPlainLines(wrapped, MARGIN, 4.5);
+                    y += 2;
+                    continue;
+                }
+
+                // Bullet — blue dot + text with inline bold support
+                if (line.startsWith("- ") || line.startsWith("* ")) {
+                    const text = line.slice(2);
+                    const stripped = stripBold(text);
+                    const hasBold = text.includes("**");
+                    pdf.setFontSize(8.5);
+                    const wrapped = splitLines(stripped, CONTENT_W - 6);
+                    pdf.setTextColor(...BODY_COL);
+                    if (hasBold && wrapped.length === 1) {
+                        ensureSpace(4.5);
+                        pdf.setFillColor(...BRAND_BLUE);
+                        pdf.circle(MARGIN + 1.5, y - 1, 0.75, "F");
+                        printMixedLine(text, MARGIN + 4.5, y, 8.5);
+                        y += 4.5;
+                    } else {
+                        pdf.setFont("helvetica", "normal");
+                        wrapped.forEach((textLine: string, idx: number) => {
+                            ensureSpace(4.5);
+                            if (idx === 0) {
+                                pdf.setFillColor(...BRAND_BLUE);
+                                pdf.circle(MARGIN + 1.5, y - 1, 0.75, "F");
+                            }
+                            pdf.text(textLine, MARGIN + 4.5, y);
+                            y += 4.5;
+                        });
+                    }
+                    y += 0.5;
+                    continue;
+                }
+
+                // Numbered list
+                const numMatch = /^(\d+)\.\s/.exec(line);
+                if (numMatch) {
+                    const text = line.slice(numMatch[0].length);
+                    const stripped = stripBold(text);
+                    const hasBold = text.includes("**");
+                    pdf.setFontSize(8.5);
+                    const wrapped = splitLines(stripped, CONTENT_W - 8);
+                    pdf.setFont("helvetica", "bold");
+                    pdf.setFontSize(8.5);
+                    if (hasBold && wrapped.length === 1) {
+                        ensureSpace(4.5);
+                        pdf.setTextColor(...BRAND_BLUE);
+                        pdf.text(`${numMatch[1]}.`, MARGIN, y);
+                        pdf.setTextColor(...BODY_COL);
+                        printMixedLine(text, MARGIN + 7, y, 8.5);
+                        y += 4.5;
+                    } else {
+                        wrapped.forEach((textLine: string, idx: number) => {
+                            ensureSpace(4.5);
+                            if (idx === 0) {
+                                pdf.setFont("helvetica", "bold");
+                                pdf.setTextColor(...BRAND_BLUE);
+                                pdf.text(`${numMatch[1]}.`, MARGIN, y);
+                            }
+                            pdf.setFont("helvetica", "normal");
+                            pdf.setTextColor(...BODY_COL);
+                            pdf.text(textLine, MARGIN + 7, y);
+                            y += 4.5;
+                        });
+                    }
+                    y += 0.5;
+                    continue;
+                }
+
+                // Horizontal rule
+                if (line.trim() === "---" || line.trim() === "***") {
+                    ensureSpace(6);
+                    y += 2;
+                    pdf.setDrawColor(...BORDER_COL);
+                    pdf.setLineWidth(0.2);
+                    pdf.line(MARGIN, y, MARGIN + CONTENT_W, y);
+                    y += 4;
+                    continue;
+                }
+
+                // Empty line
+                if (line.trim() === "") {
+                    ensureSpace(3);
+                    y += 3;
+                    continue;
+                }
+
+                // Normal paragraph — inline bold for single-line, stripped for wrapped
+                const stripped = stripBold(line);
+                const hasBold = line.includes("**");
+                pdf.setFontSize(8.5);
+                const wrapped = splitLines(stripped, CONTENT_W);
+                pdf.setTextColor(...BODY_COL);
+                if (hasBold && wrapped.length === 1) {
+                    ensureSpace(4.5);
+                    printMixedLine(line, MARGIN, y, 8.5);
+                    y += 4.5;
+                } else {
+                    pdf.setFont("helvetica", "normal");
+                    drawPlainLines(wrapped, MARGIN, 4.5);
+                }
+                y += 1;
+            }
+
+            // ── FOOTER ────────────────────────────────────────────────────────
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            const totalPages: number = (pdf as any).internal.getNumberOfPages();
+            for (let p = 1; p <= totalPages; p++) {
+                pdf.setPage(p);
+                pdf.setDrawColor(...BORDER_COL);
+                pdf.setLineWidth(0.2);
+                pdf.line(MARGIN, PAGE_H - 10, PAGE_W - MARGIN, PAGE_H - 10);
+                pdf.setFont("helvetica", "normal");
+                pdf.setFontSize(7);
+                pdf.setTextColor(...LABEL_COL);
+                pdf.text("Generated by Formify · formify-webapp.vercel.app", MARGIN, PAGE_H - 6);
+                pdf.text(`Page ${p} of ${totalPages}`, PAGE_W - MARGIN, PAGE_H - 6, { align: "right" });
+            }
+
+            // ── Save ──────────────────────────────────────────────────────────
+            const slug = (sessionTitle.trim() || "notes").replace(/[^a-z0-9]/gi, "_");
+            pdf.save(`${slug}_${new Date().toISOString().split("T")[0]}.pdf`);
+
+        } catch (error) {
+            console.error("PDF generation error:", error);
+            alert("Failed to generate PDF. Please try again.");
+        } finally {
+            setIsGeneratingPDF(false);
+        }
+    };
+
+    // ── Copy ─────────────────────────────────────────────────────────────────
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(notesMarkdown);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-    };
-
-    const handleDownload = () => {
-        const title = sessionTitle.trim() || "notes";
-        const filename = `${title.replace(/[^a-z0-9]/gi, "_")}_${new Date().toISOString().split("T")[0]}.md`;
-        const blob = new Blob([notesMarkdown], { type: "text/markdown" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
     };
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -449,27 +761,71 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
             {/* ── Sub-header ── */}
             <div className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2.5">
+                <div className="flex min-w-0 items-center gap-2.5">
                     <NotebookPen className="w-4 h-4 text-[#2149A1]" />
                     <span className="text-sm font-semibold text-slate-900">Voice Notes</span>
                     <span className="text-xs text-[#868C94]">—</span>
-                    <span className="text-xs text-[#868C94]">Audio is transcribed and converted to structured notes</span>
+                    <span className="hidden text-xs text-[#868C94] sm:inline">Audio is transcribed and converted to structured notes</span>
                 </div>
 
-                {/* WS status pill */}
-                <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border flex-shrink-0 transition-colors ${isConnected
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : (wsStatus === "connecting" || wsStatus === "reconnecting")
-                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                        : "bg-red-50 text-red-600 border-red-200"
-                    }`}>
-                    {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-                    {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
+                <div className="flex flex-shrink-0 items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setSidebarOpen(true)}
+                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 md:hidden"
+                    >
+                        <BookMarked className="h-3.5 w-3.5" />
+                        Templates
+                    </button>
+
+                    {/* WS status pill */}
+                    <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${isConnected
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : (wsStatus === "connecting" || wsStatus === "reconnecting")
+                            ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                            : "bg-red-50 text-red-600 border-red-200"
+                        }`}>
+                        {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                        {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
+                    </div>
                 </div>
             </div>
 
-            {/* ── Main content ── */}
-            <div className="flex-1 container mx-auto px-4 py-6 max-w-3xl flex flex-col gap-5">
+            {sidebarOpen && (
+                <div className="fixed inset-0 z-50 md:hidden">
+                    <button
+                        type="button"
+                        aria-label="Close templates"
+                        className="absolute inset-0 bg-black/30"
+                        onClick={() => setSidebarOpen(false)}
+                    />
+                    <div className="relative h-full w-72 shadow-xl">
+                        <NoteTemplateSidebar
+                            currentTitle={sessionTitle}
+                            currentNoteStyle={noteStyle}
+                            currentSectionsRaw={sectionsRaw}
+                            canSelect={canSelectTemplate}
+                            onSelect={handleTemplateSelect}
+                            onClose={() => setSidebarOpen(false)}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* ── Main layout ── */}
+            <div className="flex min-h-0 flex-1">
+                <aside className="hidden w-64 flex-shrink-0 border-r border-slate-200 md:flex">
+                    <NoteTemplateSidebar
+                        currentTitle={sessionTitle}
+                        currentNoteStyle={noteStyle}
+                        currentSectionsRaw={sectionsRaw}
+                        canSelect={canSelectTemplate}
+                        onSelect={handleTemplateSelect}
+                    />
+                </aside>
+
+                <main className="min-w-0 flex-1 overflow-auto">
+                    <div className="container mx-auto flex max-w-3xl flex-col gap-5 px-4 py-6">
 
                 {/* Error banner */}
                 {errorMessage && (
@@ -639,11 +995,14 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                         }
                                     </button>
                                     <button
-                                        onClick={handleDownload}
-                                        className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] px-2.5 py-1.5 rounded-lg hover:bg-[#e8eef9] transition-colors"
+                                        onClick={handleSavePDF}
+                                        disabled={isGeneratingPDF}
+                                        className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] px-2.5 py-1.5 rounded-lg hover:bg-[#e8eef9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <Download className="w-3.5 h-3.5" />
-                                        Download .md
+                                        {isGeneratingPDF
+                                            ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…</>
+                                            : <><Download className="w-3.5 h-3.5" /> Download PDF</>
+                                        }
                                     </button>
                                 </div>
                             )}
@@ -683,6 +1042,8 @@ export default function NotesClient({ user: _user }: { user: User }) {
                         </p>
                     </div>
                 )}
+                    </div>
+                </main>
             </div>
         </div>
     );
