@@ -172,7 +172,9 @@ export default function TranscriptionClient({ user }: { user: User }) {
         const empty: Record<string, string> = {};
         allFields.forEach((f) => { empty[f] = ""; });
         setAttributes(empty);
-        setLockedFields(new Set());
+        const emptyLocked = new Set<string>();
+        lockedFieldsRef.current = emptyLocked;
+        setLockedFields(emptyLocked);
         blocksReadyRef.current = false;
         setBlocksReady(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -332,11 +334,11 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
     // ── Auto-send blocks once connected AND template is ready ────────────────
 
-    const sendBlocks = useCallback((token: string) => {
+    const sendBlocks = useCallback((token: string): boolean => {
         const ws = wsRef.current;
-        if (ws?.readyState !== WebSocket.OPEN) return;
+        if (ws?.readyState !== WebSocket.OPEN) return false;
         const parsed = parseBlocks(templateRaw);
-        if (Object.keys(parsed).length === 0) return;
+        if (Object.keys(parsed).length === 0) return false;
 
         // Filter out locked field keys — do not ask the server to fill user-corrected fields.
         // Values are never included in this payload; only field keys are sent.
@@ -348,9 +350,10 @@ export default function TranscriptionClient({ user }: { user: User }) {
         }
 
         // If every field in the template is locked, there is nothing for the server to fill.
-        if (Object.keys(filtered).length === 0) return;
+        if (Object.keys(filtered).length === 0) return false;
 
         ws.send(JSON.stringify({ action: "start", mode: "forms", blocks: filtered, token }));
+        return true;
     }, [templateRaw]);
 
     // Note: sendBlocks is no longer called automatically on connect.
@@ -364,6 +367,19 @@ export default function TranscriptionClient({ user }: { user: User }) {
         setMicError(null);
         const ws = wsRef.current;
         if (ws?.readyState !== WebSocket.OPEN) return;
+
+        // ── Pre-mint check: bail early if every field is already locked ────
+        // Avoids minting a token, opening the mic, or entering recording state
+        // when there are no unlocked fields for the server to fill.
+        const parsed = parseBlocks(templateRaw);
+        const locked = lockedFieldsRef.current;
+        const hasUnlocked = Object.values(parsed).some((fields) =>
+            fields.some((f) => !locked.has(f))
+        );
+        if (!hasUnlocked) {
+            setMicError("All fields are locked. Unlock a field to continue AI filling.");
+            return;
+        }
 
         // ── Mint session token (enforces auth + usage limits server-side) ──
         // This is the single enforcement point. If the server returns FORBIDDEN,
@@ -382,10 +398,15 @@ export default function TranscriptionClient({ user }: { user: User }) {
         }
 
         // ── Send start payload with token ──────────────────────────────────
-        // Reset and send blocks now that we have a valid token
+        // Reset and send blocks now that we have a valid token.
+        // sendBlocks returns false only if all fields became locked between the
+        // pre-mint check above and now (an unexpected race). Abort cleanly.
         blocksReadyRef.current = false;
         setBlocksReady(false);
-        sendBlocks(token);
+        if (!sendBlocks(token)) {
+            setMicError("All fields are locked. Unlock a field to continue AI filling.");
+            return;
+        }
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -414,7 +435,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     : `Could not start recording: ${msg}`
             );
         }
-    }, [getSessionToken, sendBlocks, utils]);
+    }, [getSessionToken, sendBlocks, templateRaw, utils]);
 
     // ── Pause ─────────────────────────────────────────────────────────────────
 
@@ -440,6 +461,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
             if (prev.has(field)) return prev; // already locked — avoid creating a new Set
             const next = new Set(prev);
             next.add(field);
+            lockedFieldsRef.current = next;
             return next;
         });
     }, []);
@@ -450,6 +472,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
             if (!prev.has(field)) return prev;
             const next = new Set(prev);
             next.delete(field);
+            lockedFieldsRef.current = next;
             return next;
         });
     }, []);
@@ -470,7 +493,9 @@ export default function TranscriptionClient({ user }: { user: User }) {
         const empty: Record<string, string> = {};
         allFields.forEach((f) => { empty[f] = ""; });
         setAttributes(empty);
-        setLockedFields(new Set());
+        const emptyLocked = new Set<string>();
+        lockedFieldsRef.current = emptyLocked;
+        setLockedFields(emptyLocked);
         // Setting blocksReadyRef to false is enough — the useEffect watching
         // wsStatus + blocksReady will fire and call sendBlocks() once.
         blocksReadyRef.current = false;
