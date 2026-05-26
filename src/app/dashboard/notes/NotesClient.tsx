@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Mic, Square, Wifi, WifiOff, RotateCcw, Loader2,
     NotebookPen, Copy, Check, Download, AlertCircle,
-    BookMarked,
+    BookMarked, PanelLeftOpen,
 } from "lucide-react";
 import { env } from "@/env";
 import { api } from "@/trpc/react";
@@ -177,6 +177,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const [copied, setCopied] = useState(false);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const notesEndRef = useRef<HTMLDivElement>(null);
 
     const isConnected = wsStatus === "connected";
@@ -759,38 +760,6 @@ export default function NotesClient({ user: _user }: { user: User }) {
     return (
         <div className="flex flex-col min-h-0 flex-1">
 
-            {/* ── Sub-header ── */}
-            <div className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex items-center justify-between gap-4">
-                <div className="flex min-w-0 items-center gap-2.5">
-                    <NotebookPen className="w-4 h-4 text-[#2149A1]" />
-                    <span className="text-sm font-semibold text-slate-900">Voice Notes</span>
-                    <span className="text-xs text-[#868C94]">—</span>
-                    <span className="hidden text-xs text-[#868C94] sm:inline">Audio is transcribed and converted to structured notes</span>
-                </div>
-
-                <div className="flex flex-shrink-0 items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={() => setSidebarOpen(true)}
-                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 md:hidden"
-                    >
-                        <BookMarked className="h-3.5 w-3.5" />
-                        Templates
-                    </button>
-
-                    {/* WS status pill */}
-                    <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${isConnected
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : (wsStatus === "connecting" || wsStatus === "reconnecting")
-                            ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                            : "bg-red-50 text-red-600 border-red-200"
-                        }`}>
-                        {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-                        {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
-                    </div>
-                </div>
-            </div>
-
             {sidebarOpen && (
                 <div className="fixed inset-0 z-50 md:hidden">
                     <button
@@ -814,18 +783,56 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
             {/* ── Main layout ── */}
             <div className="flex min-h-0 flex-1">
-                <aside className="hidden w-64 flex-shrink-0 border-r border-slate-200 md:flex">
-                    <NoteTemplateSidebar
-                        currentTitle={sessionTitle}
-                        currentNoteStyle={noteStyle}
-                        currentSectionsRaw={sectionsRaw}
-                        canSelect={canSelectTemplate}
-                        onSelect={handleTemplateSelect}
-                    />
-                </aside>
+                {!isSidebarCollapsed && (
+                    <aside className="hidden w-72 flex-none overflow-hidden border-r border-slate-200 md:flex">
+                        <NoteTemplateSidebar
+                            currentTitle={sessionTitle}
+                            currentNoteStyle={noteStyle}
+                            currentSectionsRaw={sectionsRaw}
+                            canSelect={canSelectTemplate}
+                            onSelect={handleTemplateSelect}
+                            onToggleSidebar={() => setIsSidebarCollapsed(true)}
+                        />
+                    </aside>
+                )}
 
                 <main className="min-w-0 flex-1 overflow-auto">
                     <div className="container mx-auto flex max-w-3xl flex-col gap-5 px-4 py-6">
+
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-2">
+                                {isSidebarCollapsed && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsSidebarCollapsed(false)}
+                                        className="hidden rounded-lg border border-slate-200 p-1.5 text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#2149A1] md:inline-flex"
+                                        aria-label="Show templates sidebar"
+                                        title="Show templates sidebar"
+                                    >
+                                        <PanelLeftOpen className="h-4 w-4" />
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setSidebarOpen(true)}
+                                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 md:hidden"
+                                >
+                                    <BookMarked className="h-3.5 w-3.5" />
+                                    Templates
+                                </button>
+                            </div>
+
+                            {/* WS status pill */}
+                            <div className={`flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${isConnected
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : (wsStatus === "connecting" || wsStatus === "reconnecting")
+                                    ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+                                    : "border-red-200 bg-red-50 text-red-600"
+                                }`}>
+                                {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                                {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
+                            </div>
+                        </div>
 
                 {/* Error banner */}
                 {errorMessage && (
