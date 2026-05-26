@@ -45,3 +45,9 @@ Client recording/WebSocket paths should not log tokens, transcript text, notes m
 ## D-011 Note Templates Use Sidebar/Drawer Placement
 
 Notes templates are shown as a persistent left sidebar on desktop and a slide-in drawer from the sub-header on mobile. This keeps the main notes form unchanged, follows the dashboard mobile drawer pattern, and avoids new layout dependencies.
+
+## D-012 Notes AI Transforms Use ws-transcription HTTP Endpoints
+
+Notes Summarise/Reorganise are post-processing AI transforms, not live audio streaming. `ws-transcription` should own authenticated HTTP transform endpoints because it already owns OpenAI/Whisper/GPT provider and prompt logic. `formify-web` should call those endpoints from protected tRPC mutations and remain the UI/auth/orchestration layer.
+
+These tickets should not save generated notes to the database, send audio, or change the live browser WebSocket transcription protocol.

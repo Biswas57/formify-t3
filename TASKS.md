@@ -11,103 +11,19 @@
 | T-105 Audit/remove T3 starter leftovers | Completed | `postRouter` and `LatestPost` starter component were removed; no `api.post` references remain. |
 | T-106 Review email export HTML trust boundary | Completed | Added a security TODO at `/api/email` where client-rendered `formHTML` is accepted. |
 | T-112 Verify web app ↔ transcription server WebSocket contract | Completed | Verified forms/notes token modes, start payloads, stop payloads, binary WebM/Opus audio sending, handled inbound messages, no `corrected_audio` dependency, PII-safe recording logs, and useful missing/invalid token feedback. No mismatches found. |
-| T-113 Protect manually corrected form fields | Completed | See summary below. |
-| T-116 Notes PDF export | Completed | See summary below. |
-| T-114 Note templates: DB model + tRPC router | Completed | See summary below. |
-| T-115 Note templates: sidebar UI in NotesClient | Completed | See summary below. |
+| T-113 Protect manually corrected form fields | Completed | Manual lock/unlock styling and all-fields-locked blocking passed; mic-dependent overwrite/semantic checks remain deferred. |
+| T-116 Notes PDF export | Completed | PDF export could not be smoke-tested without generated notes; follow-up T-120 tracks remaining PDF formatting polish. |
+| T-114 Note templates: DB model + tRPC router | Completed | Create/list/delete and 10-template limit passed through the sidebar API path; ownership boundary remains deferred. |
+| T-115 Note templates: sidebar UI in NotesClient | Completed | Desktop sidebar and mobile drawer save/select/delete flows passed; active-recording template actions remain deferred. |
+| T-118 Fix notes template sidebar overflow/clutter | Completed | Removed duplicate notes sub-header text, added desktop sidebar show/hide control, and constrained template rows so long titles/sections truncate without widening the sidebar. |
+| T-119 Polish notes template sidebar truncation and toggle placement | Completed | Moved desktop hide toggle into the sidebar header, kept a lightweight collapsed reopen control, and made row actions hover/focus revealed so titles/sections use more width by default. |
+| T-132 Fix note template inline rename commit | Completed | Rename now commits directly on Enter and on blur, skips unchanged/blank titles without submitting, preserves typed value on failure, and refetches the template list after success. |
+| T-129 Design notes AI transform integration | Completed | Decision recorded in D-012: use authenticated HTTP transform endpoints in `ws-transcription`, called by protected `formify-web` tRPC mutations. |
+| T-117 Manual smoke test T-113/T-114/T-115/T-116 | Completed | Feasible smoke tests passed for form-field locking, all-fields-locked blocking, note template create/list/delete/limit, desktop sidebar, and mobile drawer. Rename issue tracked as T-132; PDF export, mic-dependent recording checks, ownership boundary, and active-recording template actions remain deferred/blocked. |
 
 ## Active
 
-None.
-
-### T-113 Summary
-
-- **Repo:** `formify-web`
-- **File:** `src/app/transcription/TranscriptionClient.tsx`
-- **Risk:** Low
-- **WS contract change:** None — field key filtering is client-side only; the server already handles any subset of blocks/fields.
-
-**What was done:**
-- Removed global `isEditing` / `editedValues` / `handleSave` / global Edit+Save buttons / "Edits are local only" disclaimer
-- Added `lockedFields: Set<string>` state + `lockedFieldsRef` (ref mirror for WS closure)
-- `handleFieldChange(field, value)`: updates `attributes` directly and locks the field on first keystroke
-- `unlockField(field)`: removes field from `lockedFields` so AI can fill it again
-- `attributes_update` and `final_attributes` handlers: skip any key in `lockedFieldsRef.current`
-- `sendBlocks`: filters locked keys from each block's field array before sending; skips empty blocks; skips send entirely if all fields are locked. **Field values are never sent.**
-- Locked fields render with amber border + small amber lock icon (click to unlock)
-- `handleReset` and template-change effect both call `setLockedFields(new Set())`
-
-**Validation:**
-- `npm run typecheck`, `npm run lint`, and `npm run build` passed. Lint/build still report the pre-existing unused eslint-disable warning in `src/server/auth/config.ts`.
-- Browser smoke reached `/dashboard/notes` but redirected to `/login`; authenticated manual UI smoke still needed.
-
-### T-116 Summary
-
-- **Repo:** `formify-web`
-- **File:** `src/app/dashboard/notes/NotesClient.tsx`
-- **Risk:** Low
-- **New dependency:** None — uses dynamic `import("jspdf")` already present in the project
-
-**What was done:**
-- Removed `handleDownload` (`.md` blob export)
-- Added `isGeneratingPDF` boolean state for loading feedback on the button
-- Added `handleSavePDF`: fully client-side, branded Formify header (matching forms PDF), walks `notesMarkdown` line-by-line handling H1/H2/H3, bullets, numbered lists, horizontal rules, paragraphs. Inline bold segments rendered via `printMixedLine` helper (single-line) with graceful fallback to stripped text for wrapped lines. Note content never sent to server, never logged.
-- Replaced "Download .md" button with "Download PDF" (shows "Generating…" spinner while building)
-- `handleCopy` retained unchanged
-
-### T-114 Summary
-
-- **Repo:** `formify-web`
-- **Files:**
-  - `prisma/schema.prisma` — new `NoteTemplate` model + `noteTemplates` relation on `User`
-  - `src/server/entitlements/features.ts` — added `FREE_NOTE_TEMPLATES: 10` to `PLAN_LIMITS`
-  - `src/server/api/routers/noteTemplate.ts` — new router (list, create, rename, update, delete)
-  - `src/server/api/root.ts` — mounted `noteTemplate: noteTemplateRouter`
-  - `DECISIONS.md` — D-009 (schema string choices), D-010 (10-template cap)
-- **Risk:** Medium — involves Prisma schema change and migration
-- **WS contract change:** None
-- **New dependency:** None
-
-**What was done:**
-- Added `NoteTemplate` model: `id`, `ownerId`, `title`, `noteStyle` (String), `sections` (String), timestamps, `@@index([ownerId])`, `onDelete: Cascade` owner relation.
-- `noteStyle` stored as plain String validated by Zod at the API boundary (not a DB enum). See D-009.
-- `sections` stored as raw comma-separated String matching `sectionsRaw` in NotesClient. See D-009.
-- Added `noteTemplates NoteTemplate[]` relation to `User`.
-- Added `FREE_NOTE_TEMPLATES: 10` to `PLAN_LIMITS`. All users share cap initially. See D-010.
-- `noteTemplateRouter`: `list` (owned, newest first), `create` (limit-enforced), `rename` (title-only, ownership-checked), `update` (full config, ownership-checked), `delete` (ownership-checked `deleteMany`).
-- Mounted as `noteTemplate` in `appRouter`.
-
-**Migration command:**
-```
-npx prisma migrate dev --name add_note_template
-```
-
-**Review validation:**
-- Added the missing title-only `rename` procedure while keeping `update` for full config edits.
-- Removed unrelated `UserPlan.status` default drift from the generated migration.
-- `npm run typecheck`, `npm run lint`, and `npm run build` passed. Lint/build still report the pre-existing unused eslint-disable warning in `src/server/auth/config.ts`.
-
-### T-115 Summary
-
-- **Repo:** `formify-web`
-- **Files:**
-  - `src/app/dashboard/notes/NoteTemplateSidebar.tsx` — new reusable notes template sidebar/drawer content
-  - `src/app/dashboard/notes/NotesClient.tsx` — desktop sidebar, mobile drawer toggle, template selection wiring
-  - `DECISIONS.md` — D-011 sidebar/drawer placement
-- **Risk:** Low — UI-only wiring against the T-114 tRPC router
-- **WS contract change:** None
-- **New dependency:** None
-
-**What was done:**
-- Added list, save-as, rename, inline-confirm delete, loading, empty, and limit-error UI for note templates.
-- Desktop renders a persistent `w-64` left sidebar; mobile renders a drawer opened from the notes sub-header.
-- Selecting a template loads `sessionTitle`, `noteStyle`, and `sectionsRaw` while idle.
-- Create/rename trim titles and do not submit empty titles.
-- Template actions are disabled for selection/save while recording is not idle.
-
-**Validation:**
-- `npm run typecheck`, `npm run lint`, and `npm run build` passed. Lint/build still report the pre-existing unused eslint-disable warning in `src/server/auth/config.ts`.
-- Manual smoke tests intentionally not run in this pass.
+_None._
 
 ## Backlog
 
@@ -118,3 +34,14 @@ npx prisma migrate dev --name add_note_template
 | T-109 Harden email HTML handling | Backlog | Escape or sanitize `formHTML` before accepting untrusted/richer HTML sources. |
 | T-110 Review server-side logging for PII | Backlog | Stripe/tRPC/password-reset/email operational logs remain; audit before production hardening. |
 | T-111 Avoid Google Fonts build network dependency | Backlog | `next/font` can fail in restricted networks; consider self-hosted/local font strategy. |
+| T-120 Review and polish PDF export formatting | Backlog | P1, medium risk, PDF/export. Inspect and improve form + notes PDF branding, title/date/style, pagination, wrapped text, blank lines, footers, and page numbers. |
+| T-121 Add editable generated notes | Backlog | P2, medium risk, UI/state. Allow generated notes editing without form-field-style locking; needs UX decision on persistence/export behavior. |
+| T-122 Investigate/remove paywall | Backlog | P1, high risk, billing-related. Requires product decision and Stripe/payment audit before implementation. |
+| T-123 Support table-style form fields | Backlog | P3, high risk, likely UI/API/DB/export. Needs product/design spec before implementation. |
+| T-124 Stripe/payment audit | Backlog | P1, medium risk, billing-related. Audit current Stripe/paywall/entitlement paths before removing or changing paywall behavior. |
+| T-125 Add notes Markdown download alongside PDF | Backlog | P2, low risk, notes export UI. Notes should be downloadable as both PDF and `.md`; applies to notes only, not form exports. |
+| T-126 Notes local autosave and recovery | Backlog | P3, medium risk, frontend-only. Autosave visible generated notes locally with restore/discard UX; no audio, DB history, or WS changes. Lower priority for now. |
+| T-127 Summarise current generated notes | Backlog | P1, medium-high risk, depends on T-130. `formify-web` adds a protected tRPC mutation and UI button that send current `notesMarkdown` only; no audio, DB save, or live WS protocol change. |
+| T-128 Reorganise current notes into new sections | Backlog | P1/P2, high risk, depends on T-130. `formify-web` adds a protected tRPC mutation and UI flow that send current `notesMarkdown` plus target sections; no audio, DB save, or live WS protocol change. |
+| T-130 Add HTTP notes transform endpoints to ws-transcription | Backlog | P0, medium-high risk, `ws-transcription`. Add server-to-server authenticated summarise/reorganise endpoints that reuse existing GPT helper style, validate input length, return Markdown, and do not log notes content. |
+| T-131 Polish TranscriptionClient field locking UI | Backlog | P2, low risk, UI-only. Make locked/edited field state neater after T-113 behavior is smoke-tested. Formerly tracked as T-119 before the notes-sidebar follow-up reused that ID. |
