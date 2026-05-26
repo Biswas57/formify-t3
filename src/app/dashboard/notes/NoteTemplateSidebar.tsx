@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
-    BookMarked, Check, Loader2, Pencil, Plus, Trash2, X,
+    BookMarked, Check, Loader2, PanelLeftClose, Pencil, Plus, Trash2, X,
 } from "lucide-react";
 import { api } from "@/trpc/react";
 
@@ -21,6 +21,7 @@ interface NoteTemplateSidebarProps {
     currentSectionsRaw: string;
     canSelect: boolean;
     onSelect: (title: string, noteStyle: NoteStyle, sections: string) => void;
+    onToggleSidebar?: () => void;
     onClose?: () => void;
 }
 
@@ -44,6 +45,7 @@ export default function NoteTemplateSidebar({
     currentSectionsRaw,
     canSelect,
     onSelect,
+    onToggleSidebar,
     onClose,
 }: NoteTemplateSidebarProps) {
     const utils = api.useUtils();
@@ -53,8 +55,12 @@ export default function NoteTemplateSidebar({
     const [actionError, setActionError] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingTitle, setEditingTitle] = useState("");
+    const [editingOriginalTitle, setEditingOriginalTitle] = useState("");
+    const [renameError, setRenameError] = useState<string | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const skipNextRenameBlurRef = useRef(false);
+    const renameCommitInFlightRef = useRef(false);
 
     const { data: templates = [], isLoading } = api.noteTemplate.list.useQuery(undefined, {
         staleTime: 30 * 1000,
@@ -96,28 +102,53 @@ export default function NoteTemplateSidebar({
     };
 
     const startRename = (template: NoteTemplateSummary) => {
+        skipNextRenameBlurRef.current = false;
         setConfirmDeleteId(null);
+        setActionError(null);
+        setRenameError(null);
         setEditingId(template.id);
         setEditingTitle(template.title);
+        setEditingOriginalTitle(template.title);
     };
 
-    const commitRename = async () => {
+    const cancelRename = () => {
+        skipNextRenameBlurRef.current = true;
+        setEditingId(null);
+        setEditingTitle("");
+        setEditingOriginalTitle("");
+        setRenameError(null);
+    };
+
+    const commitRename = async (rawTitle = editingTitle) => {
         if (!editingId) return;
-        const title = editingTitle.trim();
+        if (renameCommitInFlightRef.current) return;
+
+        const id = editingId;
+        const title = rawTitle.trim();
         if (!title) {
-            setEditingId(null);
-            setEditingTitle("");
+            cancelRename();
             return;
         }
 
+        if (title === editingOriginalTitle.trim()) {
+            cancelRename();
+            return;
+        }
+
+        renameCommitInFlightRef.current = true;
         setActionError(null);
+        setRenameError(null);
         try {
-            await renameMutation.mutateAsync({ id: editingId, title });
+            await renameMutation.mutateAsync({ id, title });
             await utils.noteTemplate.list.invalidate();
+            skipNextRenameBlurRef.current = true;
             setEditingId(null);
             setEditingTitle("");
+            setEditingOriginalTitle("");
         } catch (error) {
-            setActionError(error instanceof Error ? error.message : "Could not rename template.");
+            setRenameError(error instanceof Error ? error.message : "Could not rename template.");
+        } finally {
+            renameCommitInFlightRef.current = false;
         }
     };
 
@@ -136,19 +167,19 @@ export default function NoteTemplateSidebar({
     };
 
     return (
-        <div className="flex h-full min-h-0 flex-col bg-white">
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-white">
             <div className="border-b border-slate-200 px-4 py-3">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center justify-between gap-2">
                     <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                            <BookMarked className="h-4 w-4 text-[#2149A1]" />
-                            <span className="text-sm font-semibold text-slate-900">Templates</span>
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <BookMarked className="h-4 w-4 flex-shrink-0 text-[#2149A1]" />
+                            <span className="truncate text-sm font-semibold text-slate-900">Templates</span>
+                            <span className="flex-shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500">
                                 {templates.length}/{NOTE_TEMPLATE_LIMIT}
                             </span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-shrink-0 items-center gap-1">
                         <button
                             type="button"
                             onClick={openSaveForm}
@@ -158,6 +189,17 @@ export default function NoteTemplateSidebar({
                             <Plus className="h-3.5 w-3.5" />
                             Save
                         </button>
+                        {onToggleSidebar && (
+                            <button
+                                type="button"
+                                onClick={onToggleSidebar}
+                                className="hidden rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#2149A1] md:inline-flex"
+                                aria-label="Hide templates sidebar"
+                                title="Hide templates sidebar"
+                            >
+                                <PanelLeftClose className="h-4 w-4" />
+                            </button>
+                        )}
                         {onClose && (
                             <button
                                 type="button"
@@ -207,7 +249,7 @@ export default function NoteTemplateSidebar({
                 )}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-3">
                 {actionError && (
                     <p className="mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
                         {actionError}
@@ -236,29 +278,39 @@ export default function NoteTemplateSidebar({
                             return (
                                 <div
                                     key={template.id}
-                                    className="group rounded-lg border border-transparent px-2 py-2 transition-colors hover:border-slate-200 hover:bg-slate-50"
+                                    className="group relative min-w-0 rounded-lg border border-transparent px-2 py-2 transition-colors hover:border-slate-200 hover:bg-slate-50 focus-within:border-slate-200 focus-within:bg-slate-50"
                                 >
                                     {isEditing ? (
-                                        <input
-                                            autoFocus
-                                            type="text"
-                                            value={editingTitle}
-                                            onChange={(e) => setEditingTitle(e.target.value)}
-                                            onBlur={() => void commitRename()}
-                                            onKeyDown={(e) => {
-                                                if (e.key === "Enter") {
-                                                    e.preventDefault();
-                                                    e.currentTarget.blur();
-                                                }
-                                                if (e.key === "Escape") {
-                                                    setEditingId(null);
-                                                    setEditingTitle("");
-                                                }
-                                            }}
-                                            className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20"
-                                        />
+                                        <div className="space-y-1">
+                                            <input
+                                                autoFocus
+                                                type="text"
+                                                value={editingTitle}
+                                                onChange={(e) => setEditingTitle(e.target.value)}
+                                                onBlur={(e) => {
+                                                    if (skipNextRenameBlurRef.current) {
+                                                        skipNextRenameBlurRef.current = false;
+                                                        return;
+                                                    }
+                                                    void commitRename(e.currentTarget.value);
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        e.preventDefault();
+                                                        void commitRename(e.currentTarget.value);
+                                                    }
+                                                    if (e.key === "Escape") {
+                                                        e.preventDefault();
+                                                        cancelRename();
+                                                    }
+                                                }}
+                                                disabled={renameMutation.isPending}
+                                                className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 disabled:bg-slate-50 disabled:text-slate-400"
+                                            />
+                                            {renameError && <p className="text-xs text-red-600">{renameError}</p>}
+                                        </div>
                                     ) : (
-                                        <div className="flex items-start gap-2">
+                                        <div className="relative min-w-0">
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -267,15 +319,18 @@ export default function NoteTemplateSidebar({
                                                     onClose?.();
                                                 }}
                                                 disabled={!canSelect}
-                                                className="min-w-0 flex-1 text-left disabled:cursor-not-allowed disabled:opacity-50"
+                                                className={`block w-full min-w-0 text-left transition-[padding] disabled:cursor-not-allowed disabled:opacity-50 ${isConfirmingDelete
+                                                    ? "pr-28"
+                                                    : "pr-16 md:pr-1 md:group-hover:pr-16 md:group-focus-within:pr-16"
+                                                    }`}
                                             >
-                                                <p className="truncate text-sm font-medium text-slate-800">{template.title}</p>
-                                                <p className="mt-0.5 truncate text-xs text-slate-400">
-                                                    {NOTE_STYLE_LABELS[style]}{template.sections ? ` · ${template.sections}` : ""}
+                                                <p className="truncate text-sm font-medium text-slate-800" title={template.title}>{template.title}</p>
+                                                <p className="mt-0.5 truncate text-xs text-slate-400" title={template.sections || NOTE_STYLE_LABELS[style]}>
+                                                    {template.sections || NOTE_STYLE_LABELS[style]}
                                                 </p>
                                             </button>
                                             {isConfirmingDelete ? (
-                                                <div className="flex shrink-0 items-center gap-1">
+                                                <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-1">
                                                     <span className="text-[11px] font-medium text-red-600">Delete?</span>
                                                     <button
                                                         type="button"
@@ -296,7 +351,7 @@ export default function NoteTemplateSidebar({
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <div className="flex shrink-0 items-center gap-0.5 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
+                                                <div className="pointer-events-auto absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-100 transition-opacity md:pointer-events-none md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100">
                                                     <button
                                                         type="button"
                                                         onClick={() => startRename(template)}
