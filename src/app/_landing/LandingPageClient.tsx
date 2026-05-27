@@ -15,10 +15,16 @@ import {
     X,
     Bell,
 } from "lucide-react";
-import PricingSection from "../_components/PricingSection";
+import AccessSection from "../_components/AccessSection";
 
 export default function HomePage() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const navSections = [
+        { id: "about", label: "About" },
+        { id: "features", label: "Features" },
+        { id: "industries", label: "Industries" },
+        { id: "access", label: "Access" },
+    ];
 
     const scrollToSection = (sectionId: string) => {
         const element = document.getElementById(sectionId);
@@ -48,13 +54,13 @@ export default function HomePage() {
 
                     {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-6 animate-fade-in-delay">
-                        {["about", "features", "industries", "pricing"].map((section) => (
+                        {navSections.map(({ id, label }) => (
                             <button
-                                key={section}
-                                onClick={() => scrollToSection(section)}
-                                className="text-[#868C94] hover:text-[#2149A1] capitalize transition-colors duration-300 cursor-pointer text-sm font-medium"
+                                key={id}
+                                onClick={() => scrollToSection(id)}
+                                className="text-[#868C94] hover:text-[#2149A1] transition-colors duration-300 cursor-pointer text-sm font-medium"
                             >
-                                {section.charAt(0).toUpperCase() + section.slice(1)}
+                                {label}
                             </button>
                         ))}
                         <Link href="/login">
@@ -83,13 +89,13 @@ export default function HomePage() {
                 {isMobileMenuOpen && (
                     <div className="md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-sm">
                         <div className="container mx-auto px-4 py-4 space-y-4">
-                            {["about", "features", "industries", "pricing"].map((section) => (
+                            {navSections.map(({ id, label }) => (
                                 <button
-                                    key={section}
-                                    onClick={() => scrollToSection(section)}
-                                    className="block w-full text-left text-[#868C94] hover:text-[#2149A1] capitalize transition-colors duration-300 py-2 text-sm font-medium"
+                                    key={id}
+                                    onClick={() => scrollToSection(id)}
+                                    className="block w-full text-left text-[#868C94] hover:text-[#2149A1] transition-colors duration-300 py-2 text-sm font-medium"
                                 >
-                                    {section.charAt(0).toUpperCase() + section.slice(1)}
+                                    {label}
                                 </button>
                             ))}
                             <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
@@ -231,7 +237,7 @@ export default function HomePage() {
                         </button>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-[#868C94] animate-fade-up-delay-4 px-4">
-                        {["No credit card required", "Real-time processing", "HIPAA compliant"].map((item) => (
+                        {["Free to use", "Real-time processing", "HIPAA compliant"].map((item) => (
                             <div key={item} className="flex items-center gap-2 hover:text-[#2149A1] transition-colors duration-300">
                                 <CheckCircle className="w-4 h-4 text-[#2149A1] flex-shrink-0" />
                                 <span>{item}</span>
@@ -429,8 +435,8 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* ── Pricing ── */}
-            <PricingSection />
+            {/* ── Access ── */}
+            <AccessSection />
 
             {/* ── CTA ── */}
             <section className="py-16 sm:py-20">
@@ -450,7 +456,7 @@ export default function HomePage() {
                         </Link>
                     </div>
                     <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-8 text-sm text-[#868C94] px-4">
-                        {["✓ 14-day free trial", "✓ No setup fees", "✓ Cancel anytime", "✓ 24/7 support"].map((item) => (
+                        {["✓ Free to use", "✓ Forms and notes", "✓ Custom templates", "✓ Document export"].map((item) => (
                             <span key={item} className="hover:text-[#2149A1] transition-colors duration-300">{item}</span>
                         ))}
                     </div>
@@ -468,7 +474,7 @@ export default function HomePage() {
                             <p className="text-slate-400">Voice-powered form filling for modern professionals.</p>
                         </div>
                         {[
-                            { title: "Product", links: ["Features", "Pricing", "Security", "Integrations"] },
+                            { title: "Product", links: ["Features", "Access", "Security", "Integrations"] },
                             { title: "Company", links: ["About", "Blog", "Careers", "Contact"] },
                             { title: "Support", links: ["Help Center", "Documentation", "API Reference", "Status"] },
                         ].map(({ title, links }) => (

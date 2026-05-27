@@ -1,9 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import type { BlockSource, FieldType, PrismaClient } from "../../../../generated/prisma";
+import type { BlockSource, FieldType } from "../../../../generated/prisma";
 import { TRPCError } from "@trpc/server";
-import { getUserEntitlements, hasFeature, FEATURES, type EntitlementsCache } from "@/server/entitlements";
-import { PLAN_LIMITS } from "@/server/entitlements/features";
 
 const templateFieldSchema = z.object({
     key: z.string().min(1),
@@ -27,22 +25,6 @@ const templateBodySchema = z.object({
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-async function enforceFreeTemplateLimit(
-    userId: string,
-    db: PrismaClient,
-    cache: EntitlementsCache,
-) {
-    const entitlements = await getUserEntitlements(userId, cache);
-    if (hasFeature(entitlements, FEATURES.TEMPLATES_UNLIMITED)) return;
-    const count = await db.template.count({ where: { ownerId: userId } });
-    if (count >= PLAN_LIMITS.FREE_TEMPLATES) {
-        throw new TRPCError({
-            code: "FORBIDDEN",
-            message: `Free plan is limited to ${PLAN_LIMITS.FREE_TEMPLATES} templates. Upgrade to Pro for unlimited.`,
-        });
-    }
-}
 
 function buildBlockCreate(b: z.infer<typeof templateBlockSchema>) {
     return {
@@ -189,8 +171,6 @@ export const templateRouter = createTRPCRouter({
     create: protectedProcedure
         .input(templateBodySchema)
         .mutation(async ({ ctx, input }) => {
-            await enforceFreeTemplateLimit(ctx.session.user.id, ctx.db, ctx.entitlementsCache);
-
             return ctx.db.template.create({
                 data: {
                     ownerId: ctx.session.user.id,
@@ -232,8 +212,6 @@ export const templateRouter = createTRPCRouter({
     duplicate: protectedProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {
-            await enforceFreeTemplateLimit(ctx.session.user.id, ctx.db, ctx.entitlementsCache);
-
             const source = await ctx.db.template.findFirst({
                 where: { id: input.id, ownerId: ctx.session.user.id },
                 include: {

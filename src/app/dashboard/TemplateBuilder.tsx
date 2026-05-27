@@ -6,11 +6,9 @@ import Link from "next/link";
 import { api } from "@/trpc/react";
 import {
     ChevronDown, ChevronUp, X, Plus, Save, ArrowLeft,
-    GripVertical, Loader2, Check, Lock,
+    GripVertical, Loader2, Check,
 } from "lucide-react";
 import { SYSTEM_BLOCKS } from "@/server/blocks-library";
-import { hasFeature, FEATURES } from "@/server/entitlements/features";
-import UpgradeModal from "./_components/UpgradeModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -116,12 +114,9 @@ function canvasToSavePayload(name: string, blocks: CanvasBlock[]) {
 
 interface Props {
     initialTemplate?: DBTemplate;
-    /** The authenticated user's ID — passed from the server page component.
-     *  Threaded down to UpgradeModal so it doesn't need useSession(). */
-    userId?: string;
 }
 
-export default function TemplateBuilder({ initialTemplate, userId }: Props) {
+export default function TemplateBuilder({ initialTemplate }: Props) {
     const router = useRouter();
 
     // Canvas state
@@ -137,7 +132,6 @@ export default function TemplateBuilder({ initialTemplate, userId }: Props) {
 
     // Custom block modal
     const [modalOpen, setModalOpen] = useState(false);
-    const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
     const [showLibrary, setShowLibrary] = useState(false);
     const [modalName, setModalName] = useState("");
     const [modalFields, setModalFields] = useState<
@@ -146,27 +140,13 @@ export default function TemplateBuilder({ initialTemplate, userId }: Props) {
 
     const utils = api.useUtils();
 
-    // Check user entitlements — reads from server-prefetched cache, no waterfall.
-    // staleTime=5min prevents a background refetch on every mount.
-    const { data: entitlements } = api.entitlements.me.useQuery(undefined, {
-        staleTime: 5 * 60 * 1000,
-        refetchOnWindowFocus: false,
-    });
-    const isPro = entitlements ? hasFeature(entitlements, FEATURES.CUSTOM_BLOCKS_CREATE) : false;
-
     const createMutation = api.template.create.useMutation({
         onSuccess: (t: { id: string }) => {
             setSaved(true);
             setTimeout(() => router.push(`/dashboard/templates/${t.id}`), 600);
         },
         onError: (err) => {
-            // FORBIDDEN = free template limit reached — show upgrade modal instead of raw error
-            if (err.data?.code === "FORBIDDEN") {
-                setUpgradeModalOpen(true);
-            } else {
-                // Surface other unexpected errors clearly
-                console.error("[TemplateBuilder] Create failed:", err.message);
-            }
+            console.error("[TemplateBuilder] Create failed:", err.message);
         },
     });
 
@@ -336,13 +316,8 @@ export default function TemplateBuilder({ initialTemplate, userId }: Props) {
         });
     };
 
-    // Handler for clicking "Create" button - check if PRO or show upgrade modal
     const handleCreateBlockClick = () => {
-        if (isPro) {
-            setModalOpen(true);
-        } else {
-            setUpgradeModalOpen(true);
-        }
+        setModalOpen(true);
     };
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -542,7 +517,6 @@ export default function TemplateBuilder({ initialTemplate, userId }: Props) {
                                 onClick={handleCreateBlockClick}
                                 className="flex items-center gap-1 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors"
                             >
-                                {!isPro && <Lock className="w-3 h-3" />}
                                 <Plus className="w-3 h-3" />
                                 Create
                             </button>
@@ -554,7 +528,6 @@ export default function TemplateBuilder({ initialTemplate, userId }: Props) {
                                     onClick={handleCreateBlockClick}
                                     className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors inline-flex items-center gap-1"
                                 >
-                                    {!isPro && <Lock className="w-3 h-3" />}
                                     Create your first block →
                                 </button>
                             </div>
@@ -691,9 +664,6 @@ export default function TemplateBuilder({ initialTemplate, userId }: Props) {
                 </div>
             )}
 
-            {/* ── Upgrade Modal ── */}
-            <UpgradeModal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} userId={userId} />
-
             {/* ── Mobile sticky bottom bar ── */}
             <div
                 className="fixed bottom-0 left-0 right-0 md:hidden z-30 bg-white border-t border-slate-200 px-4 py-3"
@@ -776,7 +746,6 @@ export default function TemplateBuilder({ initialTemplate, userId }: Props) {
                                         onClick={() => { setShowLibrary(false); handleCreateBlockClick(); }}
                                         className="flex items-center gap-1 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors"
                                     >
-                                        {!isPro && <Lock className="w-3 h-3" />}
                                         <Plus className="w-3 h-3" />
                                         Create
                                     </button>
@@ -788,7 +757,6 @@ export default function TemplateBuilder({ initialTemplate, userId }: Props) {
                                             onClick={() => { setShowLibrary(false); handleCreateBlockClick(); }}
                                             className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors inline-flex items-center gap-1"
                                         >
-                                            {!isPro && <Lock className="w-3 h-3" />}
                                             Create your first block →
                                         </button>
                                     </div>

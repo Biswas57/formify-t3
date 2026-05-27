@@ -4,7 +4,6 @@ import { useState } from "react";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
 import { LogOut, User, Mail, ShieldCheck, Pencil, Lock, Trash2, Eye, EyeOff, Loader2, Check, AlertCircle } from "lucide-react";
-import BillingCard from "@/app/_components/BillingCard";
 
 interface Props {
     user: {
@@ -257,7 +256,7 @@ function DeleteAccountSection() {
                 <div className="space-y-3">
                     <p className="text-sm font-medium text-red-600">Delete your account</p>
                     <p className="text-xs text-slate-600">
-                        This permanently deletes your account, all templates, and cancels any active subscription.
+                        This permanently deletes your account, templates, and account data.
                         This action <strong>cannot be undone</strong>.
                     </p>
                     <div>
@@ -318,7 +317,7 @@ export default function ProfileClient({ user }: Props) {
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-slate-900">Profile</h1>
-                    <p className="text-sm text-[#868C94] mt-1">Your account details and subscription</p>
+                    <p className="text-sm text-[#868C94] mt-1">Your account details and settings</p>
                 </div>
 
                 {/* Avatar + name card */}
@@ -354,14 +353,6 @@ export default function ProfileClient({ user }: Props) {
                             )}
                         </div>
                     </div>
-                </div>
-
-                {/* Subscription */}
-                <div className="mb-5">
-                    <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3 px-1">
-                        Subscription
-                    </p>
-                    <BillingCard userId={user.id} />
                 </div>
 
                 {/* Account details */}

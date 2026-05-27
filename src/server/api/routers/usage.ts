@@ -1,6 +1,4 @@
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { getUserEntitlements, hasFeature, FEATURES } from "@/server/entitlements";
-import { PLAN_LIMITS } from "@/server/entitlements/features";
 
 function todayUTC(): string {
     return new Date().toISOString().split("T")[0]!;
@@ -8,33 +6,42 @@ function todayUTC(): string {
 
 export const usageRouter = createTRPCRouter({
     getToday: protectedProcedure.query(async ({ ctx }) => {
-        const entitlements = await getUserEntitlements(ctx.session.user.id, ctx.entitlementsCache);
-        const isPro = hasFeature(entitlements, FEATURES.TRANSCRIPTION_UNLIMITED);
+        try {
+            const today = todayUTC();
+            const usage = await ctx.db.transcriptionUsage.findUnique({
+                where: { userId_date: { userId: ctx.session.user.id, date: today } },
+            });
 
-        if (isPro) {
+            return {
+                count: usage?.count ?? 0,
+                limit: null as number | null,
+                isPro: true,
+                canRecord: true,
+            };
+        } catch (error) {
+            console.warn("[Usage] Usage analytics read failed; returning non-blocking state.", {
+                error: error instanceof Error ? error.message : "Unknown error",
+            });
             return { count: 0, limit: null as number | null, isPro: true, canRecord: true };
         }
-
-        const today = todayUTC();
-        const usage = await ctx.db.transcriptionUsage.findUnique({
-            where: { userId_date: { userId: ctx.session.user.id, date: today } },
-        });
-
-        const count = usage?.count ?? 0;
-        const limit = PLAN_LIMITS.FREE_DAILY_TRANSCRIPTIONS;
-        return { count, limit, isPro: false, canRecord: count < limit };
     }),
 
-    // TODO: Legacy mutation. Recording usage is now counted when
-    // transcription.getSessionToken mints a WS token; keep uncalled for now
-    // until older clients are confirmed gone.
+    // TODO: Legacy mutation. Recording usage is now analytics-only and is
+    // counted when transcription.getSessionToken mints a WS token; keep this
+    // uncalled compatibility surface until older clients are confirmed gone.
     recordSession: protectedProcedure.mutation(async ({ ctx }) => {
-        const today = todayUTC();
-        await ctx.db.transcriptionUsage.upsert({
-            where: { userId_date: { userId: ctx.session.user.id, date: today } },
-            create: { userId: ctx.session.user.id, date: today, count: 1 },
-            update: { count: { increment: 1 } },
-        });
+        try {
+            const today = todayUTC();
+            await ctx.db.transcriptionUsage.upsert({
+                where: { userId_date: { userId: ctx.session.user.id, date: today } },
+                create: { userId: ctx.session.user.id, date: today, count: 1 },
+                update: { count: { increment: 1 } },
+            });
+        } catch (error) {
+            console.warn("[Usage] Legacy usage analytics write failed.", {
+                error: error instanceof Error ? error.message : "Unknown error",
+            });
+        }
         return { success: true };
     }),
 });

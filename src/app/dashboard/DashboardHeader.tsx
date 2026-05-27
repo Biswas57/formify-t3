@@ -6,9 +6,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { FileText, Plus, LogOut, User, ChevronDown, Mic, Menu, X, NotebookPen } from "lucide-react";
-import { api } from "@/trpc/react";
-import PlanBadge from "@/app/_components/PlanBadge";
-import { hasFeature, FEATURES } from "@/server/entitlements/features";
 
 interface HeaderUser {
     name?: string | null;
@@ -27,17 +24,6 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-
-    // staleTime=5min: dashboard layout prefetches this server-side, so the client
-    // reads from the dehydrated cache on first render. Without staleTime the cache
-    // is treated as immediately stale and a redundant round-trip fires on every mount.
-    // refetchOnWindowFocus is also disabled globally in query-client.ts but explicit
-    // here to document that plan status does not need to be live-refreshed.
-    const { data: entitlements } = api.entitlements.me.useQuery(undefined, {
-        staleTime: 5 * 60 * 1000,
-        refetchOnWindowFocus: false,
-    });
-    const isPro = entitlements ? hasFeature(entitlements, FEATURES.TEMPLATES_UNLIMITED) : false;
 
     const isActive = (href: string) => {
         if (href === "/dashboard/formbank") {
@@ -153,11 +139,6 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                                     {user.name ?? "User"}
                                 </p>
                                 <p className="text-xs text-[#868C94] truncate">{user.email}</p>
-                                {isPro && (
-                                    <div className="mt-1.5">
-                                        <PlanBadge tier="pro" size="sm" showIcon={false} />
-                                    </div>
-                                )}
                             </div>
                             <Link
                                 href="/dashboard/profile"
@@ -233,9 +214,6 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                             <p className="text-sm font-semibold text-slate-900 truncate">
                                 {user.name ?? "User"}
                             </p>
-                            {isPro && (
-                                <PlanBadge tier="pro" size="sm" showIcon={false} />
-                            )}
                         </div>
                         <p className="text-xs text-[#868C94] truncate">{user.email}</p>
                     </div>

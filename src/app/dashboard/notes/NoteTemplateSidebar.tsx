@@ -32,7 +32,6 @@ const NOTE_STYLE_LABELS: Record<NoteStyle, string> = {
     study: "Study",
 };
 
-const NOTE_TEMPLATE_LIMIT = 10;
 const NOTE_STYLE_VALUES = ["general", "clinical", "meeting", "study"] as const;
 
 function toNoteStyle(value: string): NoteStyle {
@@ -175,7 +174,7 @@ export default function NoteTemplateSidebar({
                             <BookMarked className="h-4 w-4 flex-shrink-0 text-[#2149A1]" />
                             <span className="truncate text-sm font-semibold text-slate-900">Templates</span>
                             <span className="flex-shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                                {templates.length}/{NOTE_TEMPLATE_LIMIT}
+                                {templates.length} saved
                             </span>
                         </div>
                     </div>

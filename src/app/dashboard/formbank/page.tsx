@@ -7,9 +7,6 @@ export const metadata = { title: "Formify" };
 export default async function TemplatesPage() {
     // Prefetch only what this page actually uses.
     //
-    // Removed: entitlements.me — already prefetched by dashboard/layout.tsx,
-    //   which wraps this page. Prefetching it again issues a duplicate DB query.
-    //
     // Removed: usage.getToday — not used on the form bank page. Was being
     //   prefetched speculatively "in case the user navigates to profile", which
     //   adds server work to an already-slow page for a navigation that may never

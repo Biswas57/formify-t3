@@ -5,15 +5,11 @@
  *
  * Stores: title, noteStyle, sections (comma-separated raw string).
  * Does NOT store generated notes or transcripts.
- *
- * Limits: max FREE_NOTE_TEMPLATES per user (all plans share the same cap for now;
- * adjust when a Pro-unlimited note-templates feature is added).
  */
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { PLAN_LIMITS } from "@/server/entitlements/features";
 
 // Valid noteStyle values — mirrors the NoteStyle union in NotesClient.tsx.
 // Stored as a plain string in the DB; validated here at the API boundary.
@@ -48,7 +44,7 @@ export const noteTemplateRouter = createTRPCRouter({
     }),
 
     // ── create ────────────────────────────────────────────────────────────────
-    // Creates a new note template. Enforces the per-user limit before insert.
+    // Creates a new note template. Auth and ownership remain the only gates.
 
     create: protectedProcedure
         .input(
@@ -60,17 +56,6 @@ export const noteTemplateRouter = createTRPCRouter({
         )
         .mutation(async ({ ctx, input }) => {
             const userId = ctx.session.user.id;
-
-            const count = await ctx.db.noteTemplate.count({
-                where: { ownerId: userId },
-            });
-
-            if (count >= PLAN_LIMITS.FREE_NOTE_TEMPLATES) {
-                throw new TRPCError({
-                    code: "FORBIDDEN",
-                    message: `You have reached the limit of ${PLAN_LIMITS.FREE_NOTE_TEMPLATES} note templates. Delete one to create another.`,
-                });
-            }
 
             return ctx.db.noteTemplate.create({
                 data: {

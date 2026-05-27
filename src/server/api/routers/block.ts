@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { SYSTEM_BLOCKS } from "@/server/blocks-library";
-import { requireFeature, FEATURES } from "@/server/entitlements";
 
 export const blockRouter = createTRPCRouter({
     listLibrary: protectedProcedure.query(async ({ ctx }) => {
@@ -33,7 +32,7 @@ export const blockRouter = createTRPCRouter({
         };
     }),
 
-    /** Create a custom block — PRO ONLY. */
+    /** Create a custom block. Auth is required; ownership is set to the caller. */
     createCustom: protectedProcedure
         .input(z.object({
             name: z.string().min(1).max(100),
@@ -45,13 +44,6 @@ export const blockRouter = createTRPCRouter({
             })).min(1),
         }))
         .mutation(async ({ ctx, input }) => {
-            // ── PRO GATE ─────────────────────────────────────────────────────
-            await requireFeature(
-                ctx.session.user.id,
-                FEATURES.CUSTOM_BLOCKS_CREATE,
-                ctx.entitlementsCache
-            );
-
             return ctx.db.blockDefinition.create({
                 data: {
                     ownerId: ctx.session.user.id,
@@ -70,17 +62,10 @@ export const blockRouter = createTRPCRouter({
             });
         }),
 
-    /** Delete a custom block — PRO ONLY. */
+    /** Delete an owned custom block. */
     deleteCustom: protectedProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {
-            // ── PRO GATE ─────────────────────────────────────────────────────
-            await requireFeature(
-                ctx.session.user.id,
-                FEATURES.CUSTOM_BLOCKS_DELETE,
-                ctx.entitlementsCache
-            );
-
             await ctx.db.blockDefinition.deleteMany({
                 where: { id: input.id, ownerId: ctx.session.user.id },
             });

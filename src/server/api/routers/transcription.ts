@@ -2,20 +2,16 @@
  * src/server/api/routers/transcription.ts
  *
  * Mints short-lived WS session tokens.
- * This is the ONLY server-side gate for:
- *   - authentication (must be signed in)
- *   - plan/usage enforcement (free tier daily limit)
- *   - usage recording (counted here at token mint, not on client)
+ * This is the server-side gate for authentication (must be signed in).
+ * Usage is recorded here as best-effort analytics, but it no longer blocks
+ * recording now that Formify is moving to the free-app model.
  *
  * The WS server validates the token but does NOT touch the DB directly —
- * it trusts the token was minted after a successful limit check.
+ * it trusts the token was minted by this authenticated web app.
  */
 
 import { z } from "zod";
-import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { getUserEntitlements, hasFeature, FEATURES } from "@/server/entitlements";
-import { PLAN_LIMITS } from "@/server/entitlements/features";
 import { mintWSToken } from "@/server/ws-token";
 
 function todayUTC(): string {
@@ -28,10 +24,9 @@ export const transcriptionRouter = createTRPCRouter({
      *
      * Enforces:
      *   - Authentication (protectedProcedure)
-     *   - Free tier daily transcription limit
      *
-     * Records usage BEFORE returning the token so the count is authoritative
-     * even if the user closes the browser before the session ends.
+     * Records usage as non-blocking analytics. Analytics failures must not
+     * prevent a signed-in user from starting a recording session.
      *
      * Returns { token } — the client sends this in the WS start payload.
      */
@@ -41,42 +36,18 @@ export const transcriptionRouter = createTRPCRouter({
         }))
         .mutation(async ({ ctx, input }) => {
             const userId = ctx.session.user.id;
-            const today = todayUTC();
 
-            // Check entitlements — Pro users skip limit check
-            const entitlements = await getUserEntitlements(userId, ctx.entitlementsCache);
-            const isPro = hasFeature(entitlements, FEATURES.TRANSCRIPTION_UNLIMITED);
-
-            if (!isPro) {
-                // Read current usage
-                const usage = await ctx.db.transcriptionUsage.findUnique({
-                    where: { userId_date: { userId, date: today } },
-                });
-                const count = usage?.count ?? 0;
-                const limit = PLAN_LIMITS.FREE_DAILY_TRANSCRIPTIONS;
-
-                if (count >= limit) {
-                    console.warn("[Transcription] Free-tier limit denied", {
-                        userId,
-                        planSlug: entitlements.planSlug,
-                        status: entitlements.status,
-                        isPro,
-                        count,
-                        limit,
-                    });
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: `Daily transcription limit reached (${limit}/day on Free plan). Upgrade to Pro for unlimited sessions.`,
-                    });
-                }
-
-                // Increment usage NOW — before handing over the token.
-                // This prevents race conditions where a user spams getSessionToken
-                // to bypass the check before any session actually starts.
+            try {
+                const today = todayUTC();
                 await ctx.db.transcriptionUsage.upsert({
                     where: { userId_date: { userId, date: today } },
                     create: { userId, date: today, count: 1 },
                     update: { count: { increment: 1 } },
+                });
+            } catch (error) {
+                console.warn("[Transcription] Usage analytics write failed; token still minted.", {
+                    mode: input.mode,
+                    error: error instanceof Error ? error.message : "Unknown error",
                 });
             }
 
