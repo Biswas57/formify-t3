@@ -164,7 +164,6 @@ exports.Prisma.UserScalarFieldEnum = {
   emailVerified: 'emailVerified',
   image: 'image',
   passwordHash: 'passwordHash',
-  stripeCustomerId: 'stripeCustomerId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -212,29 +211,6 @@ exports.Prisma.BlockFieldDefinitionScalarFieldEnum = {
   label: 'label',
   fieldType: 'fieldType',
   required: 'required'
-};
-
-exports.Prisma.PlanScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  slug: 'slug',
-  stripePriceId: 'stripePriceId',
-  featuresJson: 'featuresJson',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.UserPlanScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  planId: 'planId',
-  status: 'status',
-  stripeSubscriptionId: 'stripeSubscriptionId',
-  currentPeriodStart: 'currentPeriodStart',
-  currentPeriodEnd: 'currentPeriodEnd',
-  cancelAtPeriodEnd: 'cancelAtPeriodEnd',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.CustomBlockScalarFieldEnum = {
@@ -296,16 +272,6 @@ exports.FieldType = exports.$Enums.FieldType = {
   SELECT: 'SELECT'
 };
 
-exports.SubscriptionStatus = exports.$Enums.SubscriptionStatus = {
-  ACTIVE: 'ACTIVE',
-  CANCELED: 'CANCELED',
-  PAST_DUE: 'PAST_DUE',
-  TRIALING: 'TRIALING',
-  INCOMPLETE: 'INCOMPLETE',
-  INCOMPLETE_EXPIRED: 'INCOMPLETE_EXPIRED',
-  UNPAID: 'UNPAID'
-};
-
 exports.Prisma.ModelName = {
   Account: 'Account',
   PasswordResetToken: 'PasswordResetToken',
@@ -317,8 +283,6 @@ exports.Prisma.ModelName = {
   TemplateField: 'TemplateField',
   BlockDefinition: 'BlockDefinition',
   BlockFieldDefinition: 'BlockFieldDefinition',
-  Plan: 'Plan',
-  UserPlan: 'UserPlan',
   CustomBlock: 'CustomBlock',
   TranscriptionUsage: 'TranscriptionUsage',
   NoteTemplate: 'NoteTemplate'

@@ -16,10 +16,9 @@ export const createQueryClient = () =>
         // Disable window-focus refetching globally.
         //
         // Problem: refetchOnWindowFocus defaults to true, which means every
-        // mounted query (entitlements, usage, template list, etc.) refires
+        // mounted query (usage, template list, etc.) refires
         // whenever the user alt-tabs back to the app. In the logs this shows up
-        // as repeated auth/session + entitlements.me + template.list calls at
-        // 728–2029ms each, often in bursts of 3–5.
+        // as repeated auth/session + template.list calls, often in bursts of 3–5.
         //
         // This is the primary cause of the repeated /api/auth/session hits:
         // tRPC procedures re-validate the session cookie on each request, so

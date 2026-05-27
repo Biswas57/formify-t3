@@ -1,8 +1,6 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { blockRouter } from "@/server/api/routers/block";
 import { templateRouter } from "@/server/api/routers/template";
-import { billingRouter } from "@/server/api/routers/billing";
-import { entitlementsRouter } from "@/server/api/routers/entitlements";
 import { usageRouter } from "@/server/api/routers/usage";
 import { transcriptionRouter } from "./routers/transcription";
 import { noteTemplateRouter } from "./routers/noteTemplate";
@@ -17,8 +15,6 @@ import { noteTemplateRouter } from "./routers/noteTemplate";
 export const appRouter = createTRPCRouter({
   template: templateRouter,
   block: blockRouter,
-  billing: billingRouter,
-  entitlements: entitlementsRouter,
   usage: usageRouter,
   transcription: transcriptionRouter,
   noteTemplate: noteTemplateRouter,

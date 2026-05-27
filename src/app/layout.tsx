@@ -25,9 +25,6 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geist.variable}`}>
-      <head>
-        <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
-      </head>
       <body>
         <SessionProvider>
           <TRPCReactProvider>{children}</TRPCReactProvider>
