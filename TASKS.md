@@ -20,6 +20,9 @@
 | T-132 Fix note template inline rename commit | Completed | Rename now commits directly on Enter and on blur, skips unchanged/blank titles without submitting, preserves typed value on failure, and refetches the template list after success. |
 | T-129 Design notes AI transform integration | Completed | Decision recorded in D-012: use authenticated HTTP transform endpoints in `ws-transcription`, called by protected `formify-web` tRPC mutations. |
 | T-117 Manual smoke test T-113/T-114/T-115/T-116 | Completed | Feasible smoke tests passed for form-field locking, all-fields-locked blocking, note template create/list/delete/limit, desktop sidebar, and mobile drawer. Rename issue tracked as T-132; PDF export, mic-dependent recording checks, ownership boundary, and active-recording template actions remain deferred/blocked. |
+| T-124 Stripe/payment/paywall audit | Completed | Audit found hard backend gates in WS token minting, template create/duplicate, custom block CRUD, note-template creation, optional NotesGate, and paywall UI/env/Stripe risks. T-122 should proceed as a phased free-app implementation. |
+| T-122 Make Formify a free app | Completed | Core features are auth-based and no longer blocked by usage, plan, template, notes, or custom-block gates. Paywall/pricing/upgrade UI and product copy were removed; docs/context now describe the free-app model. |
+| T-137 Later Stripe/schema cleanup | Completed | Removed remaining Stripe UI/routes/helper/dependency/env/entitlement residue and active billing schema through a dedicated migration. `MANUAL_SMOKE_TESTS.md` tracks deferred browser checks; historical migrations remain. |
 
 ## Active
 
@@ -29,16 +32,14 @@ _None._
 
 | ID | Status | Notes |
 | --- | --- | --- |
-| T-107 Review legacy customBlockRouter | Backlog | `customBlockRouter` is unmounted and uses old `CustomBlock`; decide whether to migrate data or remove model/API. |
+| T-107 Review legacy CustomBlock model | Backlog | Old `customBlockRouter` source was removed; decide whether existing `CustomBlock` data/model should be migrated or removed. |
 | T-108 Remove legacy usage.recordSession | Backlog | Usage is counted during WS token mint; remove mutation after confirming no old clients call it. |
 | T-109 Harden email HTML handling | Backlog | Escape or sanitize `formHTML` before accepting untrusted/richer HTML sources. |
-| T-110 Review server-side logging for PII | Backlog | Stripe/tRPC/password-reset/email operational logs remain; audit before production hardening. |
+| T-110 Review server-side logging for PII | Backlog | tRPC/password-reset/email operational logs remain; audit before production hardening. |
 | T-111 Avoid Google Fonts build network dependency | Backlog | `next/font` can fail in restricted networks; consider self-hosted/local font strategy. |
 | T-120 Review and polish PDF export formatting | Backlog | P1, medium risk, PDF/export. Inspect and improve form + notes PDF branding, title/date/style, pagination, wrapped text, blank lines, footers, and page numbers. |
 | T-121 Add editable generated notes | Backlog | P2, medium risk, UI/state. Allow generated notes editing without form-field-style locking; needs UX decision on persistence/export behavior. |
-| T-122 Investigate/remove paywall | Backlog | P1, high risk, billing-related. Requires product decision and Stripe/payment audit before implementation. |
 | T-123 Support table-style form fields | Backlog | P3, high risk, likely UI/API/DB/export. Needs product/design spec before implementation. |
-| T-124 Stripe/payment audit | Backlog | P1, medium risk, billing-related. Audit current Stripe/paywall/entitlement paths before removing or changing paywall behavior. |
 | T-125 Add notes Markdown download alongside PDF | Backlog | P2, low risk, notes export UI. Notes should be downloadable as both PDF and `.md`; applies to notes only, not form exports. |
 | T-126 Notes local autosave and recovery | Backlog | P3, medium risk, frontend-only. Autosave visible generated notes locally with restore/discard UX; no audio, DB history, or WS changes. Lower priority for now. |
 | T-127 Summarise current generated notes | Backlog | P1, medium-high risk, depends on T-130. `formify-web` adds a protected tRPC mutation and UI button that send current `notesMarkdown` only; no audio, DB save, or live WS protocol change. |

@@ -1,15 +1,17 @@
 # Formify Web App
 
-Formify is a Next.js/T3-style web application for turning live conversations into structured forms and notes. The web app owns authentication, templates, billing, entitlements, and the user interface. Real-time audio transcription is handled by a separate WebSocket transcription server.
+Formify is a free Next.js/T3-style web application for turning live conversations into structured forms and notes. The web app owns authentication, dashboards, templates, note templates, UI, PDF/email export, and WebSocket token minting. Real-time audio transcription and AI extraction are handled by the separate Formify `ws-transcription` service.
 
 ## What It Does
 
-- Create reusable form templates from system blocks and Pro custom blocks.
-- Start a voice session from a template and stream microphone audio to the transcription server.
+- Create reusable form templates from system blocks and custom blocks.
+- Start forms recording from a template and stream microphone audio to the transcription server.
 - Fill form fields in real time from WebSocket `attributes_update` and `final_attributes` messages.
-- Capture voice notes in Notes mode, with live markdown updates and a final polished note.
-- Export completed forms locally as PDF or email the rendered form.
-- Gate template, custom block, and transcription limits through plan entitlements.
+- Capture voice notes in Notes mode, with live markdown updates and final polished notes.
+- Save note templates for title, note style, and sections.
+- Export completed forms and notes locally as PDF; forms can also be emailed.
+
+Recording, notes, form templates, note templates, and custom blocks are available to signed-in users without paid tiers.
 
 ## Architecture
 
@@ -17,8 +19,7 @@ Formify is a Next.js/T3-style web application for turning live conversations int
 - **tRPC API**: routers live in `src/server/api/routers` and are mounted in `src/server/api/root.ts`.
 - **Auth**: NextAuth configuration lives in `src/server/auth`.
 - **Database**: Prisma models and migrations live in `prisma`; generated client output is in `generated/prisma`.
-- **Billing**: Stripe checkout, portal, and webhook handling live in `src/server/billing` and `src/app/api/stripe`.
-- **Entitlements**: plan feature checks live in `src/server/entitlements`.
+- **Free-app access model**: core feature access is auth-based, not plan-based.
 - **Transcription server bridge**: the web app mints short-lived WS JWTs in `src/server/ws-token.ts` and sends them to `NEXT_PUBLIC_WS_URL`.
 
 ## Recording Flow
@@ -27,16 +28,23 @@ Forms mode:
 
 1. The user opens `/transcription`, optionally with `?templateId=...`.
 2. The client calls `transcription.getSessionToken` with `mode: "forms"`.
-3. The server enforces auth and free-tier usage, then mints a short-lived JWT signed with `WS_TOKEN_SECRET`.
+3. The server verifies the signed-in user and mints a short-lived JWT signed with `WS_TOKEN_SECRET`.
 4. The browser sends `{ action: "start", mode: "forms", blocks, token }` over WebSocket.
 5. Audio chunks stream as binary WebM/Opus frames.
 6. The transcription server returns `started`, `attributes_update`, and `final_attributes` messages.
 
 Notes mode follows the same token/audio flow with `mode: "notes"` and expects `notes_update` / `notes_final` messages.
 
-## Billing And Entitlements
+## Free-App Model
 
-Free users are limited by values in `src/server/entitlements/features.ts`, including daily transcription usage and template count. Pro users receive feature flags such as unlimited templates/transcription and custom block creation. Stripe webhooks update `UserPlan` records, and request-scoped entitlement caching avoids repeated plan reads within a single request.
+Formify should present as a free app in normal product flows:
+
+- No Free/Pro distinction in normal user-facing UI.
+- No pricing table, upgrade prompt, billing card, plan badge, or subscription-management UI.
+- No core feature should be blocked by plan state or daily usage limits.
+- Billing runtime code, env vars, and active schema have been removed; historical migration files remain.
+
+Do not reintroduce paywall logic or paid-tier copy unless explicitly requested.
 
 ## Environment Variables
 
@@ -46,13 +54,8 @@ Required at a high level:
 - `AUTH_SECRET` in production
 - `AUTH_GOOGLE_ID`
 - `AUTH_GOOGLE_SECRET`
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PRO_PRICE_ID`
 - `WS_TOKEN_SECRET`
 - `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- `NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID`
 - `NEXT_PUBLIC_WS_URL`
 
 Optional or feature-specific:
@@ -61,7 +64,6 @@ Optional or feature-specific:
 - `AUTH_DISCORD_SECRET`
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
-- `NOTES_IS_PRO_ONLY=true` to make Notes mode Pro-only
 - `SKIP_ENV_VALIDATION=1` for build environments that intentionally skip env checks
 
 `WS_TOKEN_SECRET` must match the secret configured on the separate transcription WebSocket server.
@@ -86,7 +88,7 @@ Run database migrations:
 npm run db:migrate
 ```
 
-Seed plan data if needed:
+Seed reference data if needed:
 
 ```bash
 npm run db:seed
@@ -102,6 +104,7 @@ Useful checks:
 
 ```bash
 npm run typecheck
+npm run lint
 npm run build
 ```
 
