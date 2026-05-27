@@ -44,6 +44,37 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] Notes Copy action still works.
 - [ ] Notes export controls remain usable on mobile.
 
+## Notes Editing
+
+- [ ] Edit button appears only after final notes are displayed.
+- [ ] Edit button does not appear during recording/live draft/finalising states.
+- [ ] Done commits textarea edits to the visible notes.
+- [ ] Cancel discards draft edits and restores the previous final notes.
+- [ ] PDF export uses edited notes after Done.
+- [ ] Markdown export uses edited notes after Done.
+- [ ] Copy uses the current visible draft while editing.
+- [ ] Starting a new session clears edit state.
+- [ ] Late AI messages do not silently overwrite draft edits.
+
+## Notes Continuity
+
+- [ ] Stop/finalise/edit/Done/resume preserves manual edits.
+- [ ] New spoken content merges into existing edited notes.
+- [ ] Final notes after a second stop preserve previous edits and include new content.
+- [ ] Reset/new session clears notes intentionally.
+- [ ] First start does not send old notes.
+- [ ] Notes content is not logged during continuation.
+
+## Notes Layout
+
+- [ ] Notes template sidebar header no longer shows a saved-count pill.
+- [ ] Desktop sidebar collapses and expands smoothly.
+- [ ] Collapsed desktop rail shows the sidebar reopen icon near the top.
+- [ ] Reopen icon is not floating inside the main notes content.
+- [ ] Wide desktop notes workspace uses more horizontal space cleanly.
+- [ ] Mobile Templates drawer still opens and closes.
+- [ ] Note template save/select/rename/delete still behave the same.
+
 ## Account And Profile
 
 - [ ] Profile page loads.
@@ -51,6 +82,37 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] Password change works where applicable.
 - [ ] Account deletion works.
 - [ ] Deleted account cannot continue using an old authenticated session.
+
+## Appearance
+
+- [ ] Default appearance follows system preference.
+- [ ] User can switch System/Light/Dark in profile.
+- [ ] Appearance preference persists on refresh.
+- [ ] System option responds to OS preference changes.
+- [ ] Light mode still works.
+- [ ] No obvious hydration flash or class mismatch on reload.
+- [ ] Profile account actions still work after changing appearance.
+
+## Dark Mode Core Surfaces
+
+- [ ] Dashboard/header and mobile menu are readable in dark mode.
+- [ ] Form Bank template list and menus are readable in dark mode.
+- [ ] Notes page is readable in dark mode.
+- [ ] Notes empty state, including "Ready to take notes", is readable in dark mode.
+- [ ] Notes template sidebar, collapsed rail, and mobile drawer are readable in dark mode.
+- [ ] Sidebar/template row titles and subtitles are readable in dark mode.
+- [ ] Notes edit/copy/download controls remain readable in dark mode.
+- [ ] Markdown headings, body text, bullets, and horizontal rules are readable in dark mode.
+- [ ] Template builder canvas, library, modal, and mobile bottom bar are readable in dark mode.
+- [ ] Transcription page fields, locked amber state, recording controls, and email modal are readable in dark mode.
+- [ ] Profile page and account forms are readable in dark mode.
+- [ ] Labels and helper/muted text are readable in dark mode.
+- [ ] Placeholder text is visible but clearly secondary in dark mode.
+- [ ] Buttons and disabled states remain readable in dark mode.
+- [ ] Light mode remains visually intact after toggling back.
+- [ ] Mobile layouts remain usable in dark mode.
+- [ ] PDF/Markdown export behaviour is unchanged.
+- [ ] Notes edit and continuation behaviour are unchanged.
 
 ## UI Residue
 

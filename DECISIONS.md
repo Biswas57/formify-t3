@@ -75,3 +75,7 @@ Normal product flows should not show Free/Pro distinctions, pricing gates, billi
 ## D-018 No Subscriber Migration Path Is Required
 
 There are no existing paid subscribers, so Formify does not need a visible billing portal or subscriber migration UX during Stripe cleanup.
+
+## D-019 Theme Preference Is Local And Class-Based
+
+Dark mode should default to system preference and allow a user override of System, Light, or Dark in profile settings. The v1 preference is stored in `localStorage`, applies a class on `document.documentElement`, and should use a tiny layout bootstrap script to avoid initial flash. No database persistence or new dependency is required for the first pass.
