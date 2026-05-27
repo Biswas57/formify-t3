@@ -325,25 +325,25 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
     // ─────────────────────────────────────────────────────────────────────────
 
     return (
-        <div className="flex flex-col flex-1 min-h-0 bg-[#FBFBFB]">
+        <div className="flex flex-col flex-1 min-h-0 bg-[#FBFBFB] dark:bg-slate-950 dark:text-slate-100">
             {/* ── Top bar ── */}
-            <header className="flex items-center gap-3 px-4 md:px-6 py-3 md:py-3.5 border-b border-slate-200 bg-white sticky top-0 z-30 md:static">
+            <header className="flex items-center gap-3 px-4 md:px-6 py-3 md:py-3.5 border-b border-slate-200 bg-white sticky top-0 z-30 md:static dark:border-slate-800 dark:bg-slate-950">
                 <Link
                     href="/dashboard/formbank"
-                    className="flex items-center gap-1.5 text-sm text-[#868C94] hover:text-slate-700 transition-colors flex-shrink-0"
+                    className="flex items-center gap-1.5 text-sm text-[#868C94] hover:text-slate-700 transition-colors flex-shrink-0 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     <span className="hidden sm:inline">Form Bank</span>
                 </Link>
 
-                <div className="w-px h-5 bg-slate-200 flex-shrink-0" />
+                <div className="w-px h-5 bg-slate-200 flex-shrink-0 dark:bg-slate-800" />
 
                 <input
                     type="text"
                     value={templateName}
                     onChange={(e) => setTemplateName(e.target.value)}
                     placeholder="Template name"
-                    className="flex-1 min-w-0 text-base font-semibold text-slate-900 bg-transparent border-none outline-none placeholder-slate-300"
+                    className="flex-1 min-w-0 text-base font-semibold text-slate-900 bg-transparent border-none outline-none placeholder-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
                 />
 
                 <button
@@ -375,8 +375,8 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                             <div className="w-16 h-16 bg-[#e8eef9] rounded-2xl flex items-center justify-center mb-4">
                                 <Plus className="w-7 h-7 text-[#2149A1]" />
                             </div>
-                            <p className="text-slate-700 font-medium mb-1">No blocks yet</p>
-                            <p className="text-sm text-[#868C94]">
+                            <p className="text-slate-700 font-medium mb-1 dark:text-slate-200">No blocks yet</p>
+                            <p className="text-sm text-[#868C94] dark:text-slate-400">
                                 <span className="hidden md:inline">Add blocks from the library on the right →</span>
                                 <span className="md:hidden">Tap &ldquo;Add Block&rdquo; below to get started</span>
                             </p>
@@ -391,15 +391,15 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                                     onDragOver={(e) => handleDragOver(e, idx)}
                                     onDrop={(e) => handleDrop(e, idx)}
                                     onDragEnd={handleDragEnd}
-                                    className={`bg-white border rounded-xl overflow-hidden transition-all duration-150 ${dragOverIndex === idx
-                                        ? "border-[#2149A1] shadow-md"
-                                        : "border-slate-200"
+                                    className={`bg-white border rounded-xl overflow-hidden transition-all duration-150 dark:bg-slate-900/80 ${dragOverIndex === idx
+                                        ? "border-[#2149A1] shadow-md dark:border-blue-400"
+                                        : "border-slate-200 dark:border-slate-800"
                                         }`}
                                 >
                                     {/* Block header */}
-                                    <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-3 bg-white">
+                                    <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-3 bg-white dark:bg-slate-900">
                                         {/* Drag handle — desktop only */}
-                                        <div className="hidden md:block cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors flex-shrink-0">
+                                        <div className="hidden md:block cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors flex-shrink-0 dark:text-slate-400 dark:hover:text-slate-300">
                                             <GripVertical className="w-4 h-4" />
                                         </div>
 
@@ -408,7 +408,7 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                                             <button
                                                 onClick={() => moveBlock(idx, -1)}
                                                 disabled={idx === 0}
-                                                className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors"
+                                                className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors dark:text-slate-400 dark:hover:text-slate-300"
                                                 title="Move up"
                                             >
                                                 <ChevronUp className="w-3.5 h-3.5" />
@@ -416,7 +416,7 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                                             <button
                                                 onClick={() => moveBlock(idx, 1)}
                                                 disabled={idx === blocks.length - 1}
-                                                className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors"
+                                                className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors dark:text-slate-400 dark:hover:text-slate-300"
                                                 title="Move down"
                                             >
                                                 <ChevronDown className="w-3.5 h-3.5" />
@@ -424,14 +424,14 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                                         </div>
 
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-semibold text-sm text-slate-800">{block.title}</p>
-                                            <p className="text-xs text-[#868C94]">
+                                            <p className="font-semibold text-sm text-slate-800 dark:text-slate-100">{block.title}</p>
+                                            <p className="text-xs text-[#868C94] dark:text-slate-400">
                                                 {block.fields.length} field{block.fields.length !== 1 ? "s" : ""}
                                                 {block.sourceType === "SYSTEM" && (
-                                                    <span className="ml-1.5 text-[#2149A1]">· System</span>
+                                                    <span className="ml-1.5 text-[#2149A1] dark:text-blue-300">· System</span>
                                                 )}
                                                 {block.sourceType === "USER" && (
-                                                    <span className="ml-1.5 text-emerald-600">· Custom</span>
+                                                    <span className="ml-1.5 text-emerald-600 dark:text-emerald-400">· Custom</span>
                                                 )}
                                             </p>
                                         </div>
@@ -439,7 +439,7 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                                         <div className="flex items-center gap-0.5">
                                             <button
                                                 onClick={() => toggleCollapse(block.instanceId)}
-                                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 hover:text-slate-700 transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                                 title={block.collapsed ? "Expand" : "Collapse"}
                                             >
                                                 {block.collapsed ? (
@@ -450,7 +450,7 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                                             </button>
                                             <button
                                                 onClick={() => removeBlock(block.instanceId)}
-                                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-red-50 hover:text-red-500 transition-colors dark:text-slate-400 dark:hover:bg-red-950/30 dark:hover:text-red-400"
                                                 title="Remove block"
                                             >
                                                 <X className="w-4 h-4" />
@@ -460,18 +460,18 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
 
                                     {/* Fields */}
                                     {!block.collapsed && (
-                                        <div className="border-t border-slate-100 px-4 py-3 grid grid-cols-2 gap-2 bg-slate-50/50">
+                                        <div className="border-t border-slate-100 px-4 py-3 grid grid-cols-2 gap-2 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40">
                                             {block.fields.map((field) => (
                                                 <div
                                                     key={field.key}
-                                                    className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2"
+                                                    className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 dark:border-slate-800 dark:bg-slate-900"
                                                 >
                                                     <div className="w-1.5 h-1.5 bg-[#2149A1]/40 rounded-full flex-shrink-0" />
                                                     <div className="min-w-0">
-                                                        <p className="text-xs font-medium text-slate-700 truncate">
+                                                        <p className="text-xs font-medium text-slate-700 truncate dark:text-slate-200">
                                                             {field.label}
                                                         </p>
-                                                        <p className="text-xs text-[#868C94]">
+                                                        <p className="text-xs text-[#868C94] dark:text-slate-400">
                                                             {FIELD_TYPE_LABELS[field.fieldType]}
                                                         </p>
                                                     </div>
@@ -486,16 +486,16 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                 </div>
 
                 {/* ── Block Library (right panel) ── */}
-                <aside className="hidden md:flex md:flex-col w-72 shrink-0 border-l border-slate-200 bg-white overflow-y-auto">
-                    <div className="px-4 py-4 border-b border-slate-100">
-                        <h2 className="text-xs font-semibold text-[#868C94] uppercase tracking-widest">
+                <aside className="hidden md:flex md:flex-col w-72 shrink-0 border-l border-slate-200 bg-white overflow-y-auto dark:border-slate-800 dark:bg-slate-950">
+                    <div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800">
+                        <h2 className="text-xs font-semibold text-[#868C94] uppercase tracking-widest dark:text-slate-400">
                             Block Library
                         </h2>
                     </div>
 
                     {/* System blocks */}
                     <div className="px-4 py-3">
-                        <p className="text-xs font-medium text-slate-500 mb-2">System Blocks</p>
+                        <p className="text-xs font-medium text-slate-500 mb-2 dark:text-slate-400">System Blocks</p>
                         <div className="space-y-1.5">
                             {allLibraryBlocks
                                 .filter((b) => b.sourceType === "SYSTEM")
@@ -510,9 +510,9 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                     </div>
 
                     {/* Custom blocks */}
-                    <div className="px-4 py-3 border-t border-slate-100">
+                    <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800">
                         <div className="flex items-center justify-between mb-2">
-                            <p className="text-xs font-medium text-slate-500">My Blocks</p>
+                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">My Blocks</p>
                             <button
                                 onClick={handleCreateBlockClick}
                                 className="flex items-center gap-1 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors"
@@ -523,7 +523,7 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                         </div>
                         {allLibraryBlocks.filter((b) => b.sourceType === "USER").length === 0 ? (
                             <div className="text-center py-6">
-                                <p className="text-xs text-[#868C94] mb-3">No custom blocks yet</p>
+                                <p className="text-xs text-[#868C94] mb-3 dark:text-slate-400">No custom blocks yet</p>
                                 <button
                                     onClick={handleCreateBlockClick}
                                     className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors inline-flex items-center gap-1"
@@ -555,16 +555,16 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                         onClick={() => setModalOpen(false)}
                     />
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden dark:bg-slate-900 dark:shadow-slate-950/60">
                         {/* Modal header */}
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
                             <div>
-                                <h2 className="font-semibold text-slate-900">Create Custom Block</h2>
-                                <p className="text-xs text-[#868C94] mt-0.5">Saved to your block library</p>
+                                <h2 className="font-semibold text-slate-900 dark:text-slate-100">Create Custom Block</h2>
+                                <p className="text-xs text-[#868C94] mt-0.5 dark:text-slate-400">Saved to your block library</p>
                             </div>
                             <button
                                 onClick={() => setModalOpen(false)}
-                                className="p-2 rounded-lg text-[#868C94] hover:bg-slate-100 transition-colors"
+                                className="p-2 rounded-lg text-[#868C94] hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-800"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -573,7 +573,7 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                         <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
                             {/* Block name */}
                             <div>
-                                <label className="block text-xs font-medium text-[#868C94] mb-1.5">
+                                <label className="block text-xs font-medium text-[#868C94] mb-1.5 dark:text-slate-400">
                                     Block Name
                                 </label>
                                 <input
@@ -581,14 +581,14 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                                     value={modalName}
                                     onChange={(e) => setModalName(e.target.value)}
                                     placeholder="e.g. Insurance Details"
-                                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all"
+                                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                                 />
                             </div>
 
                             {/* Fields */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <label className="text-xs font-medium text-[#868C94]">Fields</label>
+                                    <label className="text-xs font-medium text-[#868C94] dark:text-slate-400">Fields</label>
                                     <button
                                         onClick={handleAddModalField}
                                         className="flex items-center gap-1 text-xs text-[#2149A1] hover:text-[#1a3a87] font-medium transition-colors"
@@ -610,14 +610,14 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                                                     })
                                                 }
                                                 placeholder="Field name"
-                                                className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all"
+                                                className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                                             />
                                             <select
                                                 value={field.fieldType}
                                                 onChange={(e) =>
                                                     handleModalFieldChange(idx, { fieldType: e.target.value as FieldType })
                                                 }
-                                                className="border border-slate-200 rounded-lg px-2 py-2 text-xs text-slate-700 focus:outline-none focus:border-[#2149A1] transition-all bg-white"
+                                                className="border border-slate-200 rounded-lg px-2 py-2 text-xs text-slate-700 focus:outline-none focus:border-[#2149A1] transition-all bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:focus:border-blue-400"
                                             >
                                                 {Object.entries(FIELD_TYPE_LABELS).map(([v, l]) => (
                                                     <option key={v} value={v}>{l}</option>
@@ -626,7 +626,7 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                                             {modalFields.length > 1 && (
                                                 <button
                                                     onClick={() => handleRemoveModalField(idx)}
-                                                    className="p-1.5 rounded text-[#868C94] hover:text-red-500 transition-colors"
+                                                    className="p-1.5 rounded text-[#868C94] hover:text-red-500 transition-colors dark:text-slate-400 dark:hover:text-red-400"
                                                 >
                                                     <X className="w-3.5 h-3.5" />
                                                 </button>
@@ -638,10 +638,10 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                         </div>
 
                         {/* Modal footer */}
-                        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+                        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40">
                             <button
                                 onClick={() => setModalOpen(false)}
-                                className="text-sm font-medium text-[#868C94] hover:text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+                                className="text-sm font-medium text-[#868C94] hover:text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                             >
                                 Cancel
                             </button>
@@ -666,13 +666,13 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
 
             {/* ── Mobile sticky bottom bar ── */}
             <div
-                className="fixed bottom-0 left-0 right-0 md:hidden z-30 bg-white border-t border-slate-200 px-4 py-3"
+                className="fixed bottom-0 left-0 right-0 md:hidden z-30 bg-white border-t border-slate-200 px-4 py-3 dark:border-slate-800 dark:bg-slate-950"
                 style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
             >
                 <div className="flex gap-3">
                     <button
                         onClick={() => setShowLibrary(true)}
-                        className="flex-1 flex items-center justify-center gap-2 border border-slate-200 text-slate-700 text-sm font-medium py-3 rounded-xl hover:bg-slate-50 transition-colors"
+                        className="flex-1 flex items-center justify-center gap-2 border border-slate-200 text-slate-700 text-sm font-medium py-3 rounded-xl hover:bg-slate-50 transition-colors dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
                     >
                         <Plus className="w-4 h-4" />
                         Add Block
@@ -703,17 +703,17 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                         onClick={() => setShowLibrary(false)}
                     />
                     {/* Sheet */}
-                    <div className="relative bg-white rounded-t-2xl flex flex-col max-h-[75vh]">
+                    <div className="relative bg-white rounded-t-2xl flex flex-col max-h-[75vh] dark:bg-slate-950">
                         {/* Pull indicator */}
                         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-                            <div className="w-10 h-1 bg-slate-200 rounded-full" />
+                            <div className="w-10 h-1 bg-slate-200 rounded-full dark:bg-slate-700" />
                         </div>
                         {/* Sheet header */}
-                        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 flex-shrink-0">
-                            <h2 className="font-semibold text-slate-900">Block Library</h2>
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 flex-shrink-0 dark:border-slate-800">
+                            <h2 className="font-semibold text-slate-900 dark:text-slate-100">Block Library</h2>
                             <button
                                 onClick={() => setShowLibrary(false)}
-                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 transition-colors"
+                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-900"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -725,7 +725,7 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                         >
                             {/* System blocks */}
                             <div className="py-3">
-                                <p className="text-xs font-medium text-slate-500 mb-2">System Blocks</p>
+                                <p className="text-xs font-medium text-slate-500 mb-2 dark:text-slate-400">System Blocks</p>
                                 <div className="space-y-1.5">
                                     {allLibraryBlocks
                                         .filter((b) => b.sourceType === "SYSTEM")
@@ -739,9 +739,9 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                                 </div>
                             </div>
                             {/* Custom blocks */}
-                            <div className="py-3 border-t border-slate-100">
+                            <div className="py-3 border-t border-slate-100 dark:border-slate-800">
                                 <div className="flex items-center justify-between mb-2">
-                                    <p className="text-xs font-medium text-slate-500">My Blocks</p>
+                                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">My Blocks</p>
                                     <button
                                         onClick={() => { setShowLibrary(false); handleCreateBlockClick(); }}
                                         className="flex items-center gap-1 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors"
@@ -752,7 +752,7 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                                 </div>
                                 {allLibraryBlocks.filter((b) => b.sourceType === "USER").length === 0 ? (
                                     <div className="text-center py-6">
-                                        <p className="text-xs text-[#868C94] mb-3">No custom blocks yet</p>
+                                        <p className="text-xs text-[#868C94] mb-3 dark:text-slate-400">No custom blocks yet</p>
                                         <button
                                             onClick={() => { setShowLibrary(false); handleCreateBlockClick(); }}
                                             className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] transition-colors inline-flex items-center gap-1"
@@ -793,11 +793,11 @@ function LibraryBlockRow({
 }) {
     return (
         <div
-            className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-slate-100 hover:border-[#2149A1]/30 hover:bg-[#e8eef9]/40 transition-all group cursor-default"
+            className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-slate-100 hover:border-[#2149A1]/30 hover:bg-[#e8eef9]/40 transition-all group cursor-default dark:border-slate-800 dark:hover:border-blue-400/30 dark:hover:bg-blue-500/10"
         >
             <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-700 truncate">{block.name}</p>
-                <p className="text-xs text-[#868C94]">
+                <p className="text-sm font-medium text-slate-700 truncate dark:text-slate-200">{block.name}</p>
+                <p className="text-xs text-[#868C94] dark:text-slate-400">
                     {block.fields.length} field{block.fields.length !== 1 ? "s" : ""}
                 </p>
             </div>

@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
-import { LogOut, User, Mail, ShieldCheck, Pencil, Lock, Trash2, Eye, EyeOff, Loader2, Check, AlertCircle } from "lucide-react";
+import { LogOut, User, Mail, ShieldCheck, Pencil, Lock, Trash2, Eye, EyeOff, Loader2, Check, AlertCircle, Monitor, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/app/_components/ThemeProvider";
+import { type Appearance } from "@/app/_components/theme";
 
 interface Props {
     user: {
@@ -14,6 +16,17 @@ interface Props {
         accounts: { provider: string }[];
     };
 }
+
+const APPEARANCE_OPTIONS: Array<{
+    value: Appearance;
+    label: string;
+    description: string;
+    icon: typeof Monitor;
+}> = [
+        { value: "system", label: "System", description: "Follow this device", icon: Monitor },
+        { value: "light", label: "Light", description: "Use light mode", icon: Sun },
+        { value: "dark", label: "Dark", description: "Use dark mode", icon: Moon },
+    ];
 
 // ─── Inline API helpers ───────────────────────────────────────────────────────
 
@@ -45,19 +58,19 @@ function PasswordField({
     const [show, setShow] = useState(false);
     return (
         <div>
-            <label className="block text-xs font-medium text-[#868C94] mb-1">{label}</label>
+            <label className="block text-xs font-medium text-[#868C94] mb-1 dark:text-slate-400">{label}</label>
             <div className="relative">
                 <input
                     type={show ? "text" : "password"}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 pr-9 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all"
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 pr-9 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                 />
                 <button
                     type="button"
                     onClick={() => setShow((v) => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#868C94] hover:text-slate-600"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#868C94] hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                     {show ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
@@ -91,16 +104,16 @@ function ChangeNameSection({ currentName }: { currentName: string | null }) {
 
     return (
         <div className="flex items-start gap-4 px-5 md:px-6 py-4">
-            <User className="w-4 h-4 text-[#868C94] flex-shrink-0 mt-0.5" />
+            <User className="w-4 h-4 text-[#868C94] flex-shrink-0 mt-0.5 dark:text-slate-400" />
             <div className="flex-1 min-w-0">
-                <p className="text-xs text-[#868C94] mb-0.5">Full name</p>
+                <p className="text-xs text-[#868C94] mb-0.5 dark:text-slate-400">Full name</p>
                 {open ? (
                     <div className="mt-1 space-y-2">
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all"
+                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                             placeholder="Your full name"
                         />
                         {status && <StatusMsg type={status.type} msg={status.msg} />}
@@ -115,7 +128,7 @@ function ChangeNameSection({ currentName }: { currentName: string | null }) {
                             </button>
                             <button
                                 onClick={() => { setOpen(false); setStatus(null); setName(currentName ?? ""); }}
-                                className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                                className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                             >
                                 Cancel
                             </button>
@@ -123,10 +136,10 @@ function ChangeNameSection({ currentName }: { currentName: string | null }) {
                     </div>
                 ) : (
                     <div className="flex items-center justify-between">
-                        <p className="text-sm text-slate-800">{currentName ?? "—"}</p>
+                        <p className="text-sm text-slate-800 dark:text-slate-200">{currentName ?? "—"}</p>
                         <button
                             onClick={() => setOpen(true)}
-                            className="ml-3 text-[#868C94] hover:text-[#2149A1] transition-colors"
+                            className="ml-3 text-[#868C94] hover:text-[#2149A1] transition-colors dark:text-slate-400 dark:hover:text-blue-300"
                             title="Edit name"
                         >
                             <Pencil className="w-3.5 h-3.5" />
@@ -176,9 +189,9 @@ function ChangePasswordSection({ hasPassword }: { hasPassword: boolean }) {
 
     return (
         <div className="flex items-start gap-4 px-5 md:px-6 py-4">
-            <Lock className="w-4 h-4 text-[#868C94] flex-shrink-0 mt-0.5" />
+            <Lock className="w-4 h-4 text-[#868C94] flex-shrink-0 mt-0.5 dark:text-slate-400" />
             <div className="flex-1 min-w-0">
-                <p className="text-xs text-[#868C94] mb-0.5">Password</p>
+                <p className="text-xs text-[#868C94] mb-0.5 dark:text-slate-400">Password</p>
                 {open ? (
                     <div className="mt-1 space-y-2">
                         {hasPassword && (
@@ -198,7 +211,7 @@ function ChangePasswordSection({ hasPassword }: { hasPassword: boolean }) {
                             </button>
                             <button
                                 onClick={() => { setOpen(false); setStatus(null); setCurrent(""); setNext(""); setConfirm(""); }}
-                                className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                                className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                             >
                                 Cancel
                             </button>
@@ -206,10 +219,10 @@ function ChangePasswordSection({ hasPassword }: { hasPassword: boolean }) {
                     </div>
                 ) : (
                     <div className="flex items-center justify-between">
-                        <p className="text-sm text-slate-800">{hasPassword ? "••••••••" : "Not set"}</p>
+                        <p className="text-sm text-slate-800 dark:text-slate-200">{hasPassword ? "••••••••" : "Not set"}</p>
                         <button
                             onClick={() => setOpen(true)}
-                            className="ml-3 text-[#868C94] hover:text-[#2149A1] transition-colors"
+                            className="ml-3 text-[#868C94] hover:text-[#2149A1] transition-colors dark:text-slate-400 dark:hover:text-blue-300"
                             title={hasPassword ? "Change password" : "Set password"}
                         >
                             <Pencil className="w-3.5 h-3.5" />
@@ -255,19 +268,19 @@ function DeleteAccountSection() {
             ) : (
                 <div className="space-y-3">
                     <p className="text-sm font-medium text-red-600">Delete your account</p>
-                    <p className="text-xs text-slate-600">
+                    <p className="text-xs text-slate-600 dark:text-slate-300">
                         This permanently deletes your account, templates, and account data.
                         This action <strong>cannot be undone</strong>.
                     </p>
                     <div>
-                        <label className="block text-xs font-medium text-[#868C94] mb-1">
-                            Type <span className="font-mono font-bold text-slate-700">DELETE</span> to confirm
+                        <label className="block text-xs font-medium text-[#868C94] mb-1 dark:text-slate-400">
+                            Type <span className="font-mono font-bold text-slate-700 dark:text-slate-200">DELETE</span> to confirm
                         </label>
                         <input
                             type="text"
                             value={confirm}
                             onChange={(e) => setConfirm(e.target.value)}
-                            className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/20 transition-all"
+                            className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/20 transition-all dark:border-red-900/70 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
                             placeholder="DELETE"
                         />
                     </div>
@@ -283,13 +296,58 @@ function DeleteAccountSection() {
                         </button>
                         <button
                             onClick={() => { setOpen(false); setConfirm(""); setStatus(null); }}
-                            className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                            className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                         >
                             Cancel
                         </button>
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+// ─── Section: Appearance ─────────────────────────────────────────────────────
+
+function AppearanceSection() {
+    const { appearance, resolvedTheme, setAppearance } = useTheme();
+
+    return (
+        <div className="bg-white border border-slate-200 rounded-xl p-5 md:p-6 dark:border-slate-800 dark:bg-slate-900">
+            <div className="mb-4">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Theme</p>
+                <p className="mt-1 text-xs text-[#868C94] dark:text-slate-400">
+                    Choose how Formify appears on this device. Currently using {resolvedTheme} mode.
+                </p>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-3" role="group" aria-label="Appearance preference">
+                {APPEARANCE_OPTIONS.map((option) => {
+                    const selected = appearance === option.value;
+                    const Icon = option.icon;
+
+                    return (
+                        <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setAppearance(option.value)}
+                            aria-pressed={selected}
+                            className={`rounded-xl border px-3 py-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-[#2149A1]/20 ${selected
+                                ? "border-[#2149A1] bg-[#e8eef9] text-[#2149A1] dark:border-blue-400 dark:bg-blue-500/15 dark:text-blue-200"
+                                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                                }`}
+                        >
+                            <span className="flex items-center gap-2 text-sm font-semibold">
+                                <Icon className="h-4 w-4" />
+                                {option.label}
+                            </span>
+                            <span className={`mt-1 block text-xs ${selected ? "text-[#2149A1]/80 dark:text-blue-200/80" : "text-[#868C94] dark:text-slate-400"}`}>
+                                {option.description}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
         </div>
     );
 }
@@ -312,16 +370,16 @@ export default function ProfileClient({ user }: Props) {
         "?";
 
     return (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto dark:text-slate-100">
             <div className="max-w-2xl mx-auto px-4 md:px-6 py-6 md:py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-slate-900">Profile</h1>
-                    <p className="text-sm text-[#868C94] mt-1">Your account details and settings</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Profile</h1>
+                    <p className="text-sm text-[#868C94] mt-1 dark:text-slate-400">Your account details and settings</p>
                 </div>
 
                 {/* Avatar + name card */}
-                <div className="bg-white border border-slate-200 rounded-xl p-5 md:p-6 mb-5 flex items-center gap-4 md:gap-5">
+                <div className="bg-white border border-slate-200 rounded-xl p-5 md:p-6 mb-5 flex items-center gap-4 md:gap-5 dark:border-slate-800 dark:bg-slate-900">
                     {user.image ? (
                         <Image
                             src={user.image}
@@ -336,17 +394,17 @@ export default function ProfileClient({ user }: Props) {
                         </div>
                     )}
                     <div>
-                        <p className="text-lg font-semibold text-slate-900">{user.name ?? "User"}</p>
-                        <p className="text-sm text-[#868C94]">{user.email}</p>
+                        <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{user.name ?? "User"}</p>
+                        <p className="text-sm text-[#868C94] dark:text-slate-400">{user.email}</p>
                         <div className="flex items-center gap-2 mt-2">
                             {hasGoogle && (
-                                <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
+                                <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full dark:border-blue-400/30 dark:bg-blue-500/15 dark:text-blue-200">
                                     <ShieldCheck className="w-3 h-3" />
                                     Google
                                 </span>
                             )}
                             {(hasPassword || providers.length === 0) && (
-                                <span className="flex items-center gap-1.5 text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">
+                                <span className="flex items-center gap-1.5 text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                     <ShieldCheck className="w-3 h-3" />
                                     Email
                                 </span>
@@ -357,16 +415,16 @@ export default function ProfileClient({ user }: Props) {
 
                 {/* Account details */}
                 <div className="mb-5">
-                    <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3 px-1">
+                    <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3 px-1 dark:text-slate-400">
                         Account details
                     </p>
-                    <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
+                    <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
                         <ChangeNameSection currentName={user.name} />
                         <div className="flex items-center gap-4 px-5 md:px-6 py-4">
-                            <Mail className="w-4 h-4 text-[#868C94] flex-shrink-0" />
+                            <Mail className="w-4 h-4 text-[#868C94] flex-shrink-0 dark:text-slate-400" />
                             <div>
-                                <p className="text-xs text-[#868C94] mb-0.5">Email</p>
-                                <p className="text-sm text-slate-800">{user.email}</p>
+                                <p className="text-xs text-[#868C94] mb-0.5 dark:text-slate-400">Email</p>
+                                <p className="text-sm text-slate-800 dark:text-slate-200">{user.email}</p>
                             </div>
                         </div>
                         {/* Show password section for credentials users OR Google-only users who want to add a password */}
@@ -374,15 +432,23 @@ export default function ProfileClient({ user }: Props) {
                     </div>
                 </div>
 
+                {/* Appearance */}
+                <div className="mb-5">
+                    <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3 px-1 dark:text-slate-400">
+                        Appearance
+                    </p>
+                    <AppearanceSection />
+                </div>
+
                 {/* Actions */}
-                <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
+                <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
                     <div className="px-5 md:px-6 py-4">
-                        <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3">
+                        <p className="text-xs font-semibold text-[#868C94] uppercase tracking-widest mb-3 dark:text-slate-400">
                             Account
                         </p>
                         <button
                             onClick={() => void signOut({ callbackUrl: "/" })}
-                            className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-red-600 transition-colors group min-h-[44px]"
+                            className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-red-600 transition-colors group min-h-[44px] dark:text-slate-200 dark:hover:text-red-400"
                         >
                             <LogOut className="w-4 h-4 group-hover:text-red-500 transition-colors" />
                             Sign out

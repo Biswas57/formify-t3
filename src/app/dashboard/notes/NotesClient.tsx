@@ -31,6 +31,16 @@ type WSStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "
 type RecordStatus = "idle" | "recording" | "finalizing" | "paused";
 type NoteStyle = "general" | "clinical" | "meeting" | "study";
 
+type NotesStartPayload = {
+    action: "start";
+    mode: "notes";
+    noteStyle: NoteStyle;
+    sections: string[];
+    token: string;
+    continuation?: boolean;
+    currentNotesMarkdown?: string;
+};
+
 const NOTE_STYLE_LABELS: Record<NoteStyle, string> = {
     general: "General",
     clinical: "Clinical",
@@ -83,7 +93,7 @@ function renderMarkdown(md: string): React.ReactNode[] {
         // H1
         if (line.startsWith("# ")) {
             return (
-                <h1 key={i} className="text-xl font-bold text-slate-900 mt-6 mb-2 first:mt-0">
+                <h1 key={i} className="text-xl font-bold text-slate-900 mt-6 mb-2 first:mt-0 dark:text-slate-100">
                     {renderInline(line.slice(2))}
                 </h1>
             );
@@ -91,8 +101,8 @@ function renderMarkdown(md: string): React.ReactNode[] {
         // H2
         if (line.startsWith("## ")) {
             return (
-                <h2 key={i} className="text-base font-semibold text-[#2149A1] mt-5 mb-1.5 first:mt-0 flex items-center gap-2">
-                    <span className="w-1 h-4 bg-[#2149A1] rounded-full flex-shrink-0" />
+                <h2 key={i} className="text-base font-semibold text-[#2149A1] mt-5 mb-1.5 first:mt-0 flex items-center gap-2 dark:text-blue-300">
+                    <span className="w-1 h-4 bg-[#2149A1] rounded-full flex-shrink-0 dark:bg-blue-400" />
                     {renderInline(line.slice(3))}
                 </h2>
             );
@@ -100,7 +110,7 @@ function renderMarkdown(md: string): React.ReactNode[] {
         // H3
         if (line.startsWith("### ")) {
             return (
-                <h3 key={i} className="text-sm font-semibold text-slate-700 mt-3 mb-1 first:mt-0">
+                <h3 key={i} className="text-sm font-semibold text-slate-700 mt-3 mb-1 first:mt-0 dark:text-slate-200">
                     {renderInline(line.slice(4))}
                 </h3>
             );
@@ -109,8 +119,8 @@ function renderMarkdown(md: string): React.ReactNode[] {
         if (line.startsWith("- ") || line.startsWith("* ")) {
             return (
                 <div key={i} className="flex items-start gap-2.5 my-1">
-                    <span className="w-1.5 h-1.5 bg-[#2149A1] rounded-full flex-shrink-0 mt-2" />
-                    <span className="text-sm text-slate-700 leading-relaxed">{renderInline(line.slice(2))}</span>
+                    <span className="w-1.5 h-1.5 bg-[#2149A1] rounded-full flex-shrink-0 mt-2 dark:bg-blue-400" />
+                    <span className="text-sm text-slate-700 leading-relaxed dark:text-slate-300">{renderInline(line.slice(2))}</span>
                 </div>
             );
         }
@@ -119,8 +129,8 @@ function renderMarkdown(md: string): React.ReactNode[] {
         if (numberedMatch) {
             return (
                 <div key={i} className="flex items-start gap-2.5 my-1">
-                    <span className="text-xs font-semibold text-[#2149A1] flex-shrink-0 mt-0.5 w-4 text-right">{numberedMatch[1]}.</span>
-                    <span className="text-sm text-slate-700 leading-relaxed">{renderInline(line.slice(numberedMatch[0].length))}</span>
+                    <span className="text-xs font-semibold text-[#2149A1] flex-shrink-0 mt-0.5 w-4 text-right dark:text-blue-300">{numberedMatch[1]}.</span>
+                    <span className="text-sm text-slate-700 leading-relaxed dark:text-slate-300">{renderInline(line.slice(numberedMatch[0].length))}</span>
                 </div>
             );
         }
@@ -130,11 +140,11 @@ function renderMarkdown(md: string): React.ReactNode[] {
         if (line.trim() === "") return <div key={i} className="h-2" />;
         // Horizontal rule
         if (line.trim() === "---" || line.trim() === "***") {
-            return <hr key={i} className="border-slate-200 my-3" />;
+            return <hr key={i} className="border-slate-200 my-3 dark:border-slate-800" />;
         }
         // Normal paragraph
         return (
-            <p key={i} className="text-sm text-slate-700 leading-relaxed my-0.5">
+            <p key={i} className="text-sm text-slate-700 leading-relaxed my-0.5 dark:text-slate-300">
                 {renderInline(line)}
             </p>
         );
@@ -149,7 +159,7 @@ function renderInline(text: string): React.ReactNode {
         <>
             {parts.map((part, i) => {
                 if (part.startsWith("**") && part.endsWith("**")) {
-                    return <strong key={i} className="font-semibold text-slate-900">{part.slice(2, -2)}</strong>;
+                    return <strong key={i} className="font-semibold text-slate-900 dark:text-slate-100">{part.slice(2, -2)}</strong>;
                 }
                 return part;
             })}
@@ -185,6 +195,10 @@ export default function NotesClient({ user: _user }: { user: User }) {
     // Notes output
     const [notesMarkdown, setNotesMarkdown] = useState("");
     const [isFinal, setIsFinal] = useState(false);
+    const [isEditingNotes, setIsEditingNotes] = useState(false);
+    const [draftNotesMarkdown, setDraftNotesMarkdown] = useState("");
+    const [hasManualEdits, setHasManualEdits] = useState(false);
+    const [notesEditMessage, setNotesEditMessage] = useState<string | null>(null);
 
     // UI
     const [copied, setCopied] = useState(false);
@@ -194,6 +208,8 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const notesEndRef = useRef<HTMLDivElement>(null);
     const downloadMenuRef = useRef<HTMLDivElement>(null);
+    const isEditingNotesRef = useRef(false);
+    const hasManualEditsRef = useRef(false);
 
     const isConnected = wsStatus === "connected";
     const isRecording = recordStatus === "recording";
@@ -203,7 +219,10 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const canSelectTemplate = recordStatus === "idle";
     const errorMessage = wsError ?? micError;
 
+    const visibleNotesMarkdown = isEditingNotes ? draftNotesMarkdown : notesMarkdown;
     const hasNotes = notesMarkdown.trim().length > 0;
+    const hasVisibleNotes = visibleNotesMarkdown.trim().length > 0;
+    const canEditNotes = hasNotes && isFinal && !isRecording && !isFinalizing;
 
     // Auto-scroll notes panel as content grows
     useEffect(() => {
@@ -237,10 +256,44 @@ export default function NotesClient({ user: _user }: { user: User }) {
     }, [downloadOpen]);
 
     useEffect(() => {
-        if (!hasNotes) {
+        if (!hasVisibleNotes) {
             setDownloadOpen(false);
         }
-    }, [hasNotes]);
+    }, [hasVisibleNotes]);
+
+    const setNotesEditing = (editing: boolean) => {
+        isEditingNotesRef.current = editing;
+        setIsEditingNotes(editing);
+    };
+
+    const setNotesManualEdits = (edited: boolean) => {
+        hasManualEditsRef.current = edited;
+        setHasManualEdits(edited);
+    };
+
+    const clearNotesEditState = () => {
+        setNotesEditing(false);
+        setDraftNotesMarkdown("");
+        setNotesEditMessage(null);
+    };
+
+    const handleStartNotesEdit = () => {
+        if (!canEditNotes) return;
+        setDraftNotesMarkdown(notesMarkdown);
+        setNotesEditMessage(null);
+        setNotesEditing(true);
+    };
+
+    const handleDoneNotesEdit = () => {
+        setNotesMarkdown(draftNotesMarkdown);
+        setNotesManualEdits(true);
+        setNotesEditing(false);
+        setNotesEditMessage(null);
+    };
+
+    const handleCancelNotesEdit = () => {
+        clearNotesEditState();
+    };
 
     // Sync default sections when style changes (only if user hasn't typed custom sections)
     const userEditedSections = useRef(false);
@@ -320,13 +373,25 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
                 if (msg.type === "notes_update") {
                     const md = msg.notesMarkdown ?? "";
-                    if (md) setNotesMarkdown(md);
+                    if (md) {
+                        if (isEditingNotesRef.current || hasManualEditsRef.current) {
+                            setNotesEditMessage("A late AI update arrived, but your edits were kept.");
+                            return;
+                        }
+                        setNotesMarkdown(md);
+                    }
                     return;
                 }
 
                 if (msg.type === "notes_final") {
                     const md = msg.notesMarkdown ?? "";
-                    if (md) setNotesMarkdown(md);
+                    if (md) {
+                        if (isEditingNotesRef.current || hasManualEditsRef.current) {
+                            setNotesEditMessage("A late final update arrived, but your edits were kept.");
+                        } else {
+                            setNotesMarkdown(md);
+                        }
+                    }
                     setIsFinal(true);
                     setRecordStatus("paused");
                     recordStatusRef.current = "paused";
@@ -381,6 +446,11 @@ export default function NotesClient({ user: _user }: { user: User }) {
     // ── Recording ─────────────────────────────────────────────────────────────
 
     const startRecording = async () => {
+        if (isEditingNotesRef.current) {
+            setMicError("Finish editing before starting a new recording.");
+            return;
+        }
+
         setMicError(null);
         const ws = wsRef.current;
         if (ws?.readyState !== WebSocket.OPEN) return;
@@ -408,13 +478,24 @@ export default function NotesClient({ user: _user }: { user: User }) {
             .map((s) => s.trim())
             .filter(Boolean);
 
-        ws.send(JSON.stringify({
+        const continuationNotesMarkdown = visibleNotesMarkdown;
+        const shouldContinueNotesSession =
+            recordStatusRef.current !== "idle" && continuationNotesMarkdown.trim().length > 0;
+
+        const startPayload: NotesStartPayload = {
             action: "start",
             mode: "notes",
             noteStyle,
             sections,
             token,
-        }));
+        };
+
+        if (shouldContinueNotesSession) {
+            startPayload.continuation = true;
+            startPayload.currentNotesMarkdown = continuationNotesMarkdown;
+        }
+
+        ws.send(JSON.stringify(startPayload));
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -428,6 +509,9 @@ export default function NotesClient({ user: _user }: { user: User }) {
             };
 
             recorder.start(2000); // 2s chunks — combined with MIN_CHUNK_NUM=6, first GPT pass fires after ~12s
+            clearNotesEditState();
+            setNotesManualEdits(false);
+            setIsFinal(false);
             setRecordStatus("recording");
             recordStatusRef.current = "recording";
         } catch (err) {
@@ -471,6 +555,8 @@ export default function NotesClient({ user: _user }: { user: User }) {
         recordStatusRef.current = "idle";
         setNotesMarkdown("");
         setIsFinal(false);
+        clearNotesEditState();
+        setNotesManualEdits(false);
         setMicError(null);
         setWsError(null);
         sessionReadyRef.current = false;
@@ -485,7 +571,8 @@ export default function NotesClient({ user: _user }: { user: User }) {
     // Uses the same jsPDF approach as the forms PDF export.
 
     const handleSavePDF = async () => {
-        if (!notesMarkdown.trim()) return;
+        const notesForExport = visibleNotesMarkdown;
+        if (!notesForExport.trim()) return;
         setIsGeneratingPDF(true);
         try {
             const { default: jsPDF } = await import("jspdf");
@@ -612,7 +699,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
             y = 42;
 
             // ── CONTENT ───────────────────────────────────────────────────────
-            for (const line of notesMarkdown.split("\n")) {
+            for (const line of notesForExport.split("\n")) {
 
                 // H1 — large bold with left accent bar
                 if (line.startsWith("# ")) {
@@ -796,9 +883,9 @@ export default function NotesClient({ user: _user }: { user: User }) {
     // Client-side only — note content never leaves the browser.
 
     const handleDownloadMarkdown = () => {
-        if (!notesMarkdown.trim()) return;
+        if (!visibleNotesMarkdown.trim()) return;
 
-        const contents = notesMarkdown.endsWith("\n") ? notesMarkdown : `${notesMarkdown}\n`;
+        const contents = visibleNotesMarkdown.endsWith("\n") ? visibleNotesMarkdown : `${visibleNotesMarkdown}\n`;
         const blob = new Blob([contents], { type: "text/markdown;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -814,7 +901,8 @@ export default function NotesClient({ user: _user }: { user: User }) {
     // ── Copy ─────────────────────────────────────────────────────────────────
 
     const handleCopy = async () => {
-        await navigator.clipboard.writeText(notesMarkdown);
+        if (!visibleNotesMarkdown.trim()) return;
+        await navigator.clipboard.writeText(visibleNotesMarkdown);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -822,7 +910,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
     // ── Render ────────────────────────────────────────────────────────────────
 
     return (
-        <div className="flex flex-col min-h-0 flex-1">
+        <div className="flex flex-col min-h-0 flex-1 dark:text-slate-100">
 
             {sidebarOpen && (
                 <div className="fixed inset-0 z-50 md:hidden">
@@ -832,7 +920,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                         className="absolute inset-0 bg-black/30"
                         onClick={() => setSidebarOpen(false)}
                     />
-                    <div className="relative h-full w-72 shadow-xl">
+                    <div className="relative h-full w-72 shadow-xl dark:shadow-slate-950/50">
                         <NoteTemplateSidebar
                             currentTitle={sessionTitle}
                             currentNoteStyle={noteStyle}
@@ -847,8 +935,20 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
             {/* ── Main layout ── */}
             <div className="flex min-h-0 flex-1">
-                {!isSidebarCollapsed && (
-                    <aside className="hidden w-72 flex-none overflow-hidden border-r border-slate-200 md:flex">
+                <aside className={`hidden flex-none overflow-hidden border-r border-slate-200 bg-white transition-[width] duration-200 ease-out md:flex dark:border-slate-800 dark:bg-slate-950 ${isSidebarCollapsed ? "w-12" : "w-72"}`}>
+                    {isSidebarCollapsed ? (
+                        <div className="flex h-full w-12 justify-center pt-3">
+                            <button
+                                type="button"
+                                onClick={() => setIsSidebarCollapsed(false)}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#2149A1] dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
+                                aria-label="Show templates sidebar"
+                                title="Show templates sidebar"
+                            >
+                                <PanelLeftOpen className="h-4 w-4" />
+                            </button>
+                        </div>
+                    ) : (
                         <NoteTemplateSidebar
                             currentTitle={sessionTitle}
                             currentNoteStyle={noteStyle}
@@ -857,29 +957,18 @@ export default function NotesClient({ user: _user }: { user: User }) {
                             onSelect={handleTemplateSelect}
                             onToggleSidebar={() => setIsSidebarCollapsed(true)}
                         />
-                    </aside>
-                )}
+                    )}
+                </aside>
 
-                <main className="min-w-0 flex-1 overflow-auto">
-                    <div className="container mx-auto flex max-w-3xl flex-col gap-5 px-4 py-6">
+                <main className="min-w-0 flex-1 overflow-auto dark:bg-slate-950">
+                    <div className="container mx-auto flex max-w-5xl flex-col gap-5 px-4 py-6 xl:max-w-6xl">
 
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex min-w-0 items-center gap-2">
-                                {isSidebarCollapsed && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsSidebarCollapsed(false)}
-                                        className="hidden rounded-lg border border-slate-200 p-1.5 text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#2149A1] md:inline-flex"
-                                        aria-label="Show templates sidebar"
-                                        title="Show templates sidebar"
-                                    >
-                                        <PanelLeftOpen className="h-4 w-4" />
-                                    </button>
-                                )}
                                 <button
                                     type="button"
                                     onClick={() => setSidebarOpen(true)}
-                                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 md:hidden"
+                                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 md:hidden dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
                                 >
                                     <BookMarked className="h-3.5 w-3.5" />
                                     Templates
@@ -900,12 +989,12 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
                 {/* Error banner */}
                 {errorMessage && (
-                    <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+                    <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
                         <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <p className="flex-1">{errorMessage}</p>
                         <button
                             onClick={() => { setWsError(null); setMicError(null); connectWS(); }}
-                            className="flex items-center gap-1 font-medium text-xs text-red-600 hover:text-red-800 whitespace-nowrap"
+                            className="flex items-center gap-1 font-medium text-xs text-red-600 hover:text-red-800 whitespace-nowrap dark:text-red-300 dark:hover:text-red-200"
                         >
                             <RotateCcw className="w-3 h-3" /> Retry
                         </button>
@@ -914,7 +1003,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
                 {/* Finalizing banner */}
                 {isFinalizing && (
-                    <div className="flex items-center gap-2.5 bg-[#e8eef9] border border-[#2149A1]/20 text-[#2149A1] text-sm rounded-lg px-4 py-3">
+                    <div className="flex items-center gap-2.5 bg-[#e8eef9] border border-[#2149A1]/20 text-[#2149A1] text-sm rounded-lg px-4 py-3 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200">
                         <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
                         Generating final notes — this may take a moment…
                     </div>
@@ -922,30 +1011,30 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
                 {/* ── Config card (only when idle) ── */}
                 {recordStatus === "idle" && (
-                    <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+                    <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900/80">
                         {/* Session title */}
                         <div>
-                            <label className="block text-xs font-medium text-[#868C94] mb-1.5">Session title <span className="font-normal">(optional)</span></label>
+                            <label className="block text-xs font-medium text-[#868C94] mb-1.5 dark:text-slate-400">Session title <span className="font-normal">(optional)</span></label>
                             <input
                                 type="text"
                                 value={sessionTitle}
                                 onChange={(e) => setSessionTitle(e.target.value)}
                                 placeholder="e.g. Patient intake — John Smith"
-                                className="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 outline-none focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1] placeholder-slate-400"
+                                className="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 outline-none focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1] placeholder-slate-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                             />
                         </div>
 
                         {/* Note style */}
                         <div>
-                            <label className="block text-xs font-medium text-[#868C94] mb-2">Note style</label>
+                            <label className="block text-xs font-medium text-[#868C94] mb-2 dark:text-slate-400">Note style</label>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 {(Object.keys(NOTE_STYLE_LABELS) as NoteStyle[]).map((style) => (
                                     <button
                                         key={style}
                                         onClick={() => handleStyleChange(style)}
                                         className={`flex flex-col items-start px-3 py-2.5 rounded-lg border text-left transition-all ${noteStyle === style
-                                            ? "border-[#2149A1] bg-[#e8eef9] text-[#2149A1]"
-                                            : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                                            ? "border-[#2149A1] bg-[#e8eef9] text-[#2149A1] dark:border-blue-400 dark:bg-blue-500/15 dark:text-blue-200"
+                                            : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                                             }`}
                                     >
                                         <span className="text-xs font-semibold">{NOTE_STYLE_LABELS[style]}</span>
@@ -957,7 +1046,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
                         {/* Sections */}
                         <div>
-                            <label className="block text-xs font-medium text-[#868C94] mb-1.5">
+                            <label className="block text-xs font-medium text-[#868C94] mb-1.5 dark:text-slate-400">
                                 Sections <span className="font-normal">(comma-separated, optional)</span>
                             </label>
                             <input
@@ -968,7 +1057,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                     setSectionsRaw(e.target.value);
                                 }}
                                 placeholder="e.g. Summary, Key Points, Action Items"
-                                className="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 outline-none focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1] placeholder-slate-400"
+                                className="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 outline-none focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1] placeholder-slate-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                             />
                         </div>
                     </div>
@@ -977,8 +1066,8 @@ export default function NotesClient({ user: _user }: { user: User }) {
                 {/* Session title display when active */}
                 {recordStatus !== "idle" && sessionTitle && (
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{sessionTitle}</h1>
-                        <p className="text-sm text-[#868C94] mt-1">
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{sessionTitle}</h1>
+                        <p className="text-sm text-[#868C94] mt-1 dark:text-slate-400">
                             {isRecording
                                 ? "Recording — notes are updating live."
                                 : isFinalizing
@@ -1016,7 +1105,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                     {(isPaused || hasNotes) && !isRecording && !isFinalizing && (
                         <button
                             onClick={handleReset}
-                            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 px-3 py-2.5 rounded-lg hover:bg-slate-100 transition-colors"
+                            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 px-3 py-2.5 rounded-lg hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
                         >
                             <RotateCcw className="w-3.5 h-3.5" />
                             New session
@@ -1033,16 +1122,16 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
                 {/* ── Notes panel ── */}
                 {(hasNotes || isRecording) && (
-                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden flex-1">
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden flex-1 dark:border-slate-800 dark:bg-slate-900/80">
                         {/* Panel header */}
-                        <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
+                        <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/60 flex flex-wrap items-center justify-between gap-3 dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex items-center gap-2">
-                                <NotebookPen className="w-4 h-4 text-[#2149A1]" />
-                                <span className="text-sm font-semibold text-slate-600">
+                                <NotebookPen className="w-4 h-4 text-[#2149A1] dark:text-blue-300" />
+                                <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
                                     {isFinal ? "Final Notes" : "Live Notes"}
                                 </span>
                                 {!isFinal && isRecording && (
-                                    <span className="flex items-center gap-1 text-xs text-[#868C94]">
+                                    <span className="flex items-center gap-1 text-xs text-[#868C94] dark:text-slate-400">
                                         <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
                                         Updating
                                     </span>
@@ -1052,13 +1141,55 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                         Complete
                                     </span>
                                 )}
+                                {isEditingNotes && (
+                                    <span className="text-xs bg-[#e8eef9] text-[#2149A1] border border-[#2149A1]/20 px-2 py-0.5 rounded-full font-medium dark:border-blue-400/20 dark:bg-blue-500/15 dark:text-blue-200">
+                                        Editing
+                                    </span>
+                                )}
+                                {hasManualEdits && !isEditingNotes && (
+                                    <span className="text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full font-medium dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                        Edited
+                                    </span>
+                                )}
                             </div>
 
                             {hasNotes && (
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center justify-end gap-2">
+                                    {canEditNotes && (
+                                        isEditingNotes ? (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleDoneNotesEdit}
+                                                    className="flex items-center gap-1.5 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a3a87]"
+                                                >
+                                                    <Check className="h-3.5 w-3.5" />
+                                                    Done
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCancelNotesEdit}
+                                                    className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={handleStartNotesEdit}
+                                                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                            >
+                                                <NotebookPen className="h-3.5 w-3.5" />
+                                                Edit
+                                            </button>
+                                        )
+                                    )}
                                     <button
+                                        type="button"
                                         onClick={handleCopy}
-                                        className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                                        disabled={!hasVisibleNotes}
+                                        className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                     >
                                         {copied
                                             ? <><Check className="w-3.5 h-3.5 text-emerald-600" /> Copied</>
@@ -1069,9 +1200,10 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                         <button
                                             type="button"
                                             onClick={() => setDownloadOpen((value) => !value)}
+                                            disabled={!hasVisibleNotes}
                                             aria-haspopup="menu"
                                             aria-expanded={downloadOpen}
-                                            className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] px-2.5 py-1.5 rounded-lg hover:bg-[#e8eef9] transition-colors"
+                                            className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] px-2.5 py-1.5 rounded-lg hover:bg-[#e8eef9] transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-300 dark:hover:bg-blue-500/15 dark:hover:text-blue-200"
                                         >
                                             <Download className="w-3.5 h-3.5" />
                                             Download
@@ -1081,7 +1213,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                         {downloadOpen && (
                                             <div
                                                 role="menu"
-                                                className="absolute right-0 top-full z-20 mt-1.5 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+                                                className="absolute right-0 top-full z-20 mt-1.5 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
                                             >
                                                 <button
                                                     type="button"
@@ -1092,12 +1224,12 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                                         void handleSavePDF();
                                                     }}
                                                     disabled={isGeneratingPDF}
-                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-200 dark:hover:bg-slate-800"
                                                 >
                                                     {isGeneratingPDF ? (
-                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#2149A1]" />
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />
                                                     ) : (
-                                                        <Download className="w-3.5 h-3.5 text-[#2149A1]" />
+                                                        <Download className="w-3.5 h-3.5 text-[#2149A1] dark:text-blue-300" />
                                                     )}
                                                     {isGeneratingPDF ? "Generating PDF…" : "Download PDF"}
                                                 </button>
@@ -1108,9 +1240,9 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                                         setDownloadOpen(false);
                                                         handleDownloadMarkdown();
                                                     }}
-                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
                                                 >
-                                                    <Download className="w-3.5 h-3.5 text-[#2149A1]" />
+                                                    <Download className="w-3.5 h-3.5 text-[#2149A1] dark:text-blue-300" />
                                                     Download Markdown (.md)
                                                 </button>
                                             </div>
@@ -1120,20 +1252,34 @@ export default function NotesClient({ user: _user }: { user: User }) {
                             )}
                         </div>
 
+                        {notesEditMessage && (
+                            <div className="border-b border-amber-100 bg-amber-50 px-5 py-2 text-xs font-medium text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+                                {notesEditMessage}
+                            </div>
+                        )}
+
                         {/* Notes content */}
                         <div className="px-6 py-5">
-                            {hasNotes ? (
+                            {isEditingNotes ? (
+                                <textarea
+                                    value={draftNotesMarkdown}
+                                    onChange={(event) => setDraftNotesMarkdown(event.target.value)}
+                                    aria-label="Edit final notes markdown"
+                                    className="min-h-[360px] w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 font-mono text-sm leading-relaxed text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+                                    spellCheck
+                                />
+                            ) : hasNotes ? (
                                 <div className="min-h-[200px]">
-                                    {renderMarkdown(notesMarkdown)}
+                                    {renderMarkdown(visibleNotesMarkdown)}
                                     <div ref={notesEndRef} />
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center min-h-[200px] text-center">
-                                    <NotebookPen className="w-10 h-10 text-slate-200 mb-3" />
-                                    <p className="text-sm text-slate-400">
+                                    <NotebookPen className="w-10 h-10 text-slate-200 mb-3 dark:text-slate-400" />
+                                    <p className="text-sm text-slate-400 dark:text-slate-400">
                                         Notes will appear here as you speak…
                                     </p>
-                                    <p className="text-xs text-slate-300 mt-1">
+                                    <p className="text-xs text-slate-300 mt-1 dark:text-slate-400">
                                         First update arrives after ~15 seconds of audio
                                     </p>
                                 </div>
@@ -1145,12 +1291,12 @@ export default function NotesClient({ user: _user }: { user: User }) {
                 {/* Empty state (idle, no notes yet) */}
                 {!hasNotes && !isRecording && recordStatus === "idle" && (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="w-16 h-16 bg-[#e8eef9] rounded-2xl flex items-center justify-center mb-4">
-                            <NotebookPen className="w-8 h-8 text-[#2149A1]" />
+                        <div className="w-16 h-16 bg-[#e8eef9] rounded-2xl flex items-center justify-center mb-4 dark:bg-blue-500/15">
+                            <NotebookPen className="w-8 h-8 text-[#2149A1] dark:text-blue-300" />
                         </div>
-                        <h2 className="text-lg font-semibold text-slate-900 mb-2">Ready to take notes</h2>
-                        <p className="text-sm text-[#868C94] max-w-sm">
-                            Configure your session above, then press <strong>Start Recording</strong>. Notes will be generated live from your speech.
+                        <h2 className="text-lg font-semibold text-slate-900 mb-2 dark:text-slate-100">Ready to take notes</h2>
+                        <p className="text-sm text-[#868C94] max-w-sm dark:text-slate-300">
+                            Configure your session above, then press <strong className="font-semibold text-slate-700 dark:text-slate-100">Start Recording</strong>. Notes will be generated live from your speech.
                         </p>
                     </div>
                 )}

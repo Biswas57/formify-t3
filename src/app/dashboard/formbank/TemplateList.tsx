@@ -124,19 +124,19 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
             <div>
                 <div className="flex items-start justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Form Bank</h1>
-                        <p className="text-sm text-[#868C94] mt-1">Your saved templates</p>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Form Bank</h1>
+                        <p className="text-sm text-[#868C94] mt-1 dark:text-slate-400">Your saved templates</p>
                     </div>
-                    <div className="w-36 h-10 bg-slate-200 rounded-lg animate-pulse" />
+                    <div className="w-36 h-10 bg-slate-200 rounded-lg animate-pulse dark:bg-slate-800" />
                 </div>
                 <div className="space-y-2 mb-10">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="bg-white border border-slate-200 rounded-xl px-5 py-4">
+                        <div key={i} className="bg-white border border-slate-200 rounded-xl px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex items-center gap-4">
-                                <div className="w-9 h-9 bg-slate-200 rounded-lg animate-pulse flex-shrink-0" />
+                                <div className="w-9 h-9 bg-slate-200 rounded-lg animate-pulse flex-shrink-0 dark:bg-slate-800" />
                                 <div className="flex-1 space-y-2">
-                                    <div className="h-4 bg-slate-200 rounded animate-pulse w-48" />
-                                    <div className="h-3 bg-slate-100 rounded animate-pulse w-32" />
+                                    <div className="h-4 bg-slate-200 rounded animate-pulse w-48 dark:bg-slate-800" />
+                                    <div className="h-3 bg-slate-100 rounded animate-pulse w-32 dark:bg-slate-800/70" />
                                 </div>
                             </div>
                         </div>
@@ -151,8 +151,8 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
             {/* Header */}
             <div className="flex items-start justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Form Bank</h1>
-                    <p className="text-sm text-[#868C94] mt-1">Your saved templates</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Form Bank</h1>
+                    <p className="text-sm text-[#868C94] mt-1 dark:text-slate-400">Your saved templates</p>
                 </div>
                 <Link href="/dashboard/create">
                     <button className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200 hover:scale-[1.02]">
@@ -171,7 +171,7 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
                         placeholder="Search templates…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all"
+                        className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                     />
                 </div>
             )}
@@ -194,12 +194,12 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
                     ))}
                 </div>
             ) : (
-                <div className="bg-white border border-slate-200 rounded-xl p-12 text-center mb-10">
+                <div className="bg-white border border-slate-200 rounded-xl p-12 text-center mb-10 dark:border-slate-800 dark:bg-slate-900">
                     <div className="w-14 h-14 bg-[#e8eef9] rounded-xl flex items-center justify-center mx-auto mb-4">
                         <FileText className="w-7 h-7 text-[#2149A1]" />
                     </div>
-                    <p className="text-slate-600 font-medium mb-1">No templates yet</p>
-                    <p className="text-sm text-[#868C94] mb-5">
+                    <p className="text-slate-600 font-medium mb-1 dark:text-slate-200">No templates yet</p>
+                    <p className="text-sm text-[#868C94] mb-5 dark:text-slate-400">
                         Create your first template or start from an example below.
                     </p>
                     <Link href="/dashboard/create">
@@ -213,8 +213,8 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
             {/* Example Templates */}
             <div>
                 <div className="flex items-center gap-2 mb-4">
-                    <Sparkles className="w-4 h-4 text-[#868C94]" />
-                    <h2 className="text-sm font-semibold text-[#868C94] uppercase tracking-widest">
+                    <Sparkles className="w-4 h-4 text-[#868C94] dark:text-slate-400" />
+                    <h2 className="text-sm font-semibold text-[#868C94] uppercase tracking-widest dark:text-slate-400">
                         Starter Templates
                     </h2>
                 </div>
@@ -226,17 +226,17 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
                         return (
                             <div
                                 key={ex.id}
-                                className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#2149A1]/30 hover:shadow-sm transition-all group"
+                                className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#2149A1]/30 hover:shadow-sm transition-all group dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-400/30"
                             >
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="w-9 h-9 bg-[#e8eef9] rounded-lg flex items-center justify-center">
                                         <FileText className="w-4 h-4 text-[#2149A1]" />
                                     </div>
                                 </div>
-                                <p className="font-semibold text-slate-800 text-sm mb-2">{ex.name}</p>
+                                <p className="font-semibold text-slate-800 text-sm mb-2 dark:text-slate-100">{ex.name}</p>
                                 <div className="flex flex-wrap gap-1.5 mb-4">
                                     {previewBlocks.map((name) => (
-                                        <span key={name} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full border border-slate-200">
+                                        <span key={name} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                             {name}
                                         </span>
                                     ))}
@@ -288,7 +288,7 @@ function TemplateRow({
         new Date(d).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
 
     return (
-        <div className="group bg-white border border-slate-200 rounded-xl px-5 py-4 hover:border-[#2149A1]/30 hover:shadow-sm transition-all relative">
+        <div className="group bg-white border border-slate-200 rounded-xl px-5 py-4 hover:border-[#2149A1]/30 hover:shadow-sm transition-all relative dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-400/30">
             <div className="flex items-center gap-4">
                 {/* Icon */}
                 <div className="w-9 h-9 bg-[#e8eef9] rounded-lg flex items-center justify-center flex-shrink-0">
@@ -297,20 +297,20 @@ function TemplateRow({
 
                 {/* Name + meta */}
                 <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-800 text-sm">{template.name}</p>
+                    <p className="font-semibold text-slate-800 text-sm dark:text-slate-100">{template.name}</p>
                     {previewTitles.length > 0 && (
                         <div className="flex items-center gap-1.5 flex-wrap mt-1">
                             {previewTitles.map((title) => (
-                                <span key={title} className="text-xs bg-[#e8eef9] text-[#2149A1] px-2 py-0.5 rounded-full border border-[#2149A1]/20">
+                                <span key={title} className="text-xs bg-[#e8eef9] text-[#2149A1] px-2 py-0.5 rounded-full border border-[#2149A1]/20 dark:border-blue-400/20 dark:bg-blue-500/15 dark:text-blue-200">
                                     {title}
                                 </span>
                             ))}
                             {blockCount > 3 && (
-                                <span className="text-xs text-[#868C94]">+{blockCount - 3} more</span>
+                                <span className="text-xs text-[#868C94] dark:text-slate-400">+{blockCount - 3} more</span>
                             )}
                         </div>
                     )}
-                    <p className="text-xs text-[#868C94] mt-0.5">
+                    <p className="text-xs text-[#868C94] mt-0.5 dark:text-slate-400">
                         {blockCount} block{blockCount !== 1 ? "s" : ""} · {fieldCount} field{fieldCount !== 1 ? "s" : ""} · Updated {formatDate(template.updatedAt)}
                     </p>
                 </div>
@@ -324,7 +324,7 @@ function TemplateRow({
                         </button>
                     </Link>
                     <Link href={`/dashboard/templates/${template.id}`} className="hidden sm:block">
-                        <button className="flex items-center gap-1.5 border border-slate-200 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-xs font-medium px-3 py-2 rounded-lg transition-colors min-h-[36px]">
+                        <button className="flex items-center gap-1.5 border border-slate-200 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-xs font-medium px-3 py-2 rounded-lg transition-colors min-h-[36px] dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300">
                             <Pencil className="w-3 h-3" />
                             Edit
                         </button>
@@ -334,22 +334,22 @@ function TemplateRow({
                     <div className="relative">
                         <button
                             onClick={() => setOpenMenu(openMenu === template.id ? null : template.id)}
-                            className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                            className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 hover:text-slate-700 transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                         >
                             <MoreHorizontal className="w-4 h-4" />
                         </button>
 
                         {openMenu === template.id && (
-                            <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-20 py-1">
+                            <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-20 py-1 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40">
                                 <Link href={`/dashboard/templates/${template.id}`} className="sm:hidden">
-                                    <button className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                    <button className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors dark:text-slate-200 dark:hover:bg-slate-800">
                                         <Pencil className="w-3.5 h-3.5" />
                                         Edit
                                     </button>
                                 </Link>
                                 <button
                                     onClick={() => onDuplicate(template.id)}
-                                    className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                                    className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors dark:text-slate-200 dark:hover:bg-slate-800"
                                 >
                                     <Copy className="w-3.5 h-3.5" />
                                     Duplicate
@@ -367,7 +367,7 @@ function TemplateRow({
                                             </button>
                                             <button
                                                 onClick={() => setDeleteConfirm(null)}
-                                                className="flex-1 border border-slate-200 text-slate-600 text-xs font-medium py-1.5 rounded transition-colors hover:bg-slate-50"
+                                                className="flex-1 border border-slate-200 text-slate-600 text-xs font-medium py-1.5 rounded transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                                             >
                                                 Cancel
                                             </button>
@@ -376,7 +376,7 @@ function TemplateRow({
                                 ) : (
                                     <button
                                         onClick={() => setDeleteConfirm(template.id)}
-                                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors dark:text-red-400 dark:hover:bg-red-950/30"
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />
                                         Delete

@@ -768,17 +768,17 @@ export default function TranscriptionClient({ user }: { user: User }) {
     // ─────────────────────────────────────────────────────────────────────────
 
     return (
-        <div className="min-h-screen bg-[#FBFBFB]">
+        <div className="min-h-screen bg-[#FBFBFB] dark:bg-slate-950 dark:text-slate-100">
 
             {/* ── Header ── */}
-            <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+            <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 dark:border-slate-800 dark:bg-slate-950/90">
                 <div className="container mx-auto px-4 py-3.5 flex items-center justify-between">
                     <Link href="/dashboard" className="flex items-center gap-2.5">
                         <div className="flex items-center gap-2.5 animate-fade-in">
                             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
                                 <Mic className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-3xl font-extrabold tracking-tight text-black">
+                            <span className="text-3xl font-extrabold tracking-tight text-black dark:text-slate-100">
                                 Formify
                             </span>
                         </div>
@@ -793,7 +793,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                             </span>
                         )}
                         {isFinalizing && (
-                            <span className="flex items-center gap-1.5 text-xs text-[#868C94]">
+                            <span className="flex items-center gap-1.5 text-xs text-[#868C94] dark:text-slate-400">
                                 <Loader2 className="w-3 h-3 animate-spin" />
                                 Finalizing…
                             </span>
@@ -811,11 +811,11 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         </div>
 
                         {/* User */}
-                        <Link href="/dashboard/profile" className="flex items-center gap-2 pl-3 border-l border-slate-200 hover:opacity-80 transition-opacity">
+                        <Link href="/dashboard/profile" className="flex items-center gap-2 pl-3 border-l border-slate-200 hover:opacity-80 transition-opacity dark:border-slate-800">
                             <div className="w-7 h-7 rounded-full bg-[#2149A1] flex items-center justify-center text-xs font-bold text-white">
                                 {user.name?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? "?"}
                             </div>
-                            <span className="text-sm text-[#868C94] hidden sm:block">
+                            <span className="text-sm text-[#868C94] hidden sm:block dark:text-slate-400">
                                 {user.name ?? user.email}
                             </span>
                         </Link>
@@ -828,7 +828,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
                 {/* Template loading state — only shown when waiting for a preloaded template */}
                 {templateId && !templateReady && (
-                    <div className="mb-6 flex items-center gap-2.5 bg-[#e8eef9] border border-[#2149A1]/20 text-[#2149A1] text-sm rounded-lg px-4 py-3">
+                    <div className="mb-6 flex items-center gap-2.5 bg-[#e8eef9] border border-[#2149A1]/20 text-[#2149A1] text-sm rounded-lg px-4 py-3 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200">
                         <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
                         Loading template…
                     </div>
@@ -836,12 +836,12 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
                 {/* Error banner */}
                 {errorMessage && (
-                    <div className="mb-6 flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+                    <div className="mb-6 flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
                         <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <p className="flex-1">{errorMessage}</p>
                         <button
                             onClick={() => { setWsError(null); setMicError(null); connectWS(); }}
-                            className="flex items-center gap-1 font-medium text-xs text-red-600 hover:text-red-800 whitespace-nowrap transition-colors"
+                            className="flex items-center gap-1 font-medium text-xs text-red-600 hover:text-red-800 whitespace-nowrap transition-colors dark:text-red-300 dark:hover:text-red-200"
                         >
                             <RotateCcw className="w-3 h-3" /> Retry
                         </button>
@@ -850,7 +850,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
                 {/* Finalizing banner */}
                 {isFinalizing && (
-                    <div className="mb-6 flex items-center gap-2.5 bg-[#e8eef9] border border-[#2149A1]/20 text-[#2149A1] text-sm rounded-lg px-4 py-3">
+                    <div className="mb-6 flex items-center gap-2.5 bg-[#e8eef9] border border-[#2149A1]/20 text-[#2149A1] text-sm rounded-lg px-4 py-3 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200">
                         <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
                         Running final extraction — fields will update in a moment…
                     </div>
@@ -862,10 +862,10 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         type="text"
                         value={formTitle}
                         onChange={(e) => setFormTitle(e.target.value)}
-                        className="text-2xl font-bold text-slate-900 bg-transparent border-none outline-none w-full placeholder-slate-300"
+                        className="text-2xl font-bold text-slate-900 bg-transparent border-none outline-none w-full placeholder-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
                         placeholder="Form title"
                     />
-                    <p className="text-sm text-[#868C94] mt-1">
+                    <p className="text-sm text-[#868C94] mt-1 dark:text-slate-400">
                         {isRecording
                             ? "Recording — fields are filling automatically."
                             : isPaused
@@ -892,7 +892,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     ) : (
                         <button
                             onClick={pauseRecording}
-                            className="flex items-center gap-2 border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-medium px-5 py-2.5 rounded-lg transition-all duration-200"
+                            className="flex items-center gap-2 border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-medium px-5 py-2.5 rounded-lg transition-all duration-200 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-900"
                         >
                             <Square className="w-3.5 h-3.5 fill-current" />
                             Pause
@@ -903,7 +903,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     {isPaused && (
                         <button
                             onClick={handleSavePDF}
-                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200"
+                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300"
                         >
                             <Download className="w-3.5 h-3.5" />
                             Save as PDF
@@ -914,7 +914,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     {isPaused && (
                         <button
                             onClick={() => setShowEmailModal(true)}
-                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200"
+                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300"
                         >
                             <Mail className="w-3.5 h-3.5" />
                             Email Form
@@ -925,7 +925,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     {(isPaused || isRecording) && (
                         <button
                             onClick={handleReset}
-                            className="flex items-center gap-1.5 text-sm text-[#868C94] hover:text-slate-700 transition-colors ml-auto"
+                            className="flex items-center gap-1.5 text-sm text-[#868C94] hover:text-slate-700 transition-colors ml-auto dark:text-slate-400 dark:hover:text-slate-200"
                         >
                             <RefreshCw className="w-3.5 h-3.5" />
                             Reset form
@@ -937,8 +937,8 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 <div ref={formContainerRef} className="space-y-5">
                     {/* Form Title for PDF */}
                     <div className="mb-4">
-                        <h2 className="text-2xl font-bold text-slate-900">{formTitle}</h2>
-                        <p className="text-sm text-slate-500 mt-1">
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formTitle}</h2>
+                        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">
                             {new Date().toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'long',
@@ -948,10 +948,10 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     </div>
 
                     {Object.entries(blocks).map(([blockName, fields]) => (
-                        <div key={blockName} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div key={blockName} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-slate-950/20">
                             {/* Block header */}
-                            <div className="px-6 py-3.5 border-b border-slate-100 bg-slate-50/60">
-                                <h3 className="text-sm font-semibold text-slate-600">{blockName}</h3>
+                            <div className="px-6 py-3.5 border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900">
+                                <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-200">{blockName}</h3>
                             </div>
 
                             {/* Fields grid */}
@@ -964,14 +964,14 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                     return (
                                         <div key={field}>
                                             <div className="flex items-center justify-between mb-1.5">
-                                                <label className="text-xs font-medium text-[#868C94]">
+                                                <label className="text-xs font-medium text-[#868C94] dark:text-slate-400">
                                                     {formatFieldLabel(field)}
                                                 </label>
                                                 {isLocked && (
                                                     <button
                                                         onClick={() => unlockField(field)}
                                                         title="Locked — click to allow AI to fill again"
-                                                        className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 transition-colors"
+                                                        className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 transition-colors dark:text-amber-300 dark:hover:text-amber-200"
                                                     >
                                                         <Lock className="w-3 h-3" />
                                                     </button>
@@ -988,10 +988,10 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                                 placeholder={isRecording ? "" : "—"}
                                                 className={`w-full text-sm px-3 py-2.5 rounded-lg border outline-none transition-all duration-200
                                                     ${isLocked
-                                                        ? "border-amber-300 bg-amber-50/50 text-slate-900 focus:ring-2 focus:ring-amber-200"
+                                                        ? "border-amber-300 bg-amber-50/50 text-slate-900 focus:ring-2 focus:ring-amber-200 dark:border-amber-500/50 dark:bg-amber-950/30 dark:text-amber-100 dark:focus:ring-amber-400/20"
                                                         : isFilled
-                                                            ? "border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1]"
-                                                            : "border-slate-200 bg-slate-50 text-slate-400 focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1]"
+                                                            ? "border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+                                                            : "border-slate-200 bg-slate-50 text-slate-400 focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                                                     }`}
                                             />
                                         </div>
@@ -1003,19 +1003,19 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 </div>
 
                 {/* ── Advanced accordion ── */}
-                <div className="mt-8 rounded-xl border border-slate-200 overflow-hidden">
+                <div className="mt-8 rounded-xl border border-slate-200 overflow-hidden dark:border-slate-800">
                     <button
                         onClick={() => setTemplateOpen((v) => !v)}
-                        className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-slate-50 text-sm text-[#868C94] hover:text-slate-700 transition-colors"
+                        className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-slate-50 text-sm text-[#868C94] hover:text-slate-700 transition-colors dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                     >
                         <span className="font-medium">Advanced — Template Editor</span>
                         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${templateOpen ? "rotate-180" : ""}`} />
                     </button>
 
                     {templateOpen && (
-                        <div className="px-5 pb-5 pt-2 bg-white border-t border-slate-100">
-                            <p className="text-xs text-[#868C94] mb-3">
-                                Format: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">BlockName: field1, field2</code>
+                        <div className="px-5 pb-5 pt-2 bg-white border-t border-slate-100 dark:border-slate-800 dark:bg-slate-900">
+                            <p className="text-xs text-[#868C94] mb-3 dark:text-slate-400">
+                                Format: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono dark:bg-slate-800 dark:text-slate-300">BlockName: field1, field2</code>
                             </p>
                             <textarea
                                 value={templateRaw}
@@ -1023,10 +1023,10 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                 rows={6}
                                 disabled={isRecording}
                                 placeholder={DEFAULT_TEMPLATE}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono text-slate-700 resize-none focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 disabled:opacity-50 transition-all"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono text-slate-700 resize-none focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 disabled:opacity-50 transition-all dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                             />
                             <div className="flex items-center justify-between mt-3">
-                                <p className="text-xs text-[#868C94]">
+                                <p className="text-xs text-[#868C94] dark:text-slate-400">
                                     Changes reset the form fields.
                                 </p>
                                 <button
@@ -1042,7 +1042,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 </div>
 
                 {/* ── Footer ── */}
-                <p className="text-xs text-slate-400 text-center mt-8 pb-4">
+                <p className="text-xs text-slate-400 text-center mt-8 pb-4 dark:text-slate-400">
                     Not saved — refreshing this page will clear the form.
                 </p>
             </div>
@@ -1050,16 +1050,16 @@ export default function TranscriptionClient({ user }: { user: User }) {
             {/* ── Email Modal ── */}
             {showEmailModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 dark:bg-slate-900 dark:shadow-slate-950/60">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold text-slate-900">Email Form</h3>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Email Form</h3>
                             <button
                                 onClick={() => {
                                     setShowEmailModal(false);
                                     setEmailStatus(null);
                                     setCustomEmail("");
                                 }}
-                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                                className="text-slate-400 hover:text-slate-600 transition-colors dark:text-slate-400 dark:hover:text-slate-200"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -1067,17 +1067,17 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
                         {emailStatus && (
                             <div className={`mb-4 p-3 rounded-lg text-sm ${emailStatus.type === "success"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-red-50 text-red-700 border border-red-200"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300"
+                                : "bg-red-50 text-red-700 border border-red-200 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
                                 }`}>
                                 {emailStatus.message}
                             </div>
                         )}
 
                         {/* Testing Notice */}
-                        <div className="mb-4 p-3 rounded-lg text-xs bg-blue-50 text-blue-700 border border-blue-200">
+                        <div className="mb-4 p-3 rounded-lg text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200">
                             <p className="font-medium mb-1">📧 Testing Mode</p>
-                            <p>Without domain verification, use <code className="bg-blue-100 px-1 py-0.5 rounded font-mono">biswas.simk@gmail.com</code> to test emails.</p>
+                            <p>Without domain verification, use <code className="bg-blue-100 px-1 py-0.5 rounded font-mono dark:bg-blue-500/20">biswas.simk@gmail.com</code> to test emails.</p>
                         </div>
 
                         <div className="space-y-4">
@@ -1090,7 +1090,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                         onChange={() => setEmailOption("self")}
                                         className="w-4 h-4 text-[#2149A1]"
                                     />
-                                    <span className="text-sm text-slate-700">
+                                    <span className="text-sm text-slate-700 dark:text-slate-200">
                                         Send to my email ({user.email ?? "No email"})
                                     </span>
                                 </label>
@@ -1105,7 +1105,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                         onChange={() => setEmailOption("custom")}
                                         className="w-4 h-4 text-[#2149A1]"
                                     />
-                                    <span className="text-sm text-slate-700">
+                                    <span className="text-sm text-slate-700 dark:text-slate-200">
                                         Send to custom email
                                     </span>
                                 </label>
@@ -1115,7 +1115,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                         value={customEmail}
                                         onChange={(e) => setCustomEmail(e.target.value)}
                                         placeholder="recipient@example.com"
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1]"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                                     />
                                 )}
                             </div>
@@ -1128,7 +1128,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                     setEmailStatus(null);
                                     setCustomEmail("");
                                 }}
-                                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
+                                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 Cancel
                             </button>

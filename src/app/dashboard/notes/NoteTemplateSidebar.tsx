@@ -166,16 +166,13 @@ export default function NoteTemplateSidebar({
     };
 
     return (
-        <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-white">
-            <div className="border-b border-slate-200 px-4 py-3">
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-white dark:bg-slate-950">
+            <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
                 <div className="flex min-w-0 items-center justify-between gap-2">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 items-center gap-2">
-                            <BookMarked className="h-4 w-4 flex-shrink-0 text-[#2149A1]" />
-                            <span className="truncate text-sm font-semibold text-slate-900">Templates</span>
-                            <span className="flex-shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                                {templates.length} saved
-                            </span>
+                            <BookMarked className="h-4 w-4 flex-shrink-0 text-[#2149A1] dark:text-blue-300" />
+                            <span className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">Templates</span>
                         </div>
                     </div>
                     <div className="flex flex-shrink-0 items-center gap-1">
@@ -183,7 +180,7 @@ export default function NoteTemplateSidebar({
                             type="button"
                             onClick={openSaveForm}
                             disabled={!canSelect}
-                            className="flex items-center gap-1 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a3a87] disabled:cursor-not-allowed disabled:opacity-40"
+                            className="mr-2 flex items-center gap-1 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a3a87] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Plus className="h-3.5 w-3.5" />
                             Save
@@ -192,7 +189,7 @@ export default function NoteTemplateSidebar({
                             <button
                                 type="button"
                                 onClick={onToggleSidebar}
-                                className="hidden rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#2149A1] md:inline-flex"
+                                className="hidden rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#2149A1] md:inline-flex dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
                                 aria-label="Hide templates sidebar"
                                 title="Hide templates sidebar"
                             >
@@ -203,7 +200,7 @@ export default function NoteTemplateSidebar({
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 md:hidden"
+                                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 md:hidden dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
                                 aria-label="Close templates"
                             >
                                 <X className="h-4 w-4" />
@@ -222,7 +219,7 @@ export default function NoteTemplateSidebar({
                                 if (e.key === "Enter") void handleCreate();
                                 if (e.key === "Escape") setIsSaving(false);
                             }}
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20"
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                             placeholder="Template name"
                         />
                         {formError && <p className="text-xs text-red-600">{formError}</p>}
@@ -239,7 +236,7 @@ export default function NoteTemplateSidebar({
                             <button
                                 type="button"
                                 onClick={() => setIsSaving(false)}
-                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
                             >
                                 Cancel
                             </button>
@@ -250,19 +247,19 @@ export default function NoteTemplateSidebar({
 
             <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-3">
                 {actionError && (
-                    <p className="mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+                    <p className="mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
                         {actionError}
                     </p>
                 )}
                 {isLoading ? (
-                    <div className="flex items-center justify-center py-10 text-slate-400">
+                    <div className="flex items-center justify-center py-10 text-slate-400 dark:text-slate-400">
                         <Loader2 className="h-5 w-5 animate-spin" />
                     </div>
                 ) : templates.length === 0 ? (
                     <div className="px-4 py-10 text-center">
-                        <BookMarked className="mx-auto mb-3 h-8 w-8 text-slate-200" />
-                        <p className="text-sm font-medium text-slate-600">No templates yet</p>
-                        <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                        <BookMarked className="mx-auto mb-3 h-8 w-8 text-slate-200 dark:text-slate-700" />
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No templates yet</p>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-400 dark:text-slate-400">
                             Save a notes setup to reuse its style and sections.
                         </p>
                     </div>
@@ -277,7 +274,7 @@ export default function NoteTemplateSidebar({
                             return (
                                 <div
                                     key={template.id}
-                                    className="group relative min-w-0 rounded-lg border border-transparent px-2 py-2 transition-colors hover:border-slate-200 hover:bg-slate-50 focus-within:border-slate-200 focus-within:bg-slate-50"
+                                    className="group relative min-w-0 rounded-lg border border-transparent px-2 py-2 transition-colors hover:border-slate-200 hover:bg-slate-50 focus-within:border-slate-200 focus-within:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-900 dark:focus-within:border-slate-700 dark:focus-within:bg-slate-900"
                                 >
                                     {isEditing ? (
                                         <div className="space-y-1">
@@ -304,7 +301,7 @@ export default function NoteTemplateSidebar({
                                                     }
                                                 }}
                                                 disabled={renameMutation.isPending}
-                                                className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 disabled:bg-slate-50 disabled:text-slate-400"
+                                                className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400/20 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
                                             />
                                             {renameError && <p className="text-xs text-red-600">{renameError}</p>}
                                         </div>
@@ -323,19 +320,19 @@ export default function NoteTemplateSidebar({
                                                     : "pr-16 md:pr-1 md:group-hover:pr-16 md:group-focus-within:pr-16"
                                                     }`}
                                             >
-                                                <p className="truncate text-sm font-medium text-slate-800" title={template.title}>{template.title}</p>
-                                                <p className="mt-0.5 truncate text-xs text-slate-400" title={template.sections || NOTE_STYLE_LABELS[style]}>
+                                                <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200" title={template.title}>{template.title}</p>
+                                                <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-400" title={template.sections || NOTE_STYLE_LABELS[style]}>
                                                     {template.sections || NOTE_STYLE_LABELS[style]}
                                                 </p>
                                             </button>
                                             {isConfirmingDelete ? (
                                                 <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-1">
-                                                    <span className="text-[11px] font-medium text-red-600">Delete?</span>
+                                                    <span className="text-[11px] font-medium text-red-600 dark:text-red-400">Delete?</span>
                                                     <button
                                                         type="button"
                                                         onClick={() => void handleDelete(template.id)}
                                                         disabled={isDeleting}
-                                                        className="rounded-md p-1.5 text-red-600 transition-colors hover:bg-white disabled:opacity-50"
+                                                        className="rounded-md p-1.5 text-red-600 transition-colors hover:bg-white disabled:opacity-50 dark:text-red-400 dark:hover:bg-slate-800"
                                                         aria-label={`Confirm delete ${template.title}`}
                                                     >
                                                         {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
@@ -343,7 +340,7 @@ export default function NoteTemplateSidebar({
                                                     <button
                                                         type="button"
                                                         onClick={() => setConfirmDeleteId(null)}
-                                                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-white hover:text-slate-600"
+                                                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-white hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                                         aria-label={`Cancel delete ${template.title}`}
                                                     >
                                                         <X className="h-3.5 w-3.5" />
@@ -354,7 +351,7 @@ export default function NoteTemplateSidebar({
                                                     <button
                                                         type="button"
                                                         onClick={() => startRename(template)}
-                                                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-white hover:text-[#2149A1]"
+                                                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-white hover:text-[#2149A1] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-blue-300"
                                                         aria-label={`Rename ${template.title}`}
                                                     >
                                                         <Pencil className="h-3.5 w-3.5" />
@@ -362,7 +359,7 @@ export default function NoteTemplateSidebar({
                                                     <button
                                                         type="button"
                                                         onClick={() => setConfirmDeleteId(template.id)}
-                                                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-white hover:text-red-600"
+                                                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-white hover:text-red-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-red-400"
                                                         aria-label={`Delete ${template.title}`}
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5" />

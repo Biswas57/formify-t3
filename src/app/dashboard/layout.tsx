@@ -11,7 +11,7 @@ export default async function DashboardLayout({
     if (!session?.user) redirect("/login");
 
     return (
-        <div className="min-h-screen bg-[#FBFBFB] flex flex-col">
+        <div className="min-h-screen bg-[#FBFBFB] flex flex-col dark:bg-slate-950 dark:text-slate-100">
             <DashboardHeader user={session.user} />
             <main className="flex-1 min-w-0 flex flex-col">{children}</main>
         </div>
