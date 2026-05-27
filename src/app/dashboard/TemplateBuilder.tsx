@@ -680,7 +680,10 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                     <button
                         onClick={handleSave}
                         disabled={isSaving || blocks.length === 0 || !templateName.trim()}
-                        className="flex-1 flex items-center justify-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium py-3 rounded-xl transition-all"
+                        className={`flex-1 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium py-3 rounded-xl transition-all ${saved
+                            ? "bg-emerald-600 hover:bg-emerald-700"
+                            : "bg-[#2149A1] hover:bg-[#1a3a87]"
+                            }`}
                     >
                         {isSaving ? (
                             <Loader2 className="w-4 h-4 animate-spin" />

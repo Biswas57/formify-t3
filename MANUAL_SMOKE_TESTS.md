@@ -75,6 +75,20 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] Mobile Templates drawer still opens and closes.
 - [ ] Note template save/select/rename/delete still behave the same.
 
+## Mobile Polish
+
+- [ ] Mobile template builder bottom save button turns green after save.
+- [ ] Mobile Notes Templates drawer slides in and out smoothly.
+- [ ] Mobile drawer backdrop and close button still close the drawer.
+- [ ] Mobile drawer remains readable in dark mode.
+- [ ] Notes card header/action layout is consistent for Live Notes / Updating.
+- [ ] Notes card header/action layout is consistent for Final Notes / Complete.
+- [ ] Notes card header/action layout is consistent while Editing.
+- [ ] Notes card header/action layout is consistent after Edited.
+- [ ] Edit, Done, Cancel, Copy, and Download still work on mobile.
+- [ ] Desktop notes sidebar/rail remains unchanged.
+- [ ] Desktop template save behaviour remains unchanged.
+
 ## Account And Profile
 
 - [ ] Profile page loads.

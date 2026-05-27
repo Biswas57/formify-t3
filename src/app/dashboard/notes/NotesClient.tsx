@@ -205,9 +205,11 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [downloadOpen, setDownloadOpen] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarDrawerVisible, setSidebarDrawerVisible] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const notesEndRef = useRef<HTMLDivElement>(null);
     const downloadMenuRef = useRef<HTMLDivElement>(null);
+    const sidebarCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isEditingNotesRef = useRef(false);
     const hasManualEditsRef = useRef(false);
 
@@ -260,6 +262,38 @@ export default function NotesClient({ user: _user }: { user: User }) {
             setDownloadOpen(false);
         }
     }, [hasVisibleNotes]);
+
+    useEffect(() => {
+        return () => {
+            if (sidebarCloseTimerRef.current) {
+                clearTimeout(sidebarCloseTimerRef.current);
+            }
+        };
+    }, []);
+
+    const openMobileSidebar = () => {
+        if (sidebarCloseTimerRef.current) {
+            clearTimeout(sidebarCloseTimerRef.current);
+            sidebarCloseTimerRef.current = null;
+        }
+
+        setSidebarOpen(true);
+        setSidebarDrawerVisible(false);
+        requestAnimationFrame(() => setSidebarDrawerVisible(true));
+    };
+
+    const closeMobileSidebar = () => {
+        setSidebarDrawerVisible(false);
+
+        if (sidebarCloseTimerRef.current) {
+            clearTimeout(sidebarCloseTimerRef.current);
+        }
+
+        sidebarCloseTimerRef.current = setTimeout(() => {
+            setSidebarOpen(false);
+            sidebarCloseTimerRef.current = null;
+        }, 200);
+    };
 
     const setNotesEditing = (editing: boolean) => {
         isEditingNotesRef.current = editing;
@@ -917,17 +951,17 @@ export default function NotesClient({ user: _user }: { user: User }) {
                     <button
                         type="button"
                         aria-label="Close templates"
-                        className="absolute inset-0 bg-black/30"
-                        onClick={() => setSidebarOpen(false)}
+                        className={`absolute inset-0 bg-black/30 transition-opacity duration-200 dark:bg-black/50 ${sidebarDrawerVisible ? "opacity-100" : "opacity-0"}`}
+                        onClick={closeMobileSidebar}
                     />
-                    <div className="relative h-full w-72 shadow-xl dark:shadow-slate-950/50">
+                    <div className={`relative h-full w-72 shadow-xl transition-transform duration-200 ease-out dark:shadow-slate-950/50 ${sidebarDrawerVisible ? "translate-x-0" : "-translate-x-full"}`}>
                         <NoteTemplateSidebar
                             currentTitle={sessionTitle}
                             currentNoteStyle={noteStyle}
                             currentSectionsRaw={sectionsRaw}
                             canSelect={canSelectTemplate}
                             onSelect={handleTemplateSelect}
-                            onClose={() => setSidebarOpen(false)}
+                            onClose={closeMobileSidebar}
                         />
                     </div>
                 </div>
@@ -967,7 +1001,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                             <div className="flex min-w-0 items-center gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => setSidebarOpen(true)}
+                                    onClick={openMobileSidebar}
                                     className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 md:hidden dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
                                 >
                                     <BookMarked className="h-3.5 w-3.5" />
@@ -1124,37 +1158,41 @@ export default function NotesClient({ user: _user }: { user: User }) {
                 {(hasNotes || isRecording) && (
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden flex-1 dark:border-slate-800 dark:bg-slate-900/80">
                         {/* Panel header */}
-                        <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/60 flex flex-wrap items-center justify-between gap-3 dark:border-slate-800 dark:bg-slate-900">
-                            <div className="flex items-center gap-2">
-                                <NotebookPen className="w-4 h-4 text-[#2149A1] dark:text-blue-300" />
-                                <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">
-                                    {isFinal ? "Final Notes" : "Live Notes"}
-                                </span>
-                                {!isFinal && isRecording && (
-                                    <span className="flex items-center gap-1 text-xs text-[#868C94] dark:text-slate-400">
-                                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
-                                        Updating
+                        <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/60 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
+                            <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-start">
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <NotebookPen className="w-4 h-4 flex-shrink-0 text-[#2149A1] dark:text-blue-300" />
+                                    <span className="truncate text-sm font-semibold text-slate-600 dark:text-slate-200">
+                                        {isFinal ? "Final Notes" : "Live Notes"}
                                     </span>
-                                )}
-                                {isFinal && (
-                                    <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
-                                        Complete
-                                    </span>
-                                )}
-                                {isEditingNotes && (
-                                    <span className="text-xs bg-[#e8eef9] text-[#2149A1] border border-[#2149A1]/20 px-2 py-0.5 rounded-full font-medium dark:border-blue-400/20 dark:bg-blue-500/15 dark:text-blue-200">
-                                        Editing
-                                    </span>
-                                )}
-                                {hasManualEdits && !isEditingNotes && (
-                                    <span className="text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full font-medium dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                        Edited
-                                    </span>
-                                )}
+                                </div>
+                                <div className="flex flex-wrap items-center justify-end gap-1.5 sm:justify-start">
+                                    {!isFinal && isRecording && (
+                                        <span className="flex items-center gap-1 text-xs text-[#868C94] dark:text-slate-400">
+                                            <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+                                            Updating
+                                        </span>
+                                    )}
+                                    {isFinal && (
+                                        <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium dark:border-emerald-700/60 dark:bg-emerald-500/15 dark:text-emerald-300">
+                                            Complete
+                                        </span>
+                                    )}
+                                    {isEditingNotes && (
+                                        <span className="text-xs bg-[#e8eef9] text-[#2149A1] border border-[#2149A1]/20 px-2 py-0.5 rounded-full font-medium dark:border-blue-400/20 dark:bg-blue-500/15 dark:text-blue-200">
+                                            Editing
+                                        </span>
+                                    )}
+                                    {hasManualEdits && !isEditingNotes && (
+                                        <span className="text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full font-medium dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                            Edited
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             {hasNotes && (
-                                <div className="flex flex-wrap items-center justify-end gap-2">
+                                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
                                     {canEditNotes && (
                                         isEditingNotes ? (
                                             <>
