@@ -36,8 +36,13 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 ## Exports
 
 - [ ] Forms PDF export works.
-- [ ] Notes PDF export works.
-- [ ] Notes Markdown export works if/when T-125 is implemented.
+- [ ] Notes Download menu opens.
+- [ ] Notes PDF export works from the Download menu.
+- [ ] Notes Markdown export creates a `.md` file.
+- [ ] Markdown file content matches the current visible notes.
+- [ ] Markdown filename uses the session title or safe fallback.
+- [ ] Notes Copy action still works.
+- [ ] Notes export controls remain usable on mobile.
 
 ## Account And Profile
 

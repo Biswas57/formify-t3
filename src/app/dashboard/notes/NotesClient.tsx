@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Mic, Square, Wifi, WifiOff, RotateCcw, Loader2,
     NotebookPen, Copy, Check, Download, AlertCircle,
-    BookMarked, PanelLeftOpen,
+    BookMarked, PanelLeftOpen, ChevronDown,
 } from "lucide-react";
 import { env } from "@/env";
 import { api } from "@/trpc/react";
@@ -60,6 +60,19 @@ const SUPPORTED_MIME =
 
 function getWSUrl(): string {
     return env.NEXT_PUBLIC_WS_URL;
+}
+
+function buildMarkdownFilename(title: string): string {
+    const base = title.trim().replace(/\.md$/i, "") || "formify-notes";
+    const safe = base
+        .replace(/[^a-zA-Z0-9 ._-]+/g, "-")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^\.+/, "")
+        .replace(/^-+|-+$/g, "")
+        .toLowerCase();
+
+    return `${safe || "formify-notes"}.md`;
 }
 
 // ─── Simple markdown renderer ────────────────────────────────────────────────
@@ -176,9 +189,11 @@ export default function NotesClient({ user: _user }: { user: User }) {
     // UI
     const [copied, setCopied] = useState(false);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+    const [downloadOpen, setDownloadOpen] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const notesEndRef = useRef<HTMLDivElement>(null);
+    const downloadMenuRef = useRef<HTMLDivElement>(null);
 
     const isConnected = wsStatus === "connected";
     const isRecording = recordStatus === "recording";
@@ -196,6 +211,36 @@ export default function NotesClient({ user: _user }: { user: User }) {
             notesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
         }
     }, [notesMarkdown, isRecording]);
+
+    useEffect(() => {
+        if (!downloadOpen) return;
+
+        const handleClick = (event: MouseEvent) => {
+            if (downloadMenuRef.current && !downloadMenuRef.current.contains(event.target as Node)) {
+                setDownloadOpen(false);
+            }
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setDownloadOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClick);
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClick);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [downloadOpen]);
+
+    useEffect(() => {
+        if (!hasNotes) {
+            setDownloadOpen(false);
+        }
+    }, [hasNotes]);
 
     // Sync default sections when style changes (only if user hasn't typed custom sections)
     const userEditedSections = useRef(false);
@@ -747,6 +792,25 @@ export default function NotesClient({ user: _user }: { user: User }) {
         }
     };
 
+    // ── Markdown Export ───────────────────────────────────────────────────────
+    // Client-side only — note content never leaves the browser.
+
+    const handleDownloadMarkdown = () => {
+        if (!notesMarkdown.trim()) return;
+
+        const contents = notesMarkdown.endsWith("\n") ? notesMarkdown : `${notesMarkdown}\n`;
+        const blob = new Blob([contents], { type: "text/markdown;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = buildMarkdownFilename(sessionTitle);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    };
+
     // ── Copy ─────────────────────────────────────────────────────────────────
 
     const handleCopy = async () => {
@@ -1001,16 +1065,57 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                             : <><Copy className="w-3.5 h-3.5" /> Copy</>
                                         }
                                     </button>
-                                    <button
-                                        onClick={handleSavePDF}
-                                        disabled={isGeneratingPDF}
-                                        className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] px-2.5 py-1.5 rounded-lg hover:bg-[#e8eef9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {isGeneratingPDF
-                                            ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…</>
-                                            : <><Download className="w-3.5 h-3.5" /> Download PDF</>
-                                        }
-                                    </button>
+                                    <div className="relative" ref={downloadMenuRef}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setDownloadOpen((value) => !value)}
+                                            aria-haspopup="menu"
+                                            aria-expanded={downloadOpen}
+                                            className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] px-2.5 py-1.5 rounded-lg hover:bg-[#e8eef9] transition-colors"
+                                        >
+                                            <Download className="w-3.5 h-3.5" />
+                                            Download
+                                            <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${downloadOpen ? "rotate-180" : ""}`} />
+                                        </button>
+
+                                        {downloadOpen && (
+                                            <div
+                                                role="menu"
+                                                className="absolute right-0 top-full z-20 mt-1.5 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    role="menuitem"
+                                                    onClick={() => {
+                                                        if (isGeneratingPDF) return;
+                                                        setDownloadOpen(false);
+                                                        void handleSavePDF();
+                                                    }}
+                                                    disabled={isGeneratingPDF}
+                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    {isGeneratingPDF ? (
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#2149A1]" />
+                                                    ) : (
+                                                        <Download className="w-3.5 h-3.5 text-[#2149A1]" />
+                                                    )}
+                                                    {isGeneratingPDF ? "Generating PDF…" : "Download PDF"}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    role="menuitem"
+                                                    onClick={() => {
+                                                        setDownloadOpen(false);
+                                                        handleDownloadMarkdown();
+                                                    }}
+                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                                                >
+                                                    <Download className="w-3.5 h-3.5 text-[#2149A1]" />
+                                                    Download Markdown (.md)
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
