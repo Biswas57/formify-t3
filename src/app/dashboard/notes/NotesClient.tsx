@@ -975,7 +975,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                             <button
                                 type="button"
                                 onClick={() => setIsSidebarCollapsed(false)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#2149A1] dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-[#2149A1] dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
                                 aria-label="Show templates sidebar"
                                 title="Show templates sidebar"
                             >
@@ -1002,7 +1002,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                 <button
                                     type="button"
                                     onClick={openMobileSidebar}
-                                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 md:hidden dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
+                                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-50 md:hidden dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
                                 >
                                     <BookMarked className="h-3.5 w-3.5" />
                                     Templates
@@ -1028,7 +1028,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                         <p className="flex-1">{errorMessage}</p>
                         <button
                             onClick={() => { setWsError(null); setMicError(null); connectWS(); }}
-                            className="flex items-center gap-1 font-medium text-xs text-red-600 hover:text-red-800 whitespace-nowrap dark:text-red-300 dark:hover:text-red-200"
+                            className="flex items-center gap-1 font-medium text-xs text-red-600 hover:text-red-800 whitespace-nowrap transition-opacity active:opacity-80 dark:text-red-300 dark:hover:text-red-200"
                         >
                             <RotateCcw className="w-3 h-3" /> Retry
                         </button>
@@ -1066,7 +1066,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                     <button
                                         key={style}
                                         onClick={() => handleStyleChange(style)}
-                                        className={`flex flex-col items-start px-3 py-2.5 rounded-lg border text-left transition-all ${noteStyle === style
+                                        className={`flex flex-col items-start px-3 py-2.5 rounded-lg border text-left transition-colors active:scale-[0.98] active:opacity-90 ${noteStyle === style
                                             ? "border-[#2149A1] bg-[#e8eef9] text-[#2149A1] dark:border-blue-400 dark:bg-blue-500/15 dark:text-blue-200"
                                             : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                                             }`}
@@ -1119,7 +1119,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                         <button
                             onClick={startRecording}
                             disabled={!canRecord || getSessionToken.isPending}
-                            className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-all duration-200 hover:scale-[1.02]"
+                            className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-[background-color,color,transform,opacity] duration-150 hover:scale-[1.02] active:scale-[0.98] active:opacity-90"
                         >
                             {getSessionToken.isPending
                                 ? <><Loader2 className="w-4 h-4 animate-spin" />Starting…</>
@@ -1129,7 +1129,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                     ) : (
                         <button
                             onClick={stopRecording}
-                            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-all duration-200"
+                            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors duration-150 active:scale-[0.98] active:opacity-90"
                         >
                             <Square className="w-4 h-4 fill-white" />
                             Stop
@@ -1139,7 +1139,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                     {(isPaused || hasNotes) && !isRecording && !isFinalizing && (
                         <button
                             onClick={handleReset}
-                            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 px-3 py-2.5 rounded-lg hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
+                            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 px-3 py-2.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98] active:opacity-80 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
                         >
                             <RotateCcw className="w-3.5 h-3.5" />
                             New session
@@ -1199,7 +1199,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                                 <button
                                                     type="button"
                                                     onClick={handleDoneNotesEdit}
-                                                    className="flex items-center gap-1.5 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a3a87]"
+                                                    className="flex items-center gap-1.5 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors active:scale-[0.98] active:opacity-90 hover:bg-[#1a3a87]"
                                                 >
                                                     <Check className="h-3.5 w-3.5" />
                                                     Done
@@ -1207,7 +1207,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                                 <button
                                                     type="button"
                                                     onClick={handleCancelNotesEdit}
-                                                    className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                    className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                                 >
                                                     Cancel
                                                 </button>
@@ -1216,7 +1216,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                             <button
                                                 type="button"
                                                 onClick={handleStartNotesEdit}
-                                                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                             >
                                                 <NotebookPen className="h-3.5 w-3.5" />
                                                 Edit
@@ -1227,7 +1227,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                         type="button"
                                         onClick={handleCopy}
                                         disabled={!hasVisibleNotes}
-                                        className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                        className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                     >
                                         {copied
                                             ? <><Check className="w-3.5 h-3.5 text-emerald-600" /> Copied</>
@@ -1241,7 +1241,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                             disabled={!hasVisibleNotes}
                                             aria-haspopup="menu"
                                             aria-expanded={downloadOpen}
-                                            className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] px-2.5 py-1.5 rounded-lg hover:bg-[#e8eef9] transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-300 dark:hover:bg-blue-500/15 dark:hover:text-blue-200"
+                                            className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] px-2.5 py-1.5 rounded-lg hover:bg-[#e8eef9] transition-colors active:scale-[0.98] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-300 dark:hover:bg-blue-500/15 dark:hover:text-blue-200"
                                         >
                                             <Download className="w-3.5 h-3.5" />
                                             Download
@@ -1262,7 +1262,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                                         void handleSavePDF();
                                                     }}
                                                     disabled={isGeneratingPDF}
-                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                 >
                                                     {isGeneratingPDF ? (
                                                         <Loader2 className="w-3.5 h-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />
@@ -1278,7 +1278,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                                         setDownloadOpen(false);
                                                         handleDownloadMarkdown();
                                                     }}
-                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                 >
                                                     <Download className="w-3.5 h-3.5 text-[#2149A1] dark:text-blue-300" />
                                                     Download Markdown (.md)

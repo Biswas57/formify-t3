@@ -22,6 +22,7 @@
 | T-141b Add theme provider and profile appearance toggle | Completed | Added local System/Light/Dark appearance preference, root `.dark` class bootstrap/provider, Tailwind v4 dark variant, and Profile Appearance controls. |
 | T-141c Apply first-pass dark styling to core app surfaces | Completed | Added usable slate/navy dark styling and dark-mode contrast fixes for dashboard shell, profile, form bank, notes/sidebar, template builder, and transcription surfaces; detailed polish remains deferred. |
 | T-141 Begin dark mode groundwork | Completed | First-pass dark mode groundwork is complete: local appearance preference, profile toggle, root dark class, and core surface styling are in place. |
+| T-145 Improve button feedback and clickable affordances | Completed | Added global clickable/disabled cursor defaults plus focused pressed feedback on high-impact mobile and app action controls. |
 | T-114 Note templates: DB model + tRPC router | Completed | Create/list/delete and 10-template limit passed through the sidebar API path; ownership boundary remains deferred. |
 | T-115 Note templates: sidebar UI in NotesClient | Completed | Desktop sidebar and mobile drawer save/select/delete flows passed; active-recording template actions remain deferred. |
 | T-118 Fix notes template sidebar overflow/clutter | Completed | Removed duplicate notes sub-header text, added desktop sidebar show/hide control, and constrained template rows so long titles/sections truncate without widening the sidebar. |
@@ -41,6 +42,7 @@ _None._
 
 | ID | Status | Notes |
 | --- | --- | --- |
+| T-013 Free-app usage safety limits and observability | Backlog | P1/P2, production hardening. Add fair-use session/cost protection and internal observability without paid tiers or Pro gates. |
 | T-107 Review legacy CustomBlock model | Backlog | Old `customBlockRouter` source was removed; decide whether existing `CustomBlock` data/model should be migrated or removed. |
 | T-108 Remove legacy usage.recordSession | Backlog | Usage is counted during WS token mint; remove mutation after confirming no old clients call it. |
 | T-109 Harden email HTML handling | Backlog | Escape or sanitize `formHTML` before accepting untrusted/richer HTML sources. |
@@ -48,8 +50,8 @@ _None._
 | T-111 Avoid Google Fonts build network dependency | Backlog | `next/font` can fail in restricted networks; consider self-hosted/local font strategy. |
 | T-120 Review and polish PDF export formatting | Backlog | P1, medium risk, PDF/export. Inspect and improve form + notes PDF branding, title/date/style, pagination, wrapped text, blank lines, footers, and page numbers. |
 | T-123 Support table-style form fields | Backlog | P3, high risk, likely UI/API/DB/export. Needs product/design spec before implementation. |
-| T-126 Notes local autosave and recovery | Backlog | P3, medium risk, frontend-only. Autosave visible generated notes locally with restore/discard UX; no audio, DB history, or WS changes. Lower priority for now. |
-| T-127 Summarise current generated notes | Backlog | P1, medium-high risk, depends on T-130. `formify-web` adds a protected tRPC mutation and UI button that send current `notesMarkdown` only; no audio, DB save, or live WS protocol change. |
-| T-128 Reorganise current notes into new sections | Backlog | P1/P2, high risk, depends on T-130. `formify-web` adds a protected tRPC mutation and UI flow that send current `notesMarkdown` plus target sections; no audio, DB save, or live WS protocol change. |
-| T-130 Add HTTP notes transform endpoints to ws-transcription | Backlog | P0, medium-high risk, `ws-transcription`. Add server-to-server authenticated summarise/reorganise endpoints that reuse existing GPT helper style, validate input length, return Markdown, and do not log notes content. |
+| T-126 Notes local autosave and recovery | Backlog | P3, medium risk, frontend-only. Autosave current visible notes/session config locally with expiry and restore/discard UX; no audio, raw transcript, DB history, or WS changes. |
+| T-127 Summarise current generated notes | Backlog | P1, medium-high risk, depends on backend transform endpoint availability. Use current visible `notesMarkdown`, show preview first, and only replace notes on explicit user action. |
+| T-128 Reorganise current notes into new sections | Backlog | P1/P2, high risk, depends on backend transform endpoint availability. Use current visible `notesMarkdown`, one-section-per-line input, preview first, and apply only on explicit user action. |
 | T-131 Polish TranscriptionClient field locking UI | Backlog | P2, low risk, UI-only. Make locked/edited field state neater after T-113 behavior is smoke-tested. Formerly tracked as T-119 before the notes-sidebar follow-up reused that ID. |
+| T-144 Add Donate button and donation page | Backlog | P2, low-medium risk. Add optional support/donate entry point without paywalls, Pro tiers, pricing tables, subscription logic, or feature gates. |

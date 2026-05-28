@@ -79,3 +79,15 @@ There are no existing paid subscribers, so Formify does not need a visible billi
 ## D-019 Theme Preference Is Local And Class-Based
 
 Dark mode should default to system preference and allow a user override of System, Light, or Dark in profile settings. The v1 preference is stored in `localStorage`, applies a class on `document.documentElement`, and should use a tiny layout bootstrap script to avoid initial flash. No database persistence or new dependency is required for the first pass.
+
+## D-020 Notes Markdown Is The Canonical Post-Processing Source
+
+Notes post-processing actions operate on current visible `notesMarkdown`, including user edits and applied transforms. Preview-only transforms do not affect future recording. Only explicit Apply/Replace actions update canonical notes, and resume sends canonical notes as continuation context.
+
+## D-021 Free-App Safety Limits Are Not Paywalls
+
+Future usage limits should protect reliability and cost for the free app. They must be framed as fair-use safety controls, not Free/Pro tiers, paid feature gates, or Stripe-backed monetisation.
+
+## D-022 Donations Are Optional Support Only
+
+Donation UI may be added as optional support for Formify. It must not reintroduce Pro plans, pricing tables, upgrade prompts, subscription management, paid feature gates, or app-owned billing routes.

@@ -70,7 +70,7 @@ function PasswordField({
                 <button
                     type="button"
                     onClick={() => setShow((v) => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#868C94] hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#868C94] transition-opacity active:opacity-70 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                     {show ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
@@ -121,14 +121,14 @@ function ChangeNameSection({ currentName }: { currentName: string | null }) {
                             <button
                                 onClick={handleSave}
                                 disabled={loading || !name.trim()}
-                                className="flex items-center gap-1.5 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
+                                className="flex items-center gap-1.5 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-[background-color,transform,opacity] active:scale-[0.98] active:opacity-90"
                             >
                                 {loading && <Loader2 className="w-3 h-3 animate-spin" />}
                                 Save
                             </button>
                             <button
                                 onClick={() => { setOpen(false); setStatus(null); setName(currentName ?? ""); }}
-                                className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98] active:opacity-80 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                             >
                                 Cancel
                             </button>
@@ -139,7 +139,7 @@ function ChangeNameSection({ currentName }: { currentName: string | null }) {
                         <p className="text-sm text-slate-800 dark:text-slate-200">{currentName ?? "—"}</p>
                         <button
                             onClick={() => setOpen(true)}
-                            className="ml-3 text-[#868C94] hover:text-[#2149A1] transition-colors dark:text-slate-400 dark:hover:text-blue-300"
+                            className="ml-3 text-[#868C94] hover:text-[#2149A1] transition-opacity active:opacity-70 dark:text-slate-400 dark:hover:text-blue-300"
                             title="Edit name"
                         >
                             <Pencil className="w-3.5 h-3.5" />
@@ -204,14 +204,14 @@ function ChangePasswordSection({ hasPassword }: { hasPassword: boolean }) {
                             <button
                                 onClick={handleSave}
                                 disabled={loading}
-                                className="flex items-center gap-1.5 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
+                                className="flex items-center gap-1.5 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-[background-color,transform,opacity] active:scale-[0.98] active:opacity-90"
                             >
                                 {loading && <Loader2 className="w-3 h-3 animate-spin" />}
                                 {hasPassword ? "Change password" : "Set password"}
                             </button>
                             <button
                                 onClick={() => { setOpen(false); setStatus(null); setCurrent(""); setNext(""); setConfirm(""); }}
-                                className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98] active:opacity-80 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                             >
                                 Cancel
                             </button>
@@ -222,7 +222,7 @@ function ChangePasswordSection({ hasPassword }: { hasPassword: boolean }) {
                         <p className="text-sm text-slate-800 dark:text-slate-200">{hasPassword ? "••••••••" : "Not set"}</p>
                         <button
                             onClick={() => setOpen(true)}
-                            className="ml-3 text-[#868C94] hover:text-[#2149A1] transition-colors dark:text-slate-400 dark:hover:text-blue-300"
+                            className="ml-3 text-[#868C94] hover:text-[#2149A1] transition-opacity active:opacity-70 dark:text-slate-400 dark:hover:text-blue-300"
                             title={hasPassword ? "Change password" : "Set password"}
                         >
                             <Pencil className="w-3.5 h-3.5" />
@@ -260,7 +260,7 @@ function DeleteAccountSection() {
             {!open ? (
                 <button
                     onClick={() => setOpen(true)}
-                    className="flex items-center gap-2.5 text-sm text-red-600 hover:text-red-700 transition-colors min-h-[44px]"
+                    className="flex items-center gap-2.5 text-sm text-red-600 hover:text-red-700 transition-opacity active:opacity-80 min-h-[44px]"
                 >
                     <Trash2 className="w-4 h-4" />
                     Delete account
@@ -289,14 +289,14 @@ function DeleteAccountSection() {
                         <button
                             onClick={handleDelete}
                             disabled={confirm !== "DELETE" || loading}
-                            className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
+                            className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-[background-color,transform,opacity] active:scale-[0.98] active:opacity-90"
                         >
                             {loading && <Loader2 className="w-3 h-3 animate-spin" />}
                             Delete permanently
                         </button>
                         <button
                             onClick={() => { setOpen(false); setConfirm(""); setStatus(null); }}
-                            className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                            className="text-xs text-[#868C94] hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98] active:opacity-80 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                         >
                             Cancel
                         </button>
@@ -332,7 +332,7 @@ function AppearanceSection() {
                             type="button"
                             onClick={() => setAppearance(option.value)}
                             aria-pressed={selected}
-                            className={`rounded-xl border px-3 py-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-[#2149A1]/20 ${selected
+                            className={`rounded-xl border px-3 py-3 text-left transition-[background-color,border-color,color,transform,opacity] active:scale-[0.98] active:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#2149A1]/20 ${selected
                                 ? "border-[#2149A1] bg-[#e8eef9] text-[#2149A1] dark:border-blue-400 dark:bg-blue-500/15 dark:text-blue-200"
                                 : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                                 }`}
@@ -448,7 +448,7 @@ export default function ProfileClient({ user }: Props) {
                         </p>
                         <button
                             onClick={() => void signOut({ callbackUrl: "/" })}
-                            className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-red-600 transition-colors group min-h-[44px] dark:text-slate-200 dark:hover:text-red-400"
+                            className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-red-600 transition-opacity active:opacity-80 group min-h-[44px] dark:text-slate-200 dark:hover:text-red-400"
                         >
                             <LogOut className="w-4 h-4 group-hover:text-red-500 transition-colors" />
                             Sign out

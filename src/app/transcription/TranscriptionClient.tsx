@@ -773,7 +773,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
             {/* ── Header ── */}
             <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 dark:border-slate-800 dark:bg-slate-950/90">
                 <div className="container mx-auto px-4 py-3.5 flex items-center justify-between">
-                    <Link href="/dashboard" className="flex items-center gap-2.5">
+                    <Link href="/dashboard" className="flex items-center gap-2.5 transition-opacity active:opacity-80">
                         <div className="flex items-center gap-2.5 animate-fade-in">
                             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
                                 <Mic className="w-6 h-6 text-white" />
@@ -811,7 +811,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         </div>
 
                         {/* User */}
-                        <Link href="/dashboard/profile" className="flex items-center gap-2 pl-3 border-l border-slate-200 hover:opacity-80 transition-opacity dark:border-slate-800">
+                        <Link href="/dashboard/profile" className="flex items-center gap-2 pl-3 border-l border-slate-200 hover:opacity-80 transition-opacity active:opacity-70 dark:border-slate-800">
                             <div className="w-7 h-7 rounded-full bg-[#2149A1] flex items-center justify-center text-xs font-bold text-white">
                                 {user.name?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? "?"}
                             </div>
@@ -841,7 +841,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         <p className="flex-1">{errorMessage}</p>
                         <button
                             onClick={() => { setWsError(null); setMicError(null); connectWS(); }}
-                            className="flex items-center gap-1 font-medium text-xs text-red-600 hover:text-red-800 whitespace-nowrap transition-colors dark:text-red-300 dark:hover:text-red-200"
+                            className="flex items-center gap-1 font-medium text-xs text-red-600 hover:text-red-800 whitespace-nowrap transition-opacity active:opacity-80 dark:text-red-300 dark:hover:text-red-200"
                         >
                             <RotateCcw className="w-3 h-3" /> Retry
                         </button>
@@ -882,7 +882,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         <button
                             onClick={startRecording}
                             disabled={!canRecord || getSessionToken.isPending}
-                            className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-all duration-200 hover:scale-[1.02]"
+                            className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-[background-color,color,transform,opacity] duration-150 hover:scale-[1.02] active:scale-[0.98] active:opacity-90"
                         >
                             {getSessionToken.isPending
                                 ? <><Loader2 className="w-4 h-4 animate-spin" />Starting…</>
@@ -892,7 +892,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     ) : (
                         <button
                             onClick={pauseRecording}
-                            className="flex items-center gap-2 border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-medium px-5 py-2.5 rounded-lg transition-all duration-200 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-900"
+                            className="flex items-center gap-2 border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-medium px-5 py-2.5 rounded-lg transition-[background-color,border-color,color,transform,opacity] duration-150 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-900"
                         >
                             <Square className="w-3.5 h-3.5 fill-current" />
                             Pause
@@ -903,7 +903,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     {isPaused && (
                         <button
                             onClick={handleSavePDF}
-                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300"
+                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-[border-color,color,transform,opacity] duration-150 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300"
                         >
                             <Download className="w-3.5 h-3.5" />
                             Save as PDF
@@ -914,7 +914,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     {isPaused && (
                         <button
                             onClick={() => setShowEmailModal(true)}
-                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-all duration-200 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300"
+                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-[border-color,color,transform,opacity] duration-150 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300"
                         >
                             <Mail className="w-3.5 h-3.5" />
                             Email Form
@@ -925,7 +925,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     {(isPaused || isRecording) && (
                         <button
                             onClick={handleReset}
-                            className="flex items-center gap-1.5 text-sm text-[#868C94] hover:text-slate-700 transition-colors ml-auto dark:text-slate-400 dark:hover:text-slate-200"
+                            className="flex items-center gap-1.5 text-sm text-[#868C94] hover:text-slate-700 transition-opacity active:opacity-80 ml-auto dark:text-slate-400 dark:hover:text-slate-200"
                         >
                             <RefreshCw className="w-3.5 h-3.5" />
                             Reset form
@@ -971,7 +971,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                                     <button
                                                         onClick={() => unlockField(field)}
                                                         title="Locked — click to allow AI to fill again"
-                                                        className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 transition-colors dark:text-amber-300 dark:hover:text-amber-200"
+                                                        className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 transition-opacity active:opacity-80 dark:text-amber-300 dark:hover:text-amber-200"
                                                     >
                                                         <Lock className="w-3 h-3" />
                                                     </button>
@@ -1006,7 +1006,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 <div className="mt-8 rounded-xl border border-slate-200 overflow-hidden dark:border-slate-800">
                     <button
                         onClick={() => setTemplateOpen((v) => !v)}
-                        className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-slate-50 text-sm text-[#868C94] hover:text-slate-700 transition-colors dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                        className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-slate-50 text-sm text-[#868C94] hover:text-slate-700 transition-colors active:opacity-80 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                     >
                         <span className="font-medium">Advanced — Template Editor</span>
                         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${templateOpen ? "rotate-180" : ""}`} />
@@ -1032,7 +1032,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                 <button
                                     onClick={() => { setTemplateOpen(false); blocksReadyRef.current = false; setBlocksReady(false); }}
                                     disabled={!isConnected || isRecording}
-                                    className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed transition-opacity active:opacity-80"
                                 >
                                     Apply template →
                                 </button>
@@ -1059,7 +1059,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                     setEmailStatus(null);
                                     setCustomEmail("");
                                 }}
-                                className="text-slate-400 hover:text-slate-600 transition-colors dark:text-slate-400 dark:hover:text-slate-200"
+                                className="text-slate-400 hover:text-slate-600 transition-opacity active:opacity-80 dark:text-slate-400 dark:hover:text-slate-200"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -1128,14 +1128,14 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                     setEmailStatus(null);
                                     setCustomEmail("");
                                 }}
-                                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors active:scale-[0.98] active:opacity-80 text-sm font-medium dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSendEmail}
                                 disabled={isSendingEmail || (emailOption === "custom" && !customEmail)}
-                                className="flex-1 px-4 py-2 bg-[#2149A1] text-white rounded-lg hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                                className="flex-1 px-4 py-2 bg-[#2149A1] text-white rounded-lg hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed transition-colors active:scale-[0.98] active:opacity-90 text-sm font-medium flex items-center justify-center gap-2"
                             >
                                 {isSendingEmail ? (
                                     <>

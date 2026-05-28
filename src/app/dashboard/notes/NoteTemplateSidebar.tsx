@@ -180,7 +180,7 @@ export default function NoteTemplateSidebar({
                             type="button"
                             onClick={openSaveForm}
                             disabled={!canSelect}
-                            className="mr-2 flex items-center gap-1 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a3a87] disabled:cursor-not-allowed disabled:opacity-40"
+                            className="mr-2 flex items-center gap-1 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors active:scale-[0.98] active:opacity-90 hover:bg-[#1a3a87] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Plus className="h-3.5 w-3.5" />
                             Save
@@ -189,7 +189,7 @@ export default function NoteTemplateSidebar({
                             <button
                                 type="button"
                                 onClick={onToggleSidebar}
-                                className="hidden rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#2149A1] md:inline-flex dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
+                                className="hidden rounded-lg p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-[#2149A1] md:inline-flex dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
                                 aria-label="Hide templates sidebar"
                                 title="Hide templates sidebar"
                             >
@@ -200,7 +200,7 @@ export default function NoteTemplateSidebar({
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 md:hidden dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
+                                className="rounded-lg p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-slate-600 md:hidden dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
                                 aria-label="Close templates"
                             >
                                 <X className="h-4 w-4" />
@@ -228,7 +228,7 @@ export default function NoteTemplateSidebar({
                                 type="button"
                                 onClick={() => void handleCreate()}
                                 disabled={!canSelect || createMutation.isPending}
-                                className="flex items-center gap-1 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a3a87] disabled:opacity-50"
+                                className="flex items-center gap-1 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors active:scale-[0.98] active:opacity-90 hover:bg-[#1a3a87] disabled:opacity-50"
                             >
                                 {createMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                                 Save
@@ -236,7 +236,7 @@ export default function NoteTemplateSidebar({
                             <button
                                 type="button"
                                 onClick={() => setIsSaving(false)}
-                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
+                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
                             >
                                 Cancel
                             </button>
@@ -315,7 +315,7 @@ export default function NoteTemplateSidebar({
                                                     onClose?.();
                                                 }}
                                                 disabled={!canSelect}
-                                                className={`block w-full min-w-0 text-left transition-[padding] disabled:cursor-not-allowed disabled:opacity-50 ${isConfirmingDelete
+                                                className={`block w-full min-w-0 text-left transition-[padding] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 ${isConfirmingDelete
                                                     ? "pr-28"
                                                     : "pr-16 md:pr-1 md:group-hover:pr-16 md:group-focus-within:pr-16"
                                                     }`}
@@ -332,7 +332,7 @@ export default function NoteTemplateSidebar({
                                                         type="button"
                                                         onClick={() => void handleDelete(template.id)}
                                                         disabled={isDeleting}
-                                                        className="rounded-md p-1.5 text-red-600 transition-colors hover:bg-white disabled:opacity-50 dark:text-red-400 dark:hover:bg-slate-800"
+                                                        className="rounded-md p-1.5 text-red-600 transition-colors active:scale-95 active:opacity-80 hover:bg-white disabled:opacity-50 dark:text-red-400 dark:hover:bg-slate-800"
                                                         aria-label={`Confirm delete ${template.title}`}
                                                     >
                                                         {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
@@ -340,7 +340,7 @@ export default function NoteTemplateSidebar({
                                                     <button
                                                         type="button"
                                                         onClick={() => setConfirmDeleteId(null)}
-                                                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-white hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                        className="rounded-md p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-white hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                                         aria-label={`Cancel delete ${template.title}`}
                                                     >
                                                         <X className="h-3.5 w-3.5" />
@@ -351,7 +351,7 @@ export default function NoteTemplateSidebar({
                                                     <button
                                                         type="button"
                                                         onClick={() => startRename(template)}
-                                                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-white hover:text-[#2149A1] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-blue-300"
+                                                        className="rounded-md p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-white hover:text-[#2149A1] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-blue-300"
                                                         aria-label={`Rename ${template.title}`}
                                                     >
                                                         <Pencil className="h-3.5 w-3.5" />
@@ -359,7 +359,7 @@ export default function NoteTemplateSidebar({
                                                     <button
                                                         type="button"
                                                         onClick={() => setConfirmDeleteId(template.id)}
-                                                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-white hover:text-red-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-red-400"
+                                                        className="rounded-md p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-white hover:text-red-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-red-400"
                                                         aria-label={`Delete ${template.title}`}
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5" />

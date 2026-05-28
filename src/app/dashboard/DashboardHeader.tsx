@@ -75,7 +75,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
         <>
             <header className="h-16 md:h-20 bg-white border-b border-slate-200 flex items-center px-4 md:px-6 gap-4 md:gap-8 sticky top-0 z-40 dark:border-slate-800 dark:bg-slate-950/95">
                 {/* Logo */}
-                <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0">
+                <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0 transition-opacity active:opacity-80">
                     <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
                         <Mic className="w-4 h-4 md:w-6 md:h-6 text-white" />
                     </div>
@@ -93,7 +93,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                         <Link
                             key={href}
                             href={href}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${isActive(href)
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 active:scale-[0.98] active:opacity-90 ${isActive(href)
                                 ? "bg-[#e8eef9] text-[#2149A1] dark:bg-blue-500/15 dark:text-blue-200"
                                 : "text-[#868C94] hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-100"
                                 }`}
@@ -111,7 +111,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                 <div className="hidden md:block relative flex-shrink-0" ref={dropdownRef}>
                     <button
                         onClick={() => setDropdownOpen((v) => !v)}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors group dark:hover:bg-slate-900"
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-95 active:opacity-80 group dark:hover:bg-slate-900"
                     >
                         {user.image ? (
                             <Image
@@ -143,7 +143,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                             <Link
                                 href="/dashboard/profile"
                                 onClick={() => setDropdownOpen(false)}
-                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors dark:text-slate-200 dark:hover:bg-slate-800"
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors active:opacity-80 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 <User className="w-3.5 h-3.5 text-[#868C94] dark:text-slate-400" />
                                 Profile
@@ -151,7 +151,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                             <div className="border-t border-slate-100 mt-1 pt-1 dark:border-slate-800">
                                 <button
                                     onClick={() => void signOut({ callbackUrl: "/" })}
-                                    className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors dark:text-red-400 dark:hover:bg-red-950/30"
+                                    className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors active:opacity-80 dark:text-red-400 dark:hover:bg-red-950/30"
                                 >
                                     <LogOut className="w-3.5 h-3.5" />
                                     Sign out
@@ -164,7 +164,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                 {/* Hamburger - mobile only */}
                 <button
                     onClick={() => setMobileMenuOpen((v) => !v)}
-                    className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-slate-100 transition-colors flex-shrink-0 dark:hover:bg-slate-900"
+                    className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-slate-100 transition-colors active:scale-95 active:opacity-80 flex-shrink-0 dark:hover:bg-slate-900"
                     aria-label="Toggle menu"
                 >
                     {mobileMenuOpen ? (
@@ -178,7 +178,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
             {/* Mobile drawer overlay */}
             {mobileMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-black/30 z-30 md:hidden dark:bg-black/50"
+                    className="fixed inset-0 bg-black/30 z-30 md:hidden cursor-pointer dark:bg-black/50"
                     onClick={() => setMobileMenuOpen(false)}
                 />
             )}
@@ -225,7 +225,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                         <Link
                             key={href}
                             href={href}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-150 min-h-[52px] ${isActive(href)
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-colors duration-150 min-h-[52px] active:scale-[0.98] active:opacity-90 ${isActive(href)
                                 ? "bg-[#e8eef9] text-[#2149A1] dark:bg-blue-500/15 dark:text-blue-200"
                                 : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-900"
                                 }`}
@@ -236,7 +236,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                     ))}
                     <Link
                         href="/dashboard/profile"
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-150 min-h-[52px] ${isActive("/dashboard/profile")
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-colors duration-150 min-h-[52px] active:scale-[0.98] active:opacity-90 ${isActive("/dashboard/profile")
                             ? "bg-[#e8eef9] text-[#2149A1] dark:bg-blue-500/15 dark:text-blue-200"
                             : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-900"
                             }`}
@@ -250,7 +250,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
                 <div className="mt-auto px-3 pb-8 border-t border-slate-100 pt-4 dark:border-slate-800">
                     <button
                         onClick={() => void signOut({ callbackUrl: "/" })}
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-red-600 hover:bg-red-50 transition-colors min-h-[52px] dark:text-red-400 dark:hover:bg-red-950/30"
+                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-red-600 hover:bg-red-50 transition-colors active:scale-[0.98] active:opacity-90 min-h-[52px] dark:text-red-400 dark:hover:bg-red-950/30"
                     >
                         <LogOut className="w-5 h-5 flex-shrink-0" />
                         Sign out

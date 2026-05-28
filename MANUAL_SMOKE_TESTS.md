@@ -89,6 +89,17 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] Desktop notes sidebar/rail remains unchanged.
 - [ ] Desktop template save behaviour remains unchanged.
 
+## Clickable Feedback
+
+- [ ] Mobile Start/Stop/Resume buttons show immediate pressed feedback.
+- [ ] Mobile Templates button and drawer controls show immediate pressed feedback.
+- [ ] Mobile Save button shows pressed, saving, and saved states correctly.
+- [ ] Mobile Edit, Done, Cancel, Copy, and Download controls feel responsive.
+- [ ] Desktop clickable cards, buttons, links, and menu items show pointer/hover affordance.
+- [ ] Desktop disabled buttons do not show pointer cursor.
+- [ ] Dark mode hover/active states remain readable.
+- [ ] No action behaviour changed.
+
 ## Account And Profile
 
 - [ ] Profile page loads.
