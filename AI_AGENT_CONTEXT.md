@@ -53,7 +53,7 @@ Build notes:
 
 - `npm run build` runs `prisma generate` first.
 - Prisma generation can change generated files with local absolute paths; avoid committing generated churn unless intentional.
-- `next/font` may need network access to fetch Google Fonts during production build.
+- Fonts use a local system font stack (no `next/font/google`), so the build does not fetch fonts over the network (T-111).
 
 ## Env Vars
 
