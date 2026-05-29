@@ -1,111 +1,77 @@
 # Decisions
 
-## D-001 Separate Web App And Transcription Server
+Architectural and product decisions that should stay stable across tickets. Ticket history and implementation notes live in `TASKS.md`; agent workflow lives in `AI_AGENT_CONTEXT.md`.
 
-Formify keeps the Next.js web app separate from the WebSocket transcription server. This repo owns auth, templates, UI, and WS token minting. The sibling service owns audio transcription and AI extraction.
+## Architecture
 
-## D-002 Web App Mints Short-Lived WS Tokens
+### D-001 Two-service split
 
-The frontend does not authenticate directly with the transcription server. It calls `transcription.getSessionToken`, which verifies the signed-in user and returns a short-lived JWT signed with `WS_TOKEN_SECRET`. Recording access is no longer blocked by free/pro usage limits.
+Formify is split into this Next.js web app and a sibling `ws-transcription` service. The web app owns auth, UI, templates, export, and WS token minting. The transcription server owns audio, Whisper, and GPT extraction. Do not change the WebSocket message contract in one repo without coordinating the other.
 
-## D-003 Usage Is Analytics-Only At Token Mint
+### D-002 Web app mints short-lived WS tokens
 
-Recording usage is counted as best-effort analytics when a WS token is minted. Usage write/read failures must not block token minting or recording. The legacy `usage.recordSession` mutation has been removed (T-108); `usage.getToday` remains as the active non-blocking analytics read.
+The browser never authenticates to the transcription server directly. Signed-in users call `transcription.getSessionToken`; the web server returns a short-lived JWT signed with `WS_TOKEN_SECRET` (shared with `ws-transcription`). The client sends that token in the WS `start` payload.
 
-## D-004 Current Form WS Payload Does Not Use corrected_audio
+### D-003 Usage is analytics-only
 
-The current frontend expects form updates as `{ type, attributes }`. It does not require `corrected_audio`. Reintroducing corrected text in the WS protocol requires coordination with the transcription server and frontend consumers.
+`TranscriptionUsage` counts sessions at token mint time as best-effort analytics. Write/read failures must **not** block token minting or recording. Do not reintroduce plan-based or daily-limit gates on `getSessionToken` or core features.
 
-## D-005 Active Custom Blocks Use BlockDefinition
+### D-004 Forms WebSocket payload: keys only, no `corrected_audio`
 
-The active template builder uses `blockRouter` and `BlockDefinition`. The old `customBlockRouter` source has been removed, and the legacy `CustomBlock` model has now also been removed (T-107) since it was unused by the active flow. The user-facing "custom blocks" feature is powered entirely by `BlockDefinition` (the `block.createCustom`/`listLibrary`/`deleteCustom` procedures) plus `TemplateBlock`/`BlockSource`.
+On `start`, forms mode sends `{ action, mode: "forms", blocks, token }` where `blocks` maps block names to **field keys only** — never field values. The current frontend expects inbound `{ type, attributes }` updates; it does not consume `corrected_audio`. Adding corrected text requires coordinated changes in both repos.
 
-## D-006 T3 Starter Post Surface Removed
+### D-005 Notes AI transforms use HTTP on `ws-transcription`
 
-The starter `postRouter` and `LatestPost` component were unused and removed to keep the active API surface focused on Formify.
+Summarise, reorganise, and similar notes post-processing are **not** live WS protocol features. `ws-transcription` exposes authenticated HTTP transform endpoints; `formify-web` calls them from protected tRPC mutations. These transforms must not persist notes to the DB, stream audio, or change the browser WS recording contract.
 
-## D-007 Email Export Trust Boundary Documented
+## Product model
 
-Email export currently accepts Formify-generated rendered HTML. The endpoint documents this as a trust boundary; future richer or untrusted HTML sources require escaping or sanitization before sending.
+### D-006 Formify is a genuinely free app
 
-## D-008 Keep WebSocket Logs PII-Safe
+Core features (forms recording, notes recording, form templates, note templates, custom blocks, PDF/email export) are available to all signed-in users. Access is **auth-based**, not plan-based. Normal UI must not show Free/Pro tiers, pricing tables, upgrade modals, plan badges, billing cards, or paid-feature copy. Backend gates were removed before paywall UI cleanup so users do not hit `FORBIDDEN` behind a “free” surface.
 
-Client recording/WebSocket paths should not log tokens, transcript text, notes markdown, form values, raw attributes, or unknown field names. User-facing error state should carry operational feedback instead.
+### D-007 Billing schema removed; migrations retained
 
-## D-009 NoteTemplate Schema Uses Plain Strings For noteStyle And sections
+Stripe runtime code, billing APIs/UI, entitlement helpers, and active billing models (`Plan`, `UserPlan`, subscription fields) were removed via a dedicated migration after runtime references were gone. There are no paid subscribers to migrate. **Do not delete old migration files casually** — they are historical record only.
 
-`NoteTemplate.noteStyle` is stored as a plain `String` (not a Prisma enum). The four valid values (`general`, `clinical`, `meeting`, `study`) are validated at the tRPC boundary with a Zod enum. This avoids a DB enum migration every time a new style is added.
+### D-008 Fair-use limits are not paywalls
 
-`NoteTemplate.sections` is stored as a raw comma-separated `String`, matching the `sectionsRaw` state in `NotesClient.tsx`. No join table is used. This keeps the schema minimal and the client-side data format unchanged.
+Any future session/cost protection must be framed as reliability fair-use for the free app, not Free/Pro tiers, Stripe-backed monetisation, or feature gates.
 
-## D-010 Note Templates Initially Used A 10 Template Cap
+### D-009 Donations are optional support only
 
-`FREE_NOTE_TEMPLATES: 10` was added to `PLAN_LIMITS` in the initial note-template implementation. This cap is superseded by D-017 as Formify moves to the free-app model.
+Donation UI (if added) must not reintroduce subscriptions, pricing tables, upgrade prompts, or app-owned billing routes.
 
-## D-011 Note Templates Use Sidebar/Drawer Placement
+## Domain behaviour
 
-Notes templates are shown as a persistent left sidebar on desktop and a slide-in drawer from the sub-header on mobile. This keeps the main notes form unchanged, follows the dashboard mobile drawer pattern, and avoids new layout dependencies.
+### D-010 Notes markdown is canonical
 
-## D-012 Notes AI Transforms Use ws-transcription HTTP Endpoints
+Notes post-processing and resume operate on the current visible `notesMarkdown` (including user edits and applied transforms). Preview-only transforms do not affect the next recording. Only explicit Apply/Replace actions update canonical notes. Resume sends canonical markdown as `currentNotesMarkdown` with `continuation: true`.
 
-Notes Summarise/Reorganise are post-processing AI transforms, not live audio streaming. `ws-transcription` should own authenticated HTTP transform endpoints because it already owns OpenAI/Whisper/GPT provider and prompt logic. `formify-web` should call those endpoints from protected tRPC mutations and remain the UI/auth/orchestration layer.
+### D-011 Locked form fields are user-owned
 
-These tickets should not save generated notes to the database, send audio, or change the live browser WebSocket transcription protocol.
+In forms mode, fields the user manually edits are tracked as locked. AI `attributes_update` / `final_attributes` must not overwrite locked keys. Locked keys are omitted from subsequent WS `start` block lists so the server is not asked to refill user-corrected fields.
 
-## D-013 Formify Moves To A Free-App Model
+### D-012 Templates and custom blocks use `BlockDefinition`
 
-Formify should make core features available to all signed-in users: forms recording, notes recording, form templates, note templates, and custom blocks. Free/pro plan state should no longer block normal product usage.
+The template builder and block library use `blockRouter` and `BlockDefinition` (`createCustom`, `listLibrary`, `deleteCustom`) with `TemplateBlock` / `BlockSource`. The legacy `CustomBlock` model and `customBlockRouter` are removed; do not reintroduce a parallel custom-block store.
 
-## D-014 Backend Access Unlock Comes Before Paywall UI Cleanup
+## Security and privacy
 
-Backend gates must be removed or bypassed before hiding upgrade UI. Otherwise users may see a free app but still hit `FORBIDDEN` errors from token minting, template creation, or custom block APIs.
+### D-013 No PII or secrets in logs
 
-## D-015 Formify Is No Longer Presented As A Billable Product
+Server and client operational logs must never include transcripts, notes markdown, form values, email HTML/body, reset tokens/URLs, passwords, session/auth tokens, or recipient addresses. Log safe metadata only (counts, lengths, statuses, timings, generic reason codes, `error.name` where `error.message` may echo PII). Auth flows must not enumerate accounts (e.g. forgot-password always returns success).
 
-Normal product flows should not show Free/Pro distinctions, pricing gates, billing cards, plan badges, upgrade prompts, subscription-management UI, or paid-feature copy. Stripe runtime code, billing APIs, billing UI, Stripe env vars, and the active billing schema have been removed.
+### D-014 Email HTML is server-rendered from structured data
 
-## D-016 Billing Schema Cleanup Used A Dedicated Migration
+`/api/email` accepts `{ to, formTitle, blocks }` validated with zod and size caps. The server renders the email and HTML-escapes every dynamic value. Do not accept client-rendered `formHTML` or embed untrusted HTML.
 
-`Plan`, `UserPlan`, `SubscriptionStatus`, Stripe IDs, plan seed/fix scripts, and entitlement helper residue were removed through one dedicated Prisma migration after runtime references were removed. Old migration files are retained and should not be deleted casually.
+## UI infrastructure
 
-## D-017 TranscriptionUsage Stays As Analytics
+### D-015 Dark mode is local and class-based
 
-`TranscriptionUsage` remains for non-blocking recording analytics. Usage writes/read failures must not block token minting or recording.
+Theme preference (system / light / dark) is stored in `localStorage`, applied via a class on `document.documentElement`, with a small layout bootstrap script to avoid flash. No DB persistence required for v1.
 
-## D-018 No Subscriber Migration Path Is Required
+### D-016 System font stack (no build-time font fetch)
 
-There are no existing paid subscribers, so Formify does not need a visible billing portal or subscriber migration UX during Stripe cleanup.
-
-## D-019 Theme Preference Is Local And Class-Based
-
-Dark mode should default to system preference and allow a user override of System, Light, or Dark in profile settings. The v1 preference is stored in `localStorage`, applies a class on `document.documentElement`, and should use a tiny layout bootstrap script to avoid initial flash. No database persistence or new dependency is required for the first pass.
-
-## D-020 Notes Markdown Is The Canonical Post-Processing Source
-
-Notes post-processing actions operate on current visible `notesMarkdown`, including user edits and applied transforms. Preview-only transforms do not affect future recording. Only explicit Apply/Replace actions update canonical notes, and resume sends canonical notes as continuation context.
-
-## D-021 Free-App Safety Limits Are Not Paywalls
-
-Future usage limits should protect reliability and cost for the free app. They must be framed as fair-use safety controls, not Free/Pro tiers, paid feature gates, or Stripe-backed monetisation.
-
-## D-022 Donations Are Optional Support Only
-
-Donation UI may be added as optional support for Formify. It must not reintroduce Pro plans, pricing tables, upgrade prompts, subscription management, paid feature gates, or app-owned billing routes.
-
-## D-023 Legacy CustomBlock Model Removed
-
-The T-107 audit confirmed the `CustomBlock` Prisma model was unused by application code: the old `customBlockRouter` was already gone, the Template Builder "create block" flow saves through `block.createCustom`/`BlockDefinition` (the `handleSaveCustomBlock` handler is only a UI name), there were no `prisma.customBlock`/`db.customBlock` calls, and the seed did not reference it. The active custom-blocks feature is powered entirely by `BlockDefinition` (see D-005).
-
-Because Formify has no paying users and the model was confirmed dead and not part of the active template/custom-block flow, the `CustomBlock` model and its `User.customBlocks` relation were removed via the `20260529000000_remove_custom_block` migration (`DROP TABLE "CustomBlock"`). Historical migrations remain untouched. This is a destructive drop accepted under the explicit decision that no production data needs to be preserved for this table.
-
-## D-024 Server Logs Must Stay PII-Safe
-
-Server-side and API logs must never include raw user content or secrets: transcripts, notes markdown, form values, email HTML/body, password reset tokens or URLs, passwords, auth/session tokens, secrets, or user email addresses. Logs should carry only safe metadata — counts, lengths, booleans, statuses, timings, and generic reason codes. When logging errors, log `error instanceof Error ? error.message : "unknown_error"` (or just `error.name` where the message itself may contain PII), never the raw `Error` object or request body. Dev-only diagnostics may be more verbose but must still avoid secrets/PII.
-
-## D-025 Email Endpoint Renders From Structured Data, Not Client HTML
-
-`/api/email` no longer accepts client-rendered `formHTML`. The transcription client sends structured data (`{ to, formTitle, blocks: [{ name, fields: [{ label, value }] }] }`), validated server-side with a zod schema and bounded size caps, and the server renders the email HTML itself while HTML-escaping every dynamic value (title, block names, labels, values). This removes the HTML/attribute injection trust boundary (no `<script>`, inline `on*=` handlers, or `javascript:` URLs can be introduced via form values), without adding a sanitisation dependency. The endpoint remains auth-gated and logs only safe metadata (see D-024). Updating the email template should keep server-side rendering and escaping; never embed raw client HTML.
-
-## D-026 System Font Stack To Avoid Build-Time Font Fetch
-
-Formify uses a professional system font stack rather than `next/font/google`. The Geist Google font was removed because `next/font/google` fetches font files over the network at build time, which fails in restricted/offline build environments. The font stack (`ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`) is defined in `globals.css` (`--font-sans`) and `tailwind.config.ts`, and the CSP `font-src`/`style-src` no longer allow Google Fonts hosts. Do not reintroduce `next/font/google` or external font `<link>`s; if a custom font is ever needed, self-host a clearly licensed font file locally.
+Typography uses a local system font stack in `globals.css` / Tailwind — not `next/font/google` — so production builds do not fetch fonts over the network.

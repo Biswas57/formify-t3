@@ -153,7 +153,5 @@ Current frontend form messages expect `{ type, attributes }`; `corrected_audio` 
 ## Known Risks
 
 - Full manual smoke testing for the free-app migration is still deferred.
-- Email export trusts Formify-generated `formHTML`; sanitize/escape before accepting richer or untrusted HTML.
 - Historical billing migrations remain; do not delete old migrations casually.
-- Some server-side logs remain for operational events; review for PII before hardening.
-- Build can fail in network-restricted environments due Google Fonts.
+- Fair-use session/cost limits are not implemented yet (see D-008 in `DECISIONS.md`).
