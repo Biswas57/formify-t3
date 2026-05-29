@@ -51,9 +51,11 @@ export async function POST(req: Request) {
                 data: { userId: user.id, token: rawToken, expiresAt },
             });
         } catch (dbErr) {
-            // Table doesn't exist yet — log and return success without sending email
-            console.warn("[forgot-password] PasswordResetToken table not found — run the migration.");
-            console.warn("[forgot-password] Error:", dbErr);
+            // Table doesn't exist yet (or another DB error) — log a safe reason and
+            // return success without sending email. Never log the token or recipient.
+            console.warn("[forgot-password] Reset token persistence failed.", {
+                reason: dbErr instanceof Error ? dbErr.message : "unknown_error",
+            });
             return successResponse;
         }
 
@@ -96,14 +98,17 @@ export async function POST(req: Request) {
                 `,
             });
 
-            console.log(`[forgot-password] Reset email sent to ${user.email}`);
+            // Never log the recipient or reset URL/token.
+            console.info("[forgot-password] Reset email dispatched.");
         } else {
-            // Development fallback: log the reset URL to the server console
-            console.log(`[forgot-password] No email provider configured. Reset URL for ${user.email}:`);
-            console.log(`[forgot-password] ${resetUrl}`);
+            // No email provider configured. Do not log the reset URL/token or the
+            // recipient — set RESEND_API_KEY to deliver reset links.
+            console.warn("[forgot-password] No email provider configured; reset link not delivered.");
         }
     } catch (err) {
-        console.error("[forgot-password] Error:", err);
+        console.error("[forgot-password] Request failed.", {
+            reason: err instanceof Error ? err.message : "unknown_error",
+        });
         // Return success regardless — prevents email enumeration
     }
 

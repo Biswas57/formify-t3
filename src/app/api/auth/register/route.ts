@@ -42,7 +42,9 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true }, { status: 201 });
     } catch (err) {
-        console.error("Registration error:", err);
+        console.error("[register] Registration failed.", {
+            reason: err instanceof Error ? err.message : "unknown_error",
+        });
         return NextResponse.json(
             { error: "Internal server error. Please try again." },
             { status: 500 }

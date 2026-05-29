@@ -108,9 +108,9 @@ export async function POST(req: NextRequest) {
         });
 
         if (error) {
-            // Log only the Resend error object — never log htmlStr, titleStr, or toStr
-            // to avoid PII appearing in server logs.
-            console.error("[email] Resend error:", error.name, error.message);
+            // Log only the Resend error name — never log error.message (it can echo
+            // the recipient address), htmlStr, titleStr, or toStr.
+            console.error("[email] Resend send failed.", { name: error.name });
 
             let errorMessage = "Failed to send email";
             if (error.message?.includes("domain is not verified")) {
