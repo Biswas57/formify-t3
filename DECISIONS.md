@@ -18,7 +18,7 @@ The current frontend expects form updates as `{ type, attributes }`. It does not
 
 ## D-005 Active Custom Blocks Use BlockDefinition
 
-The active template builder uses `blockRouter` and `BlockDefinition`. The old `customBlockRouter` source has been removed; the `CustomBlock` model remains legacy and should not be wired back in without a product and migration decision.
+The active template builder uses `blockRouter` and `BlockDefinition`. The old `customBlockRouter` source has been removed, and the legacy `CustomBlock` model has now also been removed (T-107) since it was unused by the active flow. The user-facing "custom blocks" feature is powered entirely by `BlockDefinition` (the `block.createCustom`/`listLibrary`/`deleteCustom` procedures) plus `TemplateBlock`/`BlockSource`.
 
 ## D-006 T3 Starter Post Surface Removed
 
@@ -92,8 +92,8 @@ Future usage limits should protect reliability and cost for the free app. They m
 
 Donation UI may be added as optional support for Formify. It must not reintroduce Pro plans, pricing tables, upgrade prompts, subscription management, paid feature gates, or app-owned billing routes.
 
-## D-023 Legacy CustomBlock Model Is Retained Pending A Safe Migration
+## D-023 Legacy CustomBlock Model Removed
 
-The T-107 audit confirmed the `CustomBlock` Prisma model is unused by application code: the old `customBlockRouter` was removed, the Template Builder "create block" flow saves through `block.create`/`BlockDefinition` (the `handleSaveCustomBlock` handler is only a UI name), there are no `prisma.customBlock`/`db.customBlock` calls, and the seed does not reference it. Active custom blocks use `BlockDefinition` (see D-005).
+The T-107 audit confirmed the `CustomBlock` Prisma model was unused by application code: the old `customBlockRouter` was already gone, the Template Builder "create block" flow saves through `block.createCustom`/`BlockDefinition` (the `handleSaveCustomBlock` handler is only a UI name), there were no `prisma.customBlock`/`db.customBlock` calls, and the seed did not reference it. The active custom-blocks feature is powered entirely by `BlockDefinition` (see D-005).
 
-However, `CustomBlock` is a data-bearing table with a `User` relation (`onDelete: Cascade`) that may still hold rows created before the router was removed. Dropping it would be a destructive schema change with potential user-data loss, so the model is retained for now. Removal should be handled by a dedicated migration ticket that first confirms or safely migrates any existing rows. Historical migrations remain untouched.
+Because Formify has no paying users and the model was confirmed dead and not part of the active template/custom-block flow, the `CustomBlock` model and its `User.customBlocks` relation were removed via the `20260529000000_remove_custom_block` migration (`DROP TABLE "CustomBlock"`). Historical migrations remain untouched. This is a destructive drop accepted under the explicit decision that no production data needs to be preserved for this table.

@@ -163,5 +163,5 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 
 - Historical Prisma migrations still contain old billing/Stripe terms and are intentionally retained.
 - `TranscriptionUsage` remains as non-blocking analytics.
-- `CustomBlock` model remains for T-107 review.
+- Legacy `CustomBlock` model removed (T-107); active custom blocks use `BlockDefinition`.
 - `npm run lint` and `npm run build` pass with the pre-existing unused eslint-disable warning in `src/server/auth/config.ts`.

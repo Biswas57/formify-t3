@@ -70,7 +70,6 @@ model User {
     sessions              Session[]
     templates             Template[]
     blockDefinitions      BlockDefinition[]
-    customBlocks          CustomBlock[]
     transcriptionUsages   TranscriptionUsage[]
     passwordResetTokens   PasswordResetToken[]
     noteTemplates         NoteTemplate[]
@@ -167,22 +166,6 @@ enum FieldType {
     PHONE
     TEXTAREA
     SELECT
-}
-
-// ── Custom Blocks ─────────────────────────────────────────────────────────────
-
-model CustomBlock {
-    id          String   @id @default(cuid())
-    ownerId     String
-    title       String
-    description String?  @db.Text
-    fieldsJson  String   @db.Text // JSON serialized array of field definitions
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-
-    owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-
-    @@index([ownerId])
 }
 
 // ── Transcription Usage ──────────────────────────────────────────────────

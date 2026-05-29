@@ -64,11 +64,6 @@ export type BlockDefinition = $Result.DefaultSelection<Prisma.$BlockDefinitionPa
  */
 export type BlockFieldDefinition = $Result.DefaultSelection<Prisma.$BlockFieldDefinitionPayload>
 /**
- * Model CustomBlock
- * 
- */
-export type CustomBlock = $Result.DefaultSelection<Prisma.$CustomBlockPayload>
-/**
  * Model TranscriptionUsage
  * 
  */
@@ -331,16 +326,6 @@ export class PrismaClient<
     * ```
     */
   get blockFieldDefinition(): Prisma.BlockFieldDefinitionDelegate<ExtArgs, ClientOptions>;
-
-  /**
-   * `prisma.customBlock`: Exposes CRUD operations for the **CustomBlock** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more CustomBlocks
-    * const customBlocks = await prisma.customBlock.findMany()
-    * ```
-    */
-  get customBlock(): Prisma.CustomBlockDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.transcriptionUsage`: Exposes CRUD operations for the **TranscriptionUsage** model.
@@ -812,7 +797,6 @@ export namespace Prisma {
     TemplateField: 'TemplateField',
     BlockDefinition: 'BlockDefinition',
     BlockFieldDefinition: 'BlockFieldDefinition',
-    CustomBlock: 'CustomBlock',
     TranscriptionUsage: 'TranscriptionUsage',
     NoteTemplate: 'NoteTemplate'
   };
@@ -833,7 +817,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "account" | "passwordResetToken" | "session" | "verificationToken" | "user" | "template" | "templateBlock" | "templateField" | "blockDefinition" | "blockFieldDefinition" | "customBlock" | "transcriptionUsage" | "noteTemplate"
+      modelProps: "account" | "passwordResetToken" | "session" | "verificationToken" | "user" | "template" | "templateBlock" | "templateField" | "blockDefinition" | "blockFieldDefinition" | "transcriptionUsage" | "noteTemplate"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1577,80 +1561,6 @@ export namespace Prisma {
           }
         }
       }
-      CustomBlock: {
-        payload: Prisma.$CustomBlockPayload<ExtArgs>
-        fields: Prisma.CustomBlockFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.CustomBlockFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.CustomBlockFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
-          }
-          findFirst: {
-            args: Prisma.CustomBlockFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.CustomBlockFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
-          }
-          findMany: {
-            args: Prisma.CustomBlockFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>[]
-          }
-          create: {
-            args: Prisma.CustomBlockCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
-          }
-          createMany: {
-            args: Prisma.CustomBlockCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.CustomBlockCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>[]
-          }
-          delete: {
-            args: Prisma.CustomBlockDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
-          }
-          update: {
-            args: Prisma.CustomBlockUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
-          }
-          deleteMany: {
-            args: Prisma.CustomBlockDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.CustomBlockUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.CustomBlockUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>[]
-          }
-          upsert: {
-            args: Prisma.CustomBlockUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$CustomBlockPayload>
-          }
-          aggregate: {
-            args: Prisma.CustomBlockAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateCustomBlock>
-          }
-          groupBy: {
-            args: Prisma.CustomBlockGroupByArgs<ExtArgs>
-            result: $Utils.Optional<CustomBlockGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.CustomBlockCountArgs<ExtArgs>
-            result: $Utils.Optional<CustomBlockCountAggregateOutputType> | number
-          }
-        }
-      }
       TranscriptionUsage: {
         payload: Prisma.$TranscriptionUsagePayload<ExtArgs>
         fields: Prisma.TranscriptionUsageFieldRefs
@@ -1905,7 +1815,6 @@ export namespace Prisma {
     templateField?: TemplateFieldOmit
     blockDefinition?: BlockDefinitionOmit
     blockFieldDefinition?: BlockFieldDefinitionOmit
-    customBlock?: CustomBlockOmit
     transcriptionUsage?: TranscriptionUsageOmit
     noteTemplate?: NoteTemplateOmit
   }
@@ -1992,7 +1901,6 @@ export namespace Prisma {
     sessions: number
     templates: number
     blockDefinitions: number
-    customBlocks: number
     transcriptionUsages: number
     passwordResetTokens: number
     noteTemplates: number
@@ -2003,7 +1911,6 @@ export namespace Prisma {
     sessions?: boolean | UserCountOutputTypeCountSessionsArgs
     templates?: boolean | UserCountOutputTypeCountTemplatesArgs
     blockDefinitions?: boolean | UserCountOutputTypeCountBlockDefinitionsArgs
-    customBlocks?: boolean | UserCountOutputTypeCountCustomBlocksArgs
     transcriptionUsages?: boolean | UserCountOutputTypeCountTranscriptionUsagesArgs
     passwordResetTokens?: boolean | UserCountOutputTypeCountPasswordResetTokensArgs
     noteTemplates?: boolean | UserCountOutputTypeCountNoteTemplatesArgs
@@ -2046,13 +1953,6 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountBlockDefinitionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BlockDefinitionWhereInput
-  }
-
-  /**
-   * UserCountOutputType without action
-   */
-  export type UserCountOutputTypeCountCustomBlocksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: CustomBlockWhereInput
   }
 
   /**
@@ -6621,7 +6521,6 @@ export namespace Prisma {
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     templates?: boolean | User$templatesArgs<ExtArgs>
     blockDefinitions?: boolean | User$blockDefinitionsArgs<ExtArgs>
-    customBlocks?: boolean | User$customBlocksArgs<ExtArgs>
     transcriptionUsages?: boolean | User$transcriptionUsagesArgs<ExtArgs>
     passwordResetTokens?: boolean | User$passwordResetTokensArgs<ExtArgs>
     noteTemplates?: boolean | User$noteTemplatesArgs<ExtArgs>
@@ -6667,7 +6566,6 @@ export namespace Prisma {
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     templates?: boolean | User$templatesArgs<ExtArgs>
     blockDefinitions?: boolean | User$blockDefinitionsArgs<ExtArgs>
-    customBlocks?: boolean | User$customBlocksArgs<ExtArgs>
     transcriptionUsages?: boolean | User$transcriptionUsagesArgs<ExtArgs>
     passwordResetTokens?: boolean | User$passwordResetTokensArgs<ExtArgs>
     noteTemplates?: boolean | User$noteTemplatesArgs<ExtArgs>
@@ -6683,7 +6581,6 @@ export namespace Prisma {
       sessions: Prisma.$SessionPayload<ExtArgs>[]
       templates: Prisma.$TemplatePayload<ExtArgs>[]
       blockDefinitions: Prisma.$BlockDefinitionPayload<ExtArgs>[]
-      customBlocks: Prisma.$CustomBlockPayload<ExtArgs>[]
       transcriptionUsages: Prisma.$TranscriptionUsagePayload<ExtArgs>[]
       passwordResetTokens: Prisma.$PasswordResetTokenPayload<ExtArgs>[]
       noteTemplates: Prisma.$NoteTemplatePayload<ExtArgs>[]
@@ -7095,7 +6992,6 @@ export namespace Prisma {
     sessions<T extends User$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     templates<T extends User$templatesArgs<ExtArgs> = {}>(args?: Subset<T, User$templatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     blockDefinitions<T extends User$blockDefinitionsArgs<ExtArgs> = {}>(args?: Subset<T, User$blockDefinitionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockDefinitionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    customBlocks<T extends User$customBlocksArgs<ExtArgs> = {}>(args?: Subset<T, User$customBlocksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     transcriptionUsages<T extends User$transcriptionUsagesArgs<ExtArgs> = {}>(args?: Subset<T, User$transcriptionUsagesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TranscriptionUsagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     passwordResetTokens<T extends User$passwordResetTokensArgs<ExtArgs> = {}>(args?: Subset<T, User$passwordResetTokensArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PasswordResetTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     noteTemplates<T extends User$noteTemplatesArgs<ExtArgs> = {}>(args?: Subset<T, User$noteTemplatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoteTemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -7617,30 +7513,6 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: BlockDefinitionScalarFieldEnum | BlockDefinitionScalarFieldEnum[]
-  }
-
-  /**
-   * User.customBlocks
-   */
-  export type User$customBlocksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockInclude<ExtArgs> | null
-    where?: CustomBlockWhereInput
-    orderBy?: CustomBlockOrderByWithRelationInput | CustomBlockOrderByWithRelationInput[]
-    cursor?: CustomBlockWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: CustomBlockScalarFieldEnum | CustomBlockScalarFieldEnum[]
   }
 
   /**
@@ -13301,1090 +13173,6 @@ export namespace Prisma {
 
 
   /**
-   * Model CustomBlock
-   */
-
-  export type AggregateCustomBlock = {
-    _count: CustomBlockCountAggregateOutputType | null
-    _min: CustomBlockMinAggregateOutputType | null
-    _max: CustomBlockMaxAggregateOutputType | null
-  }
-
-  export type CustomBlockMinAggregateOutputType = {
-    id: string | null
-    ownerId: string | null
-    title: string | null
-    description: string | null
-    fieldsJson: string | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type CustomBlockMaxAggregateOutputType = {
-    id: string | null
-    ownerId: string | null
-    title: string | null
-    description: string | null
-    fieldsJson: string | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type CustomBlockCountAggregateOutputType = {
-    id: number
-    ownerId: number
-    title: number
-    description: number
-    fieldsJson: number
-    createdAt: number
-    updatedAt: number
-    _all: number
-  }
-
-
-  export type CustomBlockMinAggregateInputType = {
-    id?: true
-    ownerId?: true
-    title?: true
-    description?: true
-    fieldsJson?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type CustomBlockMaxAggregateInputType = {
-    id?: true
-    ownerId?: true
-    title?: true
-    description?: true
-    fieldsJson?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type CustomBlockCountAggregateInputType = {
-    id?: true
-    ownerId?: true
-    title?: true
-    description?: true
-    fieldsJson?: true
-    createdAt?: true
-    updatedAt?: true
-    _all?: true
-  }
-
-  export type CustomBlockAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which CustomBlock to aggregate.
-     */
-    where?: CustomBlockWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of CustomBlocks to fetch.
-     */
-    orderBy?: CustomBlockOrderByWithRelationInput | CustomBlockOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: CustomBlockWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` CustomBlocks from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` CustomBlocks.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned CustomBlocks
-    **/
-    _count?: true | CustomBlockCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: CustomBlockMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: CustomBlockMaxAggregateInputType
-  }
-
-  export type GetCustomBlockAggregateType<T extends CustomBlockAggregateArgs> = {
-        [P in keyof T & keyof AggregateCustomBlock]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateCustomBlock[P]>
-      : GetScalarType<T[P], AggregateCustomBlock[P]>
-  }
-
-
-
-
-  export type CustomBlockGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: CustomBlockWhereInput
-    orderBy?: CustomBlockOrderByWithAggregationInput | CustomBlockOrderByWithAggregationInput[]
-    by: CustomBlockScalarFieldEnum[] | CustomBlockScalarFieldEnum
-    having?: CustomBlockScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: CustomBlockCountAggregateInputType | true
-    _min?: CustomBlockMinAggregateInputType
-    _max?: CustomBlockMaxAggregateInputType
-  }
-
-  export type CustomBlockGroupByOutputType = {
-    id: string
-    ownerId: string
-    title: string
-    description: string | null
-    fieldsJson: string
-    createdAt: Date
-    updatedAt: Date
-    _count: CustomBlockCountAggregateOutputType | null
-    _min: CustomBlockMinAggregateOutputType | null
-    _max: CustomBlockMaxAggregateOutputType | null
-  }
-
-  type GetCustomBlockGroupByPayload<T extends CustomBlockGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<CustomBlockGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof CustomBlockGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], CustomBlockGroupByOutputType[P]>
-            : GetScalarType<T[P], CustomBlockGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type CustomBlockSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    ownerId?: boolean
-    title?: boolean
-    description?: boolean
-    fieldsJson?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    owner?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["customBlock"]>
-
-  export type CustomBlockSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    ownerId?: boolean
-    title?: boolean
-    description?: boolean
-    fieldsJson?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    owner?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["customBlock"]>
-
-  export type CustomBlockSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    ownerId?: boolean
-    title?: boolean
-    description?: boolean
-    fieldsJson?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    owner?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["customBlock"]>
-
-  export type CustomBlockSelectScalar = {
-    id?: boolean
-    ownerId?: boolean
-    title?: boolean
-    description?: boolean
-    fieldsJson?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }
-
-  export type CustomBlockOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ownerId" | "title" | "description" | "fieldsJson" | "createdAt" | "updatedAt", ExtArgs["result"]["customBlock"]>
-  export type CustomBlockInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    owner?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type CustomBlockIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    owner?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type CustomBlockIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    owner?: boolean | UserDefaultArgs<ExtArgs>
-  }
-
-  export type $CustomBlockPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "CustomBlock"
-    objects: {
-      owner: Prisma.$UserPayload<ExtArgs>
-    }
-    scalars: $Extensions.GetPayloadResult<{
-      id: string
-      ownerId: string
-      title: string
-      description: string | null
-      fieldsJson: string
-      createdAt: Date
-      updatedAt: Date
-    }, ExtArgs["result"]["customBlock"]>
-    composites: {}
-  }
-
-  type CustomBlockGetPayload<S extends boolean | null | undefined | CustomBlockDefaultArgs> = $Result.GetResult<Prisma.$CustomBlockPayload, S>
-
-  type CustomBlockCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<CustomBlockFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: CustomBlockCountAggregateInputType | true
-    }
-
-  export interface CustomBlockDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CustomBlock'], meta: { name: 'CustomBlock' } }
-    /**
-     * Find zero or one CustomBlock that matches the filter.
-     * @param {CustomBlockFindUniqueArgs} args - Arguments to find a CustomBlock
-     * @example
-     * // Get one CustomBlock
-     * const customBlock = await prisma.customBlock.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends CustomBlockFindUniqueArgs>(args: SelectSubset<T, CustomBlockFindUniqueArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one CustomBlock that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {CustomBlockFindUniqueOrThrowArgs} args - Arguments to find a CustomBlock
-     * @example
-     * // Get one CustomBlock
-     * const customBlock = await prisma.customBlock.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends CustomBlockFindUniqueOrThrowArgs>(args: SelectSubset<T, CustomBlockFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first CustomBlock that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {CustomBlockFindFirstArgs} args - Arguments to find a CustomBlock
-     * @example
-     * // Get one CustomBlock
-     * const customBlock = await prisma.customBlock.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends CustomBlockFindFirstArgs>(args?: SelectSubset<T, CustomBlockFindFirstArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first CustomBlock that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {CustomBlockFindFirstOrThrowArgs} args - Arguments to find a CustomBlock
-     * @example
-     * // Get one CustomBlock
-     * const customBlock = await prisma.customBlock.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends CustomBlockFindFirstOrThrowArgs>(args?: SelectSubset<T, CustomBlockFindFirstOrThrowArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more CustomBlocks that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {CustomBlockFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all CustomBlocks
-     * const customBlocks = await prisma.customBlock.findMany()
-     * 
-     * // Get first 10 CustomBlocks
-     * const customBlocks = await prisma.customBlock.findMany({ take: 10 })
-     * 
-     * // Only select the `id`
-     * const customBlockWithIdOnly = await prisma.customBlock.findMany({ select: { id: true } })
-     * 
-     */
-    findMany<T extends CustomBlockFindManyArgs>(args?: SelectSubset<T, CustomBlockFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a CustomBlock.
-     * @param {CustomBlockCreateArgs} args - Arguments to create a CustomBlock.
-     * @example
-     * // Create one CustomBlock
-     * const CustomBlock = await prisma.customBlock.create({
-     *   data: {
-     *     // ... data to create a CustomBlock
-     *   }
-     * })
-     * 
-     */
-    create<T extends CustomBlockCreateArgs>(args: SelectSubset<T, CustomBlockCreateArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many CustomBlocks.
-     * @param {CustomBlockCreateManyArgs} args - Arguments to create many CustomBlocks.
-     * @example
-     * // Create many CustomBlocks
-     * const customBlock = await prisma.customBlock.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends CustomBlockCreateManyArgs>(args?: SelectSubset<T, CustomBlockCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many CustomBlocks and returns the data saved in the database.
-     * @param {CustomBlockCreateManyAndReturnArgs} args - Arguments to create many CustomBlocks.
-     * @example
-     * // Create many CustomBlocks
-     * const customBlock = await prisma.customBlock.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many CustomBlocks and only return the `id`
-     * const customBlockWithIdOnly = await prisma.customBlock.createManyAndReturn({
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends CustomBlockCreateManyAndReturnArgs>(args?: SelectSubset<T, CustomBlockCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a CustomBlock.
-     * @param {CustomBlockDeleteArgs} args - Arguments to delete one CustomBlock.
-     * @example
-     * // Delete one CustomBlock
-     * const CustomBlock = await prisma.customBlock.delete({
-     *   where: {
-     *     // ... filter to delete one CustomBlock
-     *   }
-     * })
-     * 
-     */
-    delete<T extends CustomBlockDeleteArgs>(args: SelectSubset<T, CustomBlockDeleteArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one CustomBlock.
-     * @param {CustomBlockUpdateArgs} args - Arguments to update one CustomBlock.
-     * @example
-     * // Update one CustomBlock
-     * const customBlock = await prisma.customBlock.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends CustomBlockUpdateArgs>(args: SelectSubset<T, CustomBlockUpdateArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more CustomBlocks.
-     * @param {CustomBlockDeleteManyArgs} args - Arguments to filter CustomBlocks to delete.
-     * @example
-     * // Delete a few CustomBlocks
-     * const { count } = await prisma.customBlock.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends CustomBlockDeleteManyArgs>(args?: SelectSubset<T, CustomBlockDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more CustomBlocks.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {CustomBlockUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many CustomBlocks
-     * const customBlock = await prisma.customBlock.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends CustomBlockUpdateManyArgs>(args: SelectSubset<T, CustomBlockUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more CustomBlocks and returns the data updated in the database.
-     * @param {CustomBlockUpdateManyAndReturnArgs} args - Arguments to update many CustomBlocks.
-     * @example
-     * // Update many CustomBlocks
-     * const customBlock = await prisma.customBlock.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more CustomBlocks and only return the `id`
-     * const customBlockWithIdOnly = await prisma.customBlock.updateManyAndReturn({
-     *   select: { id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends CustomBlockUpdateManyAndReturnArgs>(args: SelectSubset<T, CustomBlockUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one CustomBlock.
-     * @param {CustomBlockUpsertArgs} args - Arguments to update or create a CustomBlock.
-     * @example
-     * // Update or create a CustomBlock
-     * const customBlock = await prisma.customBlock.upsert({
-     *   create: {
-     *     // ... data to create a CustomBlock
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the CustomBlock we want to update
-     *   }
-     * })
-     */
-    upsert<T extends CustomBlockUpsertArgs>(args: SelectSubset<T, CustomBlockUpsertArgs<ExtArgs>>): Prisma__CustomBlockClient<$Result.GetResult<Prisma.$CustomBlockPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of CustomBlocks.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {CustomBlockCountArgs} args - Arguments to filter CustomBlocks to count.
-     * @example
-     * // Count the number of CustomBlocks
-     * const count = await prisma.customBlock.count({
-     *   where: {
-     *     // ... the filter for the CustomBlocks we want to count
-     *   }
-     * })
-    **/
-    count<T extends CustomBlockCountArgs>(
-      args?: Subset<T, CustomBlockCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], CustomBlockCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a CustomBlock.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {CustomBlockAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends CustomBlockAggregateArgs>(args: Subset<T, CustomBlockAggregateArgs>): Prisma.PrismaPromise<GetCustomBlockAggregateType<T>>
-
-    /**
-     * Group by CustomBlock.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {CustomBlockGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends CustomBlockGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: CustomBlockGroupByArgs['orderBy'] }
-        : { orderBy?: CustomBlockGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, CustomBlockGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCustomBlockGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the CustomBlock model
-   */
-  readonly fields: CustomBlockFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for CustomBlock.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__CustomBlockClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    owner<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the CustomBlock model
-   */
-  interface CustomBlockFieldRefs {
-    readonly id: FieldRef<"CustomBlock", 'String'>
-    readonly ownerId: FieldRef<"CustomBlock", 'String'>
-    readonly title: FieldRef<"CustomBlock", 'String'>
-    readonly description: FieldRef<"CustomBlock", 'String'>
-    readonly fieldsJson: FieldRef<"CustomBlock", 'String'>
-    readonly createdAt: FieldRef<"CustomBlock", 'DateTime'>
-    readonly updatedAt: FieldRef<"CustomBlock", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * CustomBlock findUnique
-   */
-  export type CustomBlockFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockInclude<ExtArgs> | null
-    /**
-     * Filter, which CustomBlock to fetch.
-     */
-    where: CustomBlockWhereUniqueInput
-  }
-
-  /**
-   * CustomBlock findUniqueOrThrow
-   */
-  export type CustomBlockFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockInclude<ExtArgs> | null
-    /**
-     * Filter, which CustomBlock to fetch.
-     */
-    where: CustomBlockWhereUniqueInput
-  }
-
-  /**
-   * CustomBlock findFirst
-   */
-  export type CustomBlockFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockInclude<ExtArgs> | null
-    /**
-     * Filter, which CustomBlock to fetch.
-     */
-    where?: CustomBlockWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of CustomBlocks to fetch.
-     */
-    orderBy?: CustomBlockOrderByWithRelationInput | CustomBlockOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for CustomBlocks.
-     */
-    cursor?: CustomBlockWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` CustomBlocks from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` CustomBlocks.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of CustomBlocks.
-     */
-    distinct?: CustomBlockScalarFieldEnum | CustomBlockScalarFieldEnum[]
-  }
-
-  /**
-   * CustomBlock findFirstOrThrow
-   */
-  export type CustomBlockFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockInclude<ExtArgs> | null
-    /**
-     * Filter, which CustomBlock to fetch.
-     */
-    where?: CustomBlockWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of CustomBlocks to fetch.
-     */
-    orderBy?: CustomBlockOrderByWithRelationInput | CustomBlockOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for CustomBlocks.
-     */
-    cursor?: CustomBlockWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` CustomBlocks from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` CustomBlocks.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of CustomBlocks.
-     */
-    distinct?: CustomBlockScalarFieldEnum | CustomBlockScalarFieldEnum[]
-  }
-
-  /**
-   * CustomBlock findMany
-   */
-  export type CustomBlockFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockInclude<ExtArgs> | null
-    /**
-     * Filter, which CustomBlocks to fetch.
-     */
-    where?: CustomBlockWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of CustomBlocks to fetch.
-     */
-    orderBy?: CustomBlockOrderByWithRelationInput | CustomBlockOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing CustomBlocks.
-     */
-    cursor?: CustomBlockWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` CustomBlocks from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` CustomBlocks.
-     */
-    skip?: number
-    distinct?: CustomBlockScalarFieldEnum | CustomBlockScalarFieldEnum[]
-  }
-
-  /**
-   * CustomBlock create
-   */
-  export type CustomBlockCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockInclude<ExtArgs> | null
-    /**
-     * The data needed to create a CustomBlock.
-     */
-    data: XOR<CustomBlockCreateInput, CustomBlockUncheckedCreateInput>
-  }
-
-  /**
-   * CustomBlock createMany
-   */
-  export type CustomBlockCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many CustomBlocks.
-     */
-    data: CustomBlockCreateManyInput | CustomBlockCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * CustomBlock createManyAndReturn
-   */
-  export type CustomBlockCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * The data used to create many CustomBlocks.
-     */
-    data: CustomBlockCreateManyInput | CustomBlockCreateManyInput[]
-    skipDuplicates?: boolean
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockIncludeCreateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * CustomBlock update
-   */
-  export type CustomBlockUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockInclude<ExtArgs> | null
-    /**
-     * The data needed to update a CustomBlock.
-     */
-    data: XOR<CustomBlockUpdateInput, CustomBlockUncheckedUpdateInput>
-    /**
-     * Choose, which CustomBlock to update.
-     */
-    where: CustomBlockWhereUniqueInput
-  }
-
-  /**
-   * CustomBlock updateMany
-   */
-  export type CustomBlockUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update CustomBlocks.
-     */
-    data: XOR<CustomBlockUpdateManyMutationInput, CustomBlockUncheckedUpdateManyInput>
-    /**
-     * Filter which CustomBlocks to update
-     */
-    where?: CustomBlockWhereInput
-    /**
-     * Limit how many CustomBlocks to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * CustomBlock updateManyAndReturn
-   */
-  export type CustomBlockUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * The data used to update CustomBlocks.
-     */
-    data: XOR<CustomBlockUpdateManyMutationInput, CustomBlockUncheckedUpdateManyInput>
-    /**
-     * Filter which CustomBlocks to update
-     */
-    where?: CustomBlockWhereInput
-    /**
-     * Limit how many CustomBlocks to update.
-     */
-    limit?: number
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockIncludeUpdateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * CustomBlock upsert
-   */
-  export type CustomBlockUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockInclude<ExtArgs> | null
-    /**
-     * The filter to search for the CustomBlock to update in case it exists.
-     */
-    where: CustomBlockWhereUniqueInput
-    /**
-     * In case the CustomBlock found by the `where` argument doesn't exist, create a new CustomBlock with this data.
-     */
-    create: XOR<CustomBlockCreateInput, CustomBlockUncheckedCreateInput>
-    /**
-     * In case the CustomBlock was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<CustomBlockUpdateInput, CustomBlockUncheckedUpdateInput>
-  }
-
-  /**
-   * CustomBlock delete
-   */
-  export type CustomBlockDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockInclude<ExtArgs> | null
-    /**
-     * Filter which CustomBlock to delete.
-     */
-    where: CustomBlockWhereUniqueInput
-  }
-
-  /**
-   * CustomBlock deleteMany
-   */
-  export type CustomBlockDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which CustomBlocks to delete
-     */
-    where?: CustomBlockWhereInput
-    /**
-     * Limit how many CustomBlocks to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * CustomBlock without action
-   */
-  export type CustomBlockDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CustomBlock
-     */
-    select?: CustomBlockSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CustomBlock
-     */
-    omit?: CustomBlockOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CustomBlockInclude<ExtArgs> | null
-  }
-
-
-  /**
    * Model TranscriptionUsage
    */
 
@@ -14506,13 +13294,13 @@ export namespace Prisma {
     _count?: true | TranscriptionUsageCountAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
+     *
      * Select which fields to average
     **/
     _avg?: TranscriptionUsageAvgAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
+     *
      * Select which fields to sum
     **/
     _sum?: TranscriptionUsageSumAggregateInputType
@@ -16709,19 +15497,6 @@ export namespace Prisma {
   export type BlockFieldDefinitionScalarFieldEnum = (typeof BlockFieldDefinitionScalarFieldEnum)[keyof typeof BlockFieldDefinitionScalarFieldEnum]
 
 
-  export const CustomBlockScalarFieldEnum: {
-    id: 'id',
-    ownerId: 'ownerId',
-    title: 'title',
-    description: 'description',
-    fieldsJson: 'fieldsJson',
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
-  };
-
-  export type CustomBlockScalarFieldEnum = (typeof CustomBlockScalarFieldEnum)[keyof typeof CustomBlockScalarFieldEnum]
-
-
   export const TranscriptionUsageScalarFieldEnum: {
     id: 'id',
     userId: 'userId',
@@ -17127,7 +15902,6 @@ export namespace Prisma {
     sessions?: SessionListRelationFilter
     templates?: TemplateListRelationFilter
     blockDefinitions?: BlockDefinitionListRelationFilter
-    customBlocks?: CustomBlockListRelationFilter
     transcriptionUsages?: TranscriptionUsageListRelationFilter
     passwordResetTokens?: PasswordResetTokenListRelationFilter
     noteTemplates?: NoteTemplateListRelationFilter
@@ -17146,7 +15920,6 @@ export namespace Prisma {
     sessions?: SessionOrderByRelationAggregateInput
     templates?: TemplateOrderByRelationAggregateInput
     blockDefinitions?: BlockDefinitionOrderByRelationAggregateInput
-    customBlocks?: CustomBlockOrderByRelationAggregateInput
     transcriptionUsages?: TranscriptionUsageOrderByRelationAggregateInput
     passwordResetTokens?: PasswordResetTokenOrderByRelationAggregateInput
     noteTemplates?: NoteTemplateOrderByRelationAggregateInput
@@ -17168,7 +15941,6 @@ export namespace Prisma {
     sessions?: SessionListRelationFilter
     templates?: TemplateListRelationFilter
     blockDefinitions?: BlockDefinitionListRelationFilter
-    customBlocks?: CustomBlockListRelationFilter
     transcriptionUsages?: TranscriptionUsageListRelationFilter
     passwordResetTokens?: PasswordResetTokenListRelationFilter
     noteTemplates?: NoteTemplateListRelationFilter
@@ -17515,71 +16287,6 @@ export namespace Prisma {
     label?: StringNullableWithAggregatesFilter<"BlockFieldDefinition"> | string | null
     fieldType?: EnumFieldTypeWithAggregatesFilter<"BlockFieldDefinition"> | $Enums.FieldType
     required?: BoolWithAggregatesFilter<"BlockFieldDefinition"> | boolean
-  }
-
-  export type CustomBlockWhereInput = {
-    AND?: CustomBlockWhereInput | CustomBlockWhereInput[]
-    OR?: CustomBlockWhereInput[]
-    NOT?: CustomBlockWhereInput | CustomBlockWhereInput[]
-    id?: StringFilter<"CustomBlock"> | string
-    ownerId?: StringFilter<"CustomBlock"> | string
-    title?: StringFilter<"CustomBlock"> | string
-    description?: StringNullableFilter<"CustomBlock"> | string | null
-    fieldsJson?: StringFilter<"CustomBlock"> | string
-    createdAt?: DateTimeFilter<"CustomBlock"> | Date | string
-    updatedAt?: DateTimeFilter<"CustomBlock"> | Date | string
-    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }
-
-  export type CustomBlockOrderByWithRelationInput = {
-    id?: SortOrder
-    ownerId?: SortOrder
-    title?: SortOrder
-    description?: SortOrderInput | SortOrder
-    fieldsJson?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    owner?: UserOrderByWithRelationInput
-  }
-
-  export type CustomBlockWhereUniqueInput = Prisma.AtLeast<{
-    id?: string
-    AND?: CustomBlockWhereInput | CustomBlockWhereInput[]
-    OR?: CustomBlockWhereInput[]
-    NOT?: CustomBlockWhereInput | CustomBlockWhereInput[]
-    ownerId?: StringFilter<"CustomBlock"> | string
-    title?: StringFilter<"CustomBlock"> | string
-    description?: StringNullableFilter<"CustomBlock"> | string | null
-    fieldsJson?: StringFilter<"CustomBlock"> | string
-    createdAt?: DateTimeFilter<"CustomBlock"> | Date | string
-    updatedAt?: DateTimeFilter<"CustomBlock"> | Date | string
-    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }, "id">
-
-  export type CustomBlockOrderByWithAggregationInput = {
-    id?: SortOrder
-    ownerId?: SortOrder
-    title?: SortOrder
-    description?: SortOrderInput | SortOrder
-    fieldsJson?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    _count?: CustomBlockCountOrderByAggregateInput
-    _max?: CustomBlockMaxOrderByAggregateInput
-    _min?: CustomBlockMinOrderByAggregateInput
-  }
-
-  export type CustomBlockScalarWhereWithAggregatesInput = {
-    AND?: CustomBlockScalarWhereWithAggregatesInput | CustomBlockScalarWhereWithAggregatesInput[]
-    OR?: CustomBlockScalarWhereWithAggregatesInput[]
-    NOT?: CustomBlockScalarWhereWithAggregatesInput | CustomBlockScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"CustomBlock"> | string
-    ownerId?: StringWithAggregatesFilter<"CustomBlock"> | string
-    title?: StringWithAggregatesFilter<"CustomBlock"> | string
-    description?: StringNullableWithAggregatesFilter<"CustomBlock"> | string | null
-    fieldsJson?: StringWithAggregatesFilter<"CustomBlock"> | string
-    createdAt?: DateTimeWithAggregatesFilter<"CustomBlock"> | Date | string
-    updatedAt?: DateTimeWithAggregatesFilter<"CustomBlock"> | Date | string
   }
 
   export type TranscriptionUsageWhereInput = {
@@ -17972,7 +16679,6 @@ export namespace Prisma {
     sessions?: SessionCreateNestedManyWithoutUserInput
     templates?: TemplateCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
@@ -17991,7 +16697,6 @@ export namespace Prisma {
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
@@ -18010,7 +16715,6 @@ export namespace Prisma {
     sessions?: SessionUpdateManyWithoutUserNestedInput
     templates?: TemplateUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
@@ -18029,7 +16733,6 @@ export namespace Prisma {
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
@@ -18388,75 +17091,6 @@ export namespace Prisma {
     label?: NullableStringFieldUpdateOperationsInput | string | null
     fieldType?: EnumFieldTypeFieldUpdateOperationsInput | $Enums.FieldType
     required?: BoolFieldUpdateOperationsInput | boolean
-  }
-
-  export type CustomBlockCreateInput = {
-    id?: string
-    title: string
-    description?: string | null
-    fieldsJson: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    owner: UserCreateNestedOneWithoutCustomBlocksInput
-  }
-
-  export type CustomBlockUncheckedCreateInput = {
-    id?: string
-    ownerId: string
-    title: string
-    description?: string | null
-    fieldsJson: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type CustomBlockUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    fieldsJson?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    owner?: UserUpdateOneRequiredWithoutCustomBlocksNestedInput
-  }
-
-  export type CustomBlockUncheckedUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    ownerId?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    fieldsJson?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type CustomBlockCreateManyInput = {
-    id?: string
-    ownerId: string
-    title: string
-    description?: string | null
-    fieldsJson: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type CustomBlockUpdateManyMutationInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    fieldsJson?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type CustomBlockUncheckedUpdateManyInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    ownerId?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    fieldsJson?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type TranscriptionUsageCreateInput = {
@@ -18879,12 +17513,6 @@ export namespace Prisma {
     none?: BlockDefinitionWhereInput
   }
 
-  export type CustomBlockListRelationFilter = {
-    every?: CustomBlockWhereInput
-    some?: CustomBlockWhereInput
-    none?: CustomBlockWhereInput
-  }
-
   export type TranscriptionUsageListRelationFilter = {
     every?: TranscriptionUsageWhereInput
     some?: TranscriptionUsageWhereInput
@@ -18916,10 +17544,6 @@ export namespace Prisma {
   }
 
   export type BlockDefinitionOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type CustomBlockOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -19265,36 +17889,6 @@ export namespace Prisma {
     order?: SortOrder
   }
 
-  export type CustomBlockCountOrderByAggregateInput = {
-    id?: SortOrder
-    ownerId?: SortOrder
-    title?: SortOrder
-    description?: SortOrder
-    fieldsJson?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type CustomBlockMaxOrderByAggregateInput = {
-    id?: SortOrder
-    ownerId?: SortOrder
-    title?: SortOrder
-    description?: SortOrder
-    fieldsJson?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type CustomBlockMinOrderByAggregateInput = {
-    id?: SortOrder
-    ownerId?: SortOrder
-    title?: SortOrder
-    description?: SortOrder
-    fieldsJson?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
   export type TranscriptionUsageUserIdDateCompoundUniqueInput = {
     userId: string
     date: string
@@ -19455,13 +18049,6 @@ export namespace Prisma {
     connect?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
   }
 
-  export type CustomBlockCreateNestedManyWithoutOwnerInput = {
-    create?: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput> | CustomBlockCreateWithoutOwnerInput[] | CustomBlockUncheckedCreateWithoutOwnerInput[]
-    connectOrCreate?: CustomBlockCreateOrConnectWithoutOwnerInput | CustomBlockCreateOrConnectWithoutOwnerInput[]
-    createMany?: CustomBlockCreateManyOwnerInputEnvelope
-    connect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
-  }
-
   export type TranscriptionUsageCreateNestedManyWithoutUserInput = {
     create?: XOR<TranscriptionUsageCreateWithoutUserInput, TranscriptionUsageUncheckedCreateWithoutUserInput> | TranscriptionUsageCreateWithoutUserInput[] | TranscriptionUsageUncheckedCreateWithoutUserInput[]
     connectOrCreate?: TranscriptionUsageCreateOrConnectWithoutUserInput | TranscriptionUsageCreateOrConnectWithoutUserInput[]
@@ -19509,13 +18096,6 @@ export namespace Prisma {
     connectOrCreate?: BlockDefinitionCreateOrConnectWithoutOwnerInput | BlockDefinitionCreateOrConnectWithoutOwnerInput[]
     createMany?: BlockDefinitionCreateManyOwnerInputEnvelope
     connect?: BlockDefinitionWhereUniqueInput | BlockDefinitionWhereUniqueInput[]
-  }
-
-  export type CustomBlockUncheckedCreateNestedManyWithoutOwnerInput = {
-    create?: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput> | CustomBlockCreateWithoutOwnerInput[] | CustomBlockUncheckedCreateWithoutOwnerInput[]
-    connectOrCreate?: CustomBlockCreateOrConnectWithoutOwnerInput | CustomBlockCreateOrConnectWithoutOwnerInput[]
-    createMany?: CustomBlockCreateManyOwnerInputEnvelope
-    connect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
   }
 
   export type TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput = {
@@ -19597,20 +18177,6 @@ export namespace Prisma {
     update?: BlockDefinitionUpdateWithWhereUniqueWithoutOwnerInput | BlockDefinitionUpdateWithWhereUniqueWithoutOwnerInput[]
     updateMany?: BlockDefinitionUpdateManyWithWhereWithoutOwnerInput | BlockDefinitionUpdateManyWithWhereWithoutOwnerInput[]
     deleteMany?: BlockDefinitionScalarWhereInput | BlockDefinitionScalarWhereInput[]
-  }
-
-  export type CustomBlockUpdateManyWithoutOwnerNestedInput = {
-    create?: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput> | CustomBlockCreateWithoutOwnerInput[] | CustomBlockUncheckedCreateWithoutOwnerInput[]
-    connectOrCreate?: CustomBlockCreateOrConnectWithoutOwnerInput | CustomBlockCreateOrConnectWithoutOwnerInput[]
-    upsert?: CustomBlockUpsertWithWhereUniqueWithoutOwnerInput | CustomBlockUpsertWithWhereUniqueWithoutOwnerInput[]
-    createMany?: CustomBlockCreateManyOwnerInputEnvelope
-    set?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
-    disconnect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
-    delete?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
-    connect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
-    update?: CustomBlockUpdateWithWhereUniqueWithoutOwnerInput | CustomBlockUpdateWithWhereUniqueWithoutOwnerInput[]
-    updateMany?: CustomBlockUpdateManyWithWhereWithoutOwnerInput | CustomBlockUpdateManyWithWhereWithoutOwnerInput[]
-    deleteMany?: CustomBlockScalarWhereInput | CustomBlockScalarWhereInput[]
   }
 
   export type TranscriptionUsageUpdateManyWithoutUserNestedInput = {
@@ -19709,20 +18275,6 @@ export namespace Prisma {
     update?: BlockDefinitionUpdateWithWhereUniqueWithoutOwnerInput | BlockDefinitionUpdateWithWhereUniqueWithoutOwnerInput[]
     updateMany?: BlockDefinitionUpdateManyWithWhereWithoutOwnerInput | BlockDefinitionUpdateManyWithWhereWithoutOwnerInput[]
     deleteMany?: BlockDefinitionScalarWhereInput | BlockDefinitionScalarWhereInput[]
-  }
-
-  export type CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput = {
-    create?: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput> | CustomBlockCreateWithoutOwnerInput[] | CustomBlockUncheckedCreateWithoutOwnerInput[]
-    connectOrCreate?: CustomBlockCreateOrConnectWithoutOwnerInput | CustomBlockCreateOrConnectWithoutOwnerInput[]
-    upsert?: CustomBlockUpsertWithWhereUniqueWithoutOwnerInput | CustomBlockUpsertWithWhereUniqueWithoutOwnerInput[]
-    createMany?: CustomBlockCreateManyOwnerInputEnvelope
-    set?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
-    disconnect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
-    delete?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
-    connect?: CustomBlockWhereUniqueInput | CustomBlockWhereUniqueInput[]
-    update?: CustomBlockUpdateWithWhereUniqueWithoutOwnerInput | CustomBlockUpdateWithWhereUniqueWithoutOwnerInput[]
-    updateMany?: CustomBlockUpdateManyWithWhereWithoutOwnerInput | CustomBlockUpdateManyWithWhereWithoutOwnerInput[]
-    deleteMany?: CustomBlockScalarWhereInput | CustomBlockScalarWhereInput[]
   }
 
   export type TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput = {
@@ -19983,20 +18535,6 @@ export namespace Prisma {
     upsert?: BlockDefinitionUpsertWithoutFieldsInput
     connect?: BlockDefinitionWhereUniqueInput
     update?: XOR<XOR<BlockDefinitionUpdateToOneWithWhereWithoutFieldsInput, BlockDefinitionUpdateWithoutFieldsInput>, BlockDefinitionUncheckedUpdateWithoutFieldsInput>
-  }
-
-  export type UserCreateNestedOneWithoutCustomBlocksInput = {
-    create?: XOR<UserCreateWithoutCustomBlocksInput, UserUncheckedCreateWithoutCustomBlocksInput>
-    connectOrCreate?: UserCreateOrConnectWithoutCustomBlocksInput
-    connect?: UserWhereUniqueInput
-  }
-
-  export type UserUpdateOneRequiredWithoutCustomBlocksNestedInput = {
-    create?: XOR<UserCreateWithoutCustomBlocksInput, UserUncheckedCreateWithoutCustomBlocksInput>
-    connectOrCreate?: UserCreateOrConnectWithoutCustomBlocksInput
-    upsert?: UserUpsertWithoutCustomBlocksInput
-    connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCustomBlocksInput, UserUpdateWithoutCustomBlocksInput>, UserUncheckedUpdateWithoutCustomBlocksInput>
   }
 
   export type UserCreateNestedOneWithoutTranscriptionUsagesInput = {
@@ -20274,7 +18812,6 @@ export namespace Prisma {
     sessions?: SessionCreateNestedManyWithoutUserInput
     templates?: TemplateCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
@@ -20292,7 +18829,6 @@ export namespace Prisma {
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
@@ -20326,7 +18862,6 @@ export namespace Prisma {
     sessions?: SessionUpdateManyWithoutUserNestedInput
     templates?: TemplateUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
@@ -20344,7 +18879,6 @@ export namespace Prisma {
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
@@ -20363,7 +18897,6 @@ export namespace Prisma {
     sessions?: SessionCreateNestedManyWithoutUserInput
     templates?: TemplateCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
   }
@@ -20381,7 +18914,6 @@ export namespace Prisma {
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
   }
@@ -20415,7 +18947,6 @@ export namespace Prisma {
     sessions?: SessionUpdateManyWithoutUserNestedInput
     templates?: TemplateUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
   }
@@ -20433,7 +18964,6 @@ export namespace Prisma {
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
   }
@@ -20450,7 +18980,6 @@ export namespace Prisma {
     accounts?: AccountCreateNestedManyWithoutUserInput
     templates?: TemplateCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
@@ -20468,7 +18997,6 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
@@ -20502,7 +19030,6 @@ export namespace Prisma {
     accounts?: AccountUpdateManyWithoutUserNestedInput
     templates?: TemplateUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
@@ -20520,7 +19047,6 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
@@ -20635,34 +19161,6 @@ export namespace Prisma {
 
   export type BlockDefinitionCreateManyOwnerInputEnvelope = {
     data: BlockDefinitionCreateManyOwnerInput | BlockDefinitionCreateManyOwnerInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type CustomBlockCreateWithoutOwnerInput = {
-    id?: string
-    title: string
-    description?: string | null
-    fieldsJson: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type CustomBlockUncheckedCreateWithoutOwnerInput = {
-    id?: string
-    title: string
-    description?: string | null
-    fieldsJson: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type CustomBlockCreateOrConnectWithoutOwnerInput = {
-    where: CustomBlockWhereUniqueInput
-    create: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput>
-  }
-
-  export type CustomBlockCreateManyOwnerInputEnvelope = {
-    data: CustomBlockCreateManyOwnerInput | CustomBlockCreateManyOwnerInput[]
     skipDuplicates?: boolean
   }
 
@@ -20858,35 +19356,6 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"BlockDefinition"> | Date | string
   }
 
-  export type CustomBlockUpsertWithWhereUniqueWithoutOwnerInput = {
-    where: CustomBlockWhereUniqueInput
-    update: XOR<CustomBlockUpdateWithoutOwnerInput, CustomBlockUncheckedUpdateWithoutOwnerInput>
-    create: XOR<CustomBlockCreateWithoutOwnerInput, CustomBlockUncheckedCreateWithoutOwnerInput>
-  }
-
-  export type CustomBlockUpdateWithWhereUniqueWithoutOwnerInput = {
-    where: CustomBlockWhereUniqueInput
-    data: XOR<CustomBlockUpdateWithoutOwnerInput, CustomBlockUncheckedUpdateWithoutOwnerInput>
-  }
-
-  export type CustomBlockUpdateManyWithWhereWithoutOwnerInput = {
-    where: CustomBlockScalarWhereInput
-    data: XOR<CustomBlockUpdateManyMutationInput, CustomBlockUncheckedUpdateManyWithoutOwnerInput>
-  }
-
-  export type CustomBlockScalarWhereInput = {
-    AND?: CustomBlockScalarWhereInput | CustomBlockScalarWhereInput[]
-    OR?: CustomBlockScalarWhereInput[]
-    NOT?: CustomBlockScalarWhereInput | CustomBlockScalarWhereInput[]
-    id?: StringFilter<"CustomBlock"> | string
-    ownerId?: StringFilter<"CustomBlock"> | string
-    title?: StringFilter<"CustomBlock"> | string
-    description?: StringNullableFilter<"CustomBlock"> | string | null
-    fieldsJson?: StringFilter<"CustomBlock"> | string
-    createdAt?: DateTimeFilter<"CustomBlock"> | Date | string
-    updatedAt?: DateTimeFilter<"CustomBlock"> | Date | string
-  }
-
   export type TranscriptionUsageUpsertWithWhereUniqueWithoutUserInput = {
     where: TranscriptionUsageWhereUniqueInput
     update: XOR<TranscriptionUsageUpdateWithoutUserInput, TranscriptionUsageUncheckedUpdateWithoutUserInput>
@@ -21011,7 +19480,6 @@ export namespace Prisma {
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
@@ -21029,7 +19497,6 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
@@ -21091,7 +19558,6 @@ export namespace Prisma {
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
@@ -21109,7 +19575,6 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
@@ -21312,7 +19777,6 @@ export namespace Prisma {
     accounts?: AccountCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     templates?: TemplateCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
@@ -21330,7 +19794,6 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
@@ -21393,7 +19856,6 @@ export namespace Prisma {
     accounts?: AccountUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     templates?: TemplateUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
@@ -21411,7 +19873,6 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
@@ -21465,94 +19926,6 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type UserCreateWithoutCustomBlocksInput = {
-    id?: string
-    name?: string | null
-    email?: string | null
-    emailVerified?: Date | string | null
-    image?: string | null
-    passwordHash?: string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    accounts?: AccountCreateNestedManyWithoutUserInput
-    sessions?: SessionCreateNestedManyWithoutUserInput
-    templates?: TemplateCreateNestedManyWithoutOwnerInput
-    blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
-    transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
-    passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
-    noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
-  }
-
-  export type UserUncheckedCreateWithoutCustomBlocksInput = {
-    id?: string
-    name?: string | null
-    email?: string | null
-    emailVerified?: Date | string | null
-    image?: string | null
-    passwordHash?: string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
-    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
-    templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
-    blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
-    transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
-    passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
-    noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
-  }
-
-  export type UserCreateOrConnectWithoutCustomBlocksInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutCustomBlocksInput, UserUncheckedCreateWithoutCustomBlocksInput>
-  }
-
-  export type UserUpsertWithoutCustomBlocksInput = {
-    update: XOR<UserUpdateWithoutCustomBlocksInput, UserUncheckedUpdateWithoutCustomBlocksInput>
-    create: XOR<UserCreateWithoutCustomBlocksInput, UserUncheckedCreateWithoutCustomBlocksInput>
-    where?: UserWhereInput
-  }
-
-  export type UserUpdateToOneWithWhereWithoutCustomBlocksInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutCustomBlocksInput, UserUncheckedUpdateWithoutCustomBlocksInput>
-  }
-
-  export type UserUpdateWithoutCustomBlocksInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    image?: NullableStringFieldUpdateOperationsInput | string | null
-    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    accounts?: AccountUpdateManyWithoutUserNestedInput
-    sessions?: SessionUpdateManyWithoutUserNestedInput
-    templates?: TemplateUpdateManyWithoutOwnerNestedInput
-    blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
-    transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
-    passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
-    noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
-  }
-
-  export type UserUncheckedUpdateWithoutCustomBlocksInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    image?: NullableStringFieldUpdateOperationsInput | string | null
-    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
-    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
-    templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
-    blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
-    transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
-    passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
-    noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
-  }
-
   export type UserCreateWithoutTranscriptionUsagesInput = {
     id?: string
     name?: string | null
@@ -21566,7 +19939,6 @@ export namespace Prisma {
     sessions?: SessionCreateNestedManyWithoutUserInput
     templates?: TemplateCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateCreateNestedManyWithoutOwnerInput
   }
@@ -21584,7 +19956,6 @@ export namespace Prisma {
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     noteTemplates?: NoteTemplateUncheckedCreateNestedManyWithoutOwnerInput
   }
@@ -21618,7 +19989,6 @@ export namespace Prisma {
     sessions?: SessionUpdateManyWithoutUserNestedInput
     templates?: TemplateUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUpdateManyWithoutOwnerNestedInput
   }
@@ -21636,7 +20006,6 @@ export namespace Prisma {
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     noteTemplates?: NoteTemplateUncheckedUpdateManyWithoutOwnerNestedInput
   }
@@ -21654,7 +20023,6 @@ export namespace Prisma {
     sessions?: SessionCreateNestedManyWithoutUserInput
     templates?: TemplateCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
   }
@@ -21672,7 +20040,6 @@ export namespace Prisma {
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     templates?: TemplateUncheckedCreateNestedManyWithoutOwnerInput
     blockDefinitions?: BlockDefinitionUncheckedCreateNestedManyWithoutOwnerInput
-    customBlocks?: CustomBlockUncheckedCreateNestedManyWithoutOwnerInput
     transcriptionUsages?: TranscriptionUsageUncheckedCreateNestedManyWithoutUserInput
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   }
@@ -21706,7 +20073,6 @@ export namespace Prisma {
     sessions?: SessionUpdateManyWithoutUserNestedInput
     templates?: TemplateUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
   }
@@ -21724,7 +20090,6 @@ export namespace Prisma {
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     templates?: TemplateUncheckedUpdateManyWithoutOwnerNestedInput
     blockDefinitions?: BlockDefinitionUncheckedUpdateManyWithoutOwnerNestedInput
-    customBlocks?: CustomBlockUncheckedUpdateManyWithoutOwnerNestedInput
     transcriptionUsages?: TranscriptionUsageUncheckedUpdateManyWithoutUserNestedInput
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   }
@@ -21759,15 +20124,6 @@ export namespace Prisma {
   export type BlockDefinitionCreateManyOwnerInput = {
     id?: string
     name: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type CustomBlockCreateManyOwnerInput = {
-    id?: string
-    title: string
-    description?: string | null
-    fieldsJson: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -21898,33 +20254,6 @@ export namespace Prisma {
   export type BlockDefinitionUncheckedUpdateManyWithoutOwnerInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type CustomBlockUpdateWithoutOwnerInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    fieldsJson?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type CustomBlockUncheckedUpdateWithoutOwnerInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    fieldsJson?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type CustomBlockUncheckedUpdateManyWithoutOwnerInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    fieldsJson?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

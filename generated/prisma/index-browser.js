@@ -213,16 +213,6 @@ exports.Prisma.BlockFieldDefinitionScalarFieldEnum = {
   required: 'required'
 };
 
-exports.Prisma.CustomBlockScalarFieldEnum = {
-  id: 'id',
-  ownerId: 'ownerId',
-  title: 'title',
-  description: 'description',
-  fieldsJson: 'fieldsJson',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
 exports.Prisma.TranscriptionUsageScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -283,7 +273,6 @@ exports.Prisma.ModelName = {
   TemplateField: 'TemplateField',
   BlockDefinition: 'BlockDefinition',
   BlockFieldDefinition: 'BlockFieldDefinition',
-  CustomBlock: 'CustomBlock',
   TranscriptionUsage: 'TranscriptionUsage',
   NoteTemplate: 'NoteTemplate'
 };

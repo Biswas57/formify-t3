@@ -33,7 +33,7 @@ Formify is now free-app-first. Do not add Free/Pro distinctions, paywall gates, 
 
 Legacy notes:
 
-- The old `customBlockRouter` source has been removed; the `CustomBlock` model remains for later T-107 migration review.
+- The old `customBlockRouter` source and the legacy `CustomBlock` model have both been removed (T-107). Active custom blocks use `BlockDefinition` via `blockRouter`.
 - T3 starter `postRouter` and `LatestPost` have been removed from current source.
 - Paywall-era UI components such as `NotesGate`, `UpgradeModal`, `PlanBadge`, and `BillingCard` have been removed and should not be reintroduced into normal flows.
 
@@ -154,7 +154,6 @@ Current frontend form messages expect `{ type, attributes }`; `corrected_audio` 
 
 - Full manual smoke testing for the free-app migration is still deferred.
 - Email export trusts Formify-generated `formHTML`; sanitize/escape before accepting richer or untrusted HTML.
-- `CustomBlock` model appears legacy but needs migration review before removal.
 - Historical billing migrations remain; do not delete old migrations casually.
 - Some server-side logs remain for operational events; review for PII before hardening.
 - Build can fail in network-restricted environments due Google Fonts.

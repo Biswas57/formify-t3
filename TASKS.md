@@ -34,6 +34,7 @@
 | T-122 Make Formify a free app | Completed | Core features are auth-based and no longer blocked by usage, plan, template, notes, or custom-block gates. Paywall/pricing/upgrade UI and product copy were removed; docs/context now describe the free-app model. |
 | T-137 Later Stripe/schema cleanup | Completed | Removed remaining Stripe UI/routes/helper/dependency/env/entitlement residue and active billing schema through a dedicated migration. `MANUAL_SMOKE_TESTS.md` tracks deferred browser checks; historical migrations remain. |
 | T-108 Remove legacy usage.recordSession | Completed | Audit confirmed no frontend/test/API caller used `usage.recordSession`; removed the legacy mutation while keeping the active `usage.getToday` analytics read. WS token minting and recording behaviour unchanged. |
+| T-107 Review legacy CustomBlock model | Completed | Audit (D-023) proved the `CustomBlock` model was unused: active custom blocks use `BlockDefinition` via `block.createCustom`/`listLibrary`/`deleteCustom`, and no `prisma.customBlock` calls exist. Removed the model, the `User.customBlocks` relation, and dropped the table via `20260529000000_remove_custom_block`. Template Builder/custom-block behaviour unchanged. |
 
 ## Active
 
@@ -44,7 +45,6 @@ _None._
 | ID | Status | Notes |
 | --- | --- | --- |
 | T-013 Free-app usage safety limits and observability | Backlog | P1/P2, production hardening. Add fair-use session/cost protection and internal observability without paid tiers or Pro gates. |
-| T-107 Review legacy CustomBlock model | Backlog | Audited (D-023): model is code-unused (no `customBlockRouter`, no `prisma.customBlock` calls; Template Builder uses `BlockDefinition`) but is a data-bearing table with a `User` relation. Retained pending a dedicated, data-safe migration ticket; removal deferred to avoid user-data loss. |
 | T-109 Harden email HTML handling | Backlog | Escape or sanitize `formHTML` before accepting untrusted/richer HTML sources. |
 | T-110 Review server-side logging for PII | Backlog | tRPC/password-reset/email operational logs remain; audit before production hardening. |
 | T-111 Avoid Google Fonts build network dependency | Backlog | `next/font` can fail in restricted networks; consider self-hosted/local font strategy. |
