@@ -91,3 +91,9 @@ Future usage limits should protect reliability and cost for the free app. They m
 ## D-022 Donations Are Optional Support Only
 
 Donation UI may be added as optional support for Formify. It must not reintroduce Pro plans, pricing tables, upgrade prompts, subscription management, paid feature gates, or app-owned billing routes.
+
+## D-023 Legacy CustomBlock Model Is Retained Pending A Safe Migration
+
+The T-107 audit confirmed the `CustomBlock` Prisma model is unused by application code: the old `customBlockRouter` was removed, the Template Builder "create block" flow saves through `block.create`/`BlockDefinition` (the `handleSaveCustomBlock` handler is only a UI name), there are no `prisma.customBlock`/`db.customBlock` calls, and the seed does not reference it. Active custom blocks use `BlockDefinition` (see D-005).
+
+However, `CustomBlock` is a data-bearing table with a `User` relation (`onDelete: Cascade`) that may still hold rows created before the router was removed. Dropping it would be a destructive schema change with potential user-data loss, so the model is retained for now. Removal should be handled by a dedicated migration ticket that first confirms or safely migrates any existing rows. Historical migrations remain untouched.

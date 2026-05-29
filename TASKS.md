@@ -44,7 +44,7 @@ _None._
 | ID | Status | Notes |
 | --- | --- | --- |
 | T-013 Free-app usage safety limits and observability | Backlog | P1/P2, production hardening. Add fair-use session/cost protection and internal observability without paid tiers or Pro gates. |
-| T-107 Review legacy CustomBlock model | Backlog | Old `customBlockRouter` source was removed; decide whether existing `CustomBlock` data/model should be migrated or removed. |
+| T-107 Review legacy CustomBlock model | Backlog | Audited (D-023): model is code-unused (no `customBlockRouter`, no `prisma.customBlock` calls; Template Builder uses `BlockDefinition`) but is a data-bearing table with a `User` relation. Retained pending a dedicated, data-safe migration ticket; removal deferred to avoid user-data loss. |
 | T-109 Harden email HTML handling | Backlog | Escape or sanitize `formHTML` before accepting untrusted/richer HTML sources. |
 | T-110 Review server-side logging for PII | Backlog | tRPC/password-reset/email operational logs remain; audit before production hardening. |
 | T-111 Avoid Google Fonts build network dependency | Backlog | `next/font` can fail in restricted networks; consider self-hosted/local font strategy. |
