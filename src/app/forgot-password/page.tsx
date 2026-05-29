@@ -101,7 +101,7 @@ function ForgotPasswordForm() {
                                 Didn&apos;t receive it?{" "}
                                 <button
                                     onClick={() => setSubmitted(false)}
-                                    className="text-[#2149A1] font-medium hover:underline"
+                                    className="text-[#2149A1] font-medium hover:underline transition-opacity active:opacity-70"
                                 >
                                     Try again
                                 </button>
@@ -146,7 +146,7 @@ function ForgotPasswordForm() {
                                 <button
                                     type="submit"
                                     disabled={isLoading || !email}
-                                    className="w-full bg-[#2149A1] hover:bg-[#1a3a87] text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                                    className="w-full bg-[#2149A1] hover:bg-[#1a3a87] text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.01] active:scale-[0.98] active:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                                 >
                                     {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                                     {isLoading ? "Sending…" : "Send reset link"}

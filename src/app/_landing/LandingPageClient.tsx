@@ -58,18 +58,18 @@ export default function HomePage() {
                             <button
                                 key={id}
                                 onClick={() => scrollToSection(id)}
-                                className="text-[#868C94] hover:text-[#2149A1] transition-colors duration-300 cursor-pointer text-sm font-medium"
+                                className="text-[#868C94] hover:text-[#2149A1] transition-colors duration-300 active:opacity-70 cursor-pointer text-sm font-medium"
                             >
                                 {label}
                             </button>
                         ))}
                         <Link href="/login">
-                            <button className="border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-700 text-sm font-medium px-4 py-1.5 rounded-md transition-all duration-300">
+                            <button className="border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-700 text-sm font-medium px-4 py-1.5 rounded-md transition-all duration-300 active:scale-[0.98] active:opacity-90">
                                 Sign In
                             </button>
                         </Link>
                         <Link href="/register">
-                            <button className="bg-[#2149A1] hover:bg-[#1a3a87] text-white text-sm font-medium px-4 py-1.5 rounded-md hover:scale-105 transition-all duration-300">
+                            <button className="bg-[#2149A1] hover:bg-[#1a3a87] text-white text-sm font-medium px-4 py-1.5 rounded-md hover:scale-105 transition-all duration-300 active:scale-95 active:opacity-90">
                                 Get Started
                             </button>
                         </Link>
@@ -77,7 +77,7 @@ export default function HomePage() {
 
                     {/* Mobile Toggle */}
                     <button
-                        className="md:hidden p-2 text-[#868C94] hover:text-[#2149A1] transition-colors duration-300"
+                        className="md:hidden p-2 text-[#868C94] hover:text-[#2149A1] transition-colors duration-300 active:opacity-70"
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         aria-label="Toggle mobile menu"
                     >
@@ -93,19 +93,19 @@ export default function HomePage() {
                                 <button
                                     key={id}
                                     onClick={() => scrollToSection(id)}
-                                    className="block w-full text-left text-[#868C94] hover:text-[#2149A1] transition-colors duration-300 py-2 text-sm font-medium"
+                                    className="block w-full text-left text-[#868C94] hover:text-[#2149A1] transition-colors duration-300 active:opacity-70 py-2 text-sm font-medium"
                                 >
                                     {label}
                                 </button>
                             ))}
                             <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
                                 <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <button className="w-full border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-700 font-medium py-2 rounded-md transition-all duration-300">
+                                    <button className="w-full border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-700 font-medium py-2 rounded-md transition-all duration-300 active:scale-[0.98] active:opacity-90">
                                         Sign In
                                     </button>
                                 </Link>
                                 <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <button className="w-full bg-[#2149A1] hover:bg-[#1a3a87] text-white font-medium py-2 rounded-md transition-all duration-300">
+                                    <button className="w-full bg-[#2149A1] hover:bg-[#1a3a87] text-white font-medium py-2 rounded-md transition-all duration-300 active:scale-[0.98] active:opacity-90">
                                         Get Started
                                     </button>
                                 </Link>
@@ -227,12 +227,12 @@ export default function HomePage() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 animate-fade-up-delay-3 px-4">
                         <Link href="/register" className="w-full sm:w-auto">
-                            <button className="w-full sm:w-auto bg-[#2149A1] hover:bg-[#1a3a87] text-white text-base sm:text-lg px-6 sm:px-8 py-3 rounded-lg hover:scale-105 transition-all duration-300 group flex items-center justify-center gap-2 font-medium">
+                            <button className="w-full sm:w-auto bg-[#2149A1] hover:bg-[#1a3a87] text-white text-base sm:text-lg px-6 sm:px-8 py-3 rounded-lg hover:scale-105 transition-all duration-300 active:scale-95 active:opacity-90 group flex items-center justify-center gap-2 font-medium">
                                 Get Started
                                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform duration-300" />
                             </button>
                         </Link>
-                        <button className="w-full sm:w-auto border border-slate-300 hover:border-[#2149A1] text-slate-700 hover:text-[#2149A1] text-base sm:text-lg px-6 sm:px-8 py-3 rounded-lg hover:scale-105 transition-all duration-300 font-medium">
+                        <button className="w-full sm:w-auto border border-slate-300 hover:border-[#2149A1] text-slate-700 hover:text-[#2149A1] text-base sm:text-lg px-6 sm:px-8 py-3 rounded-lg hover:scale-105 transition-all duration-300 active:scale-95 active:opacity-90 font-medium">
                             Watch Demo
                         </button>
                     </div>
@@ -328,10 +328,10 @@ export default function HomePage() {
                                         </div>
                                     ))}
                                     <div className="flex gap-3 pt-4 mt-6 border-t border-slate-200">
-                                        <button className="flex-1 bg-[#2149A1] hover:bg-[#1a3a87] text-white text-sm font-medium py-2 px-4 rounded transition-colors duration-200">
+                                        <button className="flex-1 bg-[#2149A1] hover:bg-[#1a3a87] text-white text-sm font-medium py-2 px-4 rounded transition-colors duration-200 active:scale-[0.98] active:opacity-90">
                                             Save as PDF
                                         </button>
-                                        <button className="flex-1 border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-medium py-2 px-4 rounded transition-colors duration-200">
+                                        <button className="flex-1 border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-medium py-2 px-4 rounded transition-colors duration-200 active:scale-[0.98] active:opacity-90">
                                             Edit
                                         </button>
                                     </div>
@@ -450,7 +450,7 @@ export default function HomePage() {
                     </p>
                     <div className="max-w-md mx-auto mb-8 animate-slide-up px-4">
                         <Link href="/register" className="w-full sm:w-auto">
-                            <button className="w-full sm:w-auto bg-[#2149A1] hover:bg-[#1a3a87] hover:scale-105 text-white font-medium px-8 py-3 rounded-lg transition-all duration-300">
+                            <button className="w-full sm:w-auto bg-[#2149A1] hover:bg-[#1a3a87] hover:scale-105 text-white font-medium px-8 py-3 rounded-lg transition-all duration-300 active:scale-95 active:opacity-90">
                                 Get Started
                             </button>
                         </Link>
@@ -483,7 +483,7 @@ export default function HomePage() {
                                 <ul className="space-y-2 text-slate-400">
                                     {links.map((link) => (
                                         <li key={link}>
-                                            <a href="#" className="hover:text-[#4a72d4] transition-colors duration-300">{link}</a>
+                                            <a href="#" className="hover:text-[#4a72d4] transition-colors duration-300 active:opacity-70">{link}</a>
                                         </li>
                                     ))}
                                 </ul>
@@ -494,7 +494,7 @@ export default function HomePage() {
                         <p className="text-slate-400 text-sm">© 2025 Formify. All rights reserved.</p>
                         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 text-sm text-slate-400 mt-4 md:mt-0">
                             {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((item) => (
-                                <a key={item} href="#" className="hover:text-[#4a72d4] transition-colors duration-300 text-center sm:text-left">{item}</a>
+                                <a key={item} href="#" className="hover:text-[#4a72d4] transition-colors duration-300 active:opacity-70 text-center sm:text-left">{item}</a>
                             ))}
                         </div>
                     </div>

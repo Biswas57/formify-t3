@@ -98,6 +98,9 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] Desktop clickable cards, buttons, links, and menu items show pointer/hover affordance.
 - [ ] Desktop disabled buttons do not show pointer cursor.
 - [ ] Dark mode hover/active states remain readable.
+- [ ] Landing page Sign In / Get Started / Watch Demo / nav / mobile menu controls show immediate pressed feedback.
+- [ ] Login, register, forgot-password, and reset-password submit/Google/password-toggle buttons show immediate pressed feedback.
+- [ ] Auth submit buttons keep their loading labels and disabled state without pressed feedback while disabled.
 - [ ] No action behaviour changed.
 
 ## Account And Profile

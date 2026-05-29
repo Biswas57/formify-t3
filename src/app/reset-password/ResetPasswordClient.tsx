@@ -226,7 +226,7 @@ export default function ResetPasswordClient({ token }: Props) {
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword((v) => !v)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#848494] hover:text-[#2149A1] transition-colors"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#848494] hover:text-[#2149A1] transition-colors active:opacity-70"
                                             aria-label={
                                                 showPassword ? "Hide password" : "Show password"
                                             }
@@ -272,7 +272,7 @@ export default function ResetPasswordClient({ token }: Props) {
                                         <button
                                             type="button"
                                             onClick={() => setShowConfirm((v) => !v)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#848494] hover:text-[#2149A1] transition-colors"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#848494] hover:text-[#2149A1] transition-colors active:opacity-70"
                                             aria-label={
                                                 showConfirm ? "Hide password" : "Show password"
                                             }
@@ -296,7 +296,7 @@ export default function ResetPasswordClient({ token }: Props) {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full bg-[#2149A1] hover:bg-[#1a3a87] text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                                    className="w-full bg-[#2149A1] hover:bg-[#1a3a87] text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.01] active:scale-[0.98] active:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                                 >
                                     {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                                     {isLoading ? "Updating…" : "Update password"}

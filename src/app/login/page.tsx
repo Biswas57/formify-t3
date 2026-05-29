@@ -156,7 +156,7 @@ function LoginForm() {
                     <button
                         onClick={handleGoogleSignIn}
                         disabled={isGoogleLoading || isLoading}
-                        className="w-full flex items-center justify-center gap-3 border border-slate-300 hover:border-[#2149A1] bg-white hover:bg-[#e8eef9]/30 text-slate-700 font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mb-6"
+                        className="w-full flex items-center justify-center gap-3 border border-slate-300 hover:border-[#2149A1] bg-white hover:bg-[#e8eef9]/30 text-slate-700 font-medium py-3 px-4 rounded-lg transition-all duration-200 active:scale-[0.98] active:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed mb-6"
                     >
                         {isGoogleLoading ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
@@ -217,7 +217,7 @@ function LoginForm() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#848494] hover:text-[#2149A1] transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#848494] hover:text-[#2149A1] transition-colors active:opacity-70"
                                     aria-label={showPassword ? "Hide password" : "Show password"}
                                 >
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -228,7 +228,7 @@ function LoginForm() {
                         <button
                             type="submit"
                             disabled={isLoading || isGoogleLoading}
-                            className="w-full bg-[#2149A1] hover:bg-[#1a3a87] text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                            className="w-full bg-[#2149A1] hover:bg-[#1a3a87] text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.01] active:scale-[0.98] active:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                         >
                             {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                             {isLoading ? "Signing in…" : "Sign In"}
