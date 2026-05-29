@@ -709,32 +709,23 @@ export default function TranscriptionClient({ user }: { user: User }) {
         }
 
         try {
-            // Generate form data as HTML for email body
-            const formHTML = Object.entries(blocks)
-                .map(([blockName, fields]) => `
-                    <div style="margin-bottom: 20px;">
-                        <h3 style="color: #2149A1; font-size: 14px; font-weight: 600; margin-bottom: 10px;">${blockName}</h3>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            ${fields.map(field => `
-                                <tr>
-                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: 500; color: #6b7280; width: 40%;">${formatFieldLabel(field)}</td>
-                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; color: #111827;">${attributes[field] ?? '—'}</td>
-                                </tr>
-                            `).join('')}
-                        </table>
-                    </div>
-                `).join('');
+            // Send structured data only. The server renders the email HTML and
+            // escapes every value, so no client-rendered/raw HTML is sent or trusted.
+            const emailBlocks = Object.entries(blocks).map(([blockName, fields]) => ({
+                name: blockName,
+                fields: fields.map((field) => ({
+                    label: formatFieldLabel(field),
+                    value: attributes[field] ?? "",
+                })),
+            }));
 
-            // Privacy: send only the rendered HTML, never raw field values.
-            // formData/attributes is intentionally excluded — it is redundant with
-            // formHTML and would send structured PII in the request payload.
             const response = await fetch('/api/email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     to: recipientEmail,
                     formTitle,
-                    formHTML,
+                    blocks: emailBlocks,
                 }),
             });
 

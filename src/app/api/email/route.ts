@@ -1,9 +1,47 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { z } from "zod";
 import { auth } from "@/server/auth";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Defensive caps to bound request size and rendered output.
+const MAX_TEXT_LEN = 5000;
+const MAX_FIELDS_PER_BLOCK = 200;
+const MAX_BLOCKS = 100;
+
+// The client sends structured data only. The server renders the email HTML and
+// escapes every dynamic value, so untrusted/raw HTML is never accepted or sent.
+const emailSchema = z.object({
+    to: z.string().email().max(MAX_TEXT_LEN),
+    formTitle: z.string().min(1).max(MAX_TEXT_LEN),
+    blocks: z
+        .array(
+            z.object({
+                name: z.string().max(MAX_TEXT_LEN),
+                fields: z
+                    .array(
+                        z.object({
+                            label: z.string().max(MAX_TEXT_LEN),
+                            value: z.string().max(MAX_TEXT_LEN),
+                        }),
+                    )
+                    .max(MAX_FIELDS_PER_BLOCK),
+            }),
+        )
+        .max(MAX_BLOCKS),
+});
+
+/** Escape user-supplied text so it can never inject HTML/attributes into the email. */
+function escapeHtml(input: string): string {
+    return input
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
 
 export async function POST(req: NextRequest) {
     try {
@@ -12,37 +50,43 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const body = await req.json() as unknown;
+        const body = (await req.json()) as unknown;
 
-        // Privacy: only destructure the three fields we actually need.
-        // Any additional fields (e.g. formData, attributes) sent by an older
-        // client are silently dropped here and never logged or forwarded.
-        const { to, formTitle, formHTML } = body as {
-            to?: unknown;
-            formTitle?: unknown;
-            formHTML?: unknown;
-        };
-
-        const toStr = String(to);
-        const titleStr = String(formTitle);
-        const htmlStr = typeof formHTML === "string" ? formHTML : "";
-
-        // TODO(security): this endpoint trusts Formify's own client-rendered
-        // formHTML. Escape or sanitize here before accepting richer/untrusted
-        // HTML sources or allowing arbitrary saved HTML templates.
-        if (!toStr || !titleStr) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        // Validate shape and size. Never log the parsed body — it contains PII.
+        const parsed = emailSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json({ error: "Invalid email request." }, { status: 400 });
         }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(toStr)) {
-            return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
-        }
+        const { to, formTitle, blocks } = parsed.data;
+
+        // Server-render the form body from structured data, escaping every value.
+        const blocksHtml = blocks
+            .map(
+                (block) => `
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #2149A1; font-size: 14px; font-weight: 600; margin-bottom: 10px;">${escapeHtml(block.name)}</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            ${block.fields
+                                .map(
+                                    (field) => `
+                                <tr>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: 500; color: #6b7280; width: 40%;">${escapeHtml(field.label)}</td>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; color: #111827;">${escapeHtml(field.value) || "&mdash;"}</td>
+                                </tr>
+                            `,
+                                )
+                                .join("")}
+                        </table>
+                    </div>
+                `,
+            )
+            .join("");
 
         const { data, error } = await resend.emails.send({
             from: process.env.RESEND_FROM_EMAIL ?? "Formify <onboarding@resend.dev>",
-            to: [toStr],
-            subject: `Formify: ${titleStr}`,
+            to: [to],
+            subject: `Formify: ${formTitle}`,
             html: `
                 <!DOCTYPE html>
                 <html>
@@ -86,17 +130,17 @@ export async function POST(req: NextRequest) {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <h1>${titleStr}</h1>
+                            <h1>${escapeHtml(formTitle)}</h1>
                             <p class="subtitle">Generated by Formify on ${new Date().toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-            })}</p>
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            })}</p>
                         </div>
                         <div class="content">
-                            ${htmlStr}
+                            ${blocksHtml}
                         </div>
                         <div class="footer">
                             <p>This form was sent from Formify</p>
@@ -109,7 +153,7 @@ export async function POST(req: NextRequest) {
 
         if (error) {
             // Log only the Resend error name — never log error.message (it can echo
-            // the recipient address), htmlStr, titleStr, or toStr.
+            // the recipient address), the rendered HTML, the title, or the recipient.
             console.error("[email] Resend send failed.", { name: error.name });
 
             let errorMessage = "Failed to send email";
@@ -129,7 +173,6 @@ export async function POST(req: NextRequest) {
         console.log("[email] Sent, messageId:", data?.id);
 
         return NextResponse.json({ success: true, messageId: data?.id });
-
     } catch (error) {
         // Log only the error class/message, never the request body.
         const label = error instanceof Error ? error.message : "unknown";

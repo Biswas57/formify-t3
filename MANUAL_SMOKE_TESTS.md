@@ -103,6 +103,15 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] Auth submit buttons keep their loading labels and disabled state without pressed feedback while disabled.
 - [ ] No action behaviour changed.
 
+## Email HTML Hardening
+
+- [ ] Sending a normal form email still works and renders acceptably.
+- [ ] A form value containing `<script>alert(1)</script>` is escaped to inert text (no script runs, visible as literal text).
+- [ ] A form value containing `onclick=` / `javascript:` is escaped to inert text, not an active handler/link.
+- [ ] Empty field values still render as a dash.
+- [ ] An invalid/oversized payload returns a generic error and does not send.
+- [ ] No raw email/form HTML, recipient, or field values appear in server logs.
+
 ## Account And Profile
 
 - [ ] Profile page loads.

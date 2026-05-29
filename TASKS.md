@@ -46,6 +46,7 @@ _None._
 | --- | --- | --- |
 | T-013 Free-app usage safety limits and observability | Backlog | P1/P2, production hardening. Add fair-use session/cost protection and internal observability without paid tiers or Pro gates. |
 | T-109 Harden email HTML handling | Backlog | Escape or sanitize `formHTML` before accepting untrusted/richer HTML sources. |
+| T-109 Harden email HTML handling | Completed | `/api/email` no longer accepts client-rendered `formHTML`; the client sends structured `blocks` and the server zod-validates shape/size and renders the email while HTML-escaping every dynamic value (D-025). `<script>`, inline `on*=` handlers, and `javascript:` URLs in form values are escaped to inert text. Auth intact; no raw HTML/PII logged; no new dependency. |
 | T-110 Review server-side logging for PII | Completed | Audited server/API logs (D-024). Removed reset-URL/token + recipient-email logs in forgot-password, redacted raw `Error` objects to safe reason codes in forgot-password/register, and dropped the Resend `error.message` (recipient echo) to log only `error.name`. Safe metadata logs (timings, messageId, error.message-only) retained; no behaviour or response changes. |
 | T-111 Avoid Google Fonts build network dependency | Backlog | `next/font` can fail in restricted networks; consider self-hosted/local font strategy. |
 | T-120 Review and polish PDF export formatting | Backlog | P1, medium risk, PDF/export. Inspect and improve form + notes PDF branding, title/date/style, pagination, wrapped text, blank lines, footers, and page numbers. |
