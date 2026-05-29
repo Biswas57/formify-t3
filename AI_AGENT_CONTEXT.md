@@ -22,7 +22,7 @@ Formify is now free-app-first. Do not add Free/Pro distinctions, paywall gates, 
 - `src/server/api/routers/template.ts`: form template CRUD.
 - `src/server/api/routers/noteTemplate.ts`: note template CRUD.
 - `src/server/api/routers/block.ts`: active block library and custom block API.
-- `src/server/api/routers/usage.ts`: non-blocking usage state; `recordSession` is legacy.
+- `src/server/api/routers/usage.ts`: non-blocking usage state via `getToday`.
 - `src/app/transcription/TranscriptionClient.tsx`: forms-mode recording and WebSocket UI.
 - `src/app/dashboard/notes/NotesClient.tsx`: notes-mode recording and WebSocket UI.
 - `src/app/dashboard/notes/NoteTemplateSidebar.tsx`: saved note template UI.
@@ -155,7 +155,6 @@ Current frontend form messages expect `{ type, attributes }`; `corrected_audio` 
 - Full manual smoke testing for the free-app migration is still deferred.
 - Email export trusts Formify-generated `formHTML`; sanitize/escape before accepting richer or untrusted HTML.
 - `CustomBlock` model appears legacy but needs migration review before removal.
-- `usage.recordSession` is legacy and should be removed only after older clients are ruled out.
 - Historical billing migrations remain; do not delete old migrations casually.
 - Some server-side logs remain for operational events; review for PII before hardening.
 - Build can fail in network-restricted environments due Google Fonts.

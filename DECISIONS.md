@@ -10,7 +10,7 @@ The frontend does not authenticate directly with the transcription server. It ca
 
 ## D-003 Usage Is Analytics-Only At Token Mint
 
-Recording usage is counted as best-effort analytics when a WS token is minted. Usage write/read failures must not block token minting or recording. `usage.recordSession` remains only as legacy API surface.
+Recording usage is counted as best-effort analytics when a WS token is minted. Usage write/read failures must not block token minting or recording. The legacy `usage.recordSession` mutation has been removed (T-108); `usage.getToday` remains as the active non-blocking analytics read.
 
 ## D-004 Current Form WS Payload Does Not Use corrected_audio
 

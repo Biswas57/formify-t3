@@ -33,6 +33,7 @@
 | T-124 Stripe/payment/paywall audit | Completed | Audit found hard backend gates in WS token minting, template create/duplicate, custom block CRUD, note-template creation, optional NotesGate, and paywall UI/env/Stripe risks. T-122 should proceed as a phased free-app implementation. |
 | T-122 Make Formify a free app | Completed | Core features are auth-based and no longer blocked by usage, plan, template, notes, or custom-block gates. Paywall/pricing/upgrade UI and product copy were removed; docs/context now describe the free-app model. |
 | T-137 Later Stripe/schema cleanup | Completed | Removed remaining Stripe UI/routes/helper/dependency/env/entitlement residue and active billing schema through a dedicated migration. `MANUAL_SMOKE_TESTS.md` tracks deferred browser checks; historical migrations remain. |
+| T-108 Remove legacy usage.recordSession | Completed | Audit confirmed no frontend/test/API caller used `usage.recordSession`; removed the legacy mutation while keeping the active `usage.getToday` analytics read. WS token minting and recording behaviour unchanged. |
 
 ## Active
 
@@ -44,7 +45,6 @@ _None._
 | --- | --- | --- |
 | T-013 Free-app usage safety limits and observability | Backlog | P1/P2, production hardening. Add fair-use session/cost protection and internal observability without paid tiers or Pro gates. |
 | T-107 Review legacy CustomBlock model | Backlog | Old `customBlockRouter` source was removed; decide whether existing `CustomBlock` data/model should be migrated or removed. |
-| T-108 Remove legacy usage.recordSession | Backlog | Usage is counted during WS token mint; remove mutation after confirming no old clients call it. |
 | T-109 Harden email HTML handling | Backlog | Escape or sanitize `formHTML` before accepting untrusted/richer HTML sources. |
 | T-110 Review server-side logging for PII | Backlog | tRPC/password-reset/email operational logs remain; audit before production hardening. |
 | T-111 Avoid Google Fonts build network dependency | Backlog | `next/font` can fail in restricted networks; consider self-hosted/local font strategy. |
