@@ -75,3 +75,7 @@ Theme preference (system / light / dark) is stored in `localStorage`, applied vi
 ### D-016 System font stack (no build-time font fetch)
 
 Typography uses a local system font stack in `globals.css` / Tailwind — not `next/font/google` — so production builds do not fetch fonts over the network.
+
+### D-017 Notes max session warning model (reliability guard)
+
+For Notes mode, frontend warns against a 120-minute maximum session length as a reliability safeguard (not monetisation). Warning UX is local wall-clock timing from recording start for the active backend recording window, not MediaRecorder chunk cadence. Resume/start creates a new backend recording window, so warning timing resets per window. If the backend finalises at the cap, UI should show the session was finalised, advise starting a new session, and confirm notes are preserved.

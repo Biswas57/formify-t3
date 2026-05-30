@@ -65,6 +65,16 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] First start does not send old notes.
 - [ ] Notes content is not logged during continuation.
 
+## Notes Session Length Guard
+
+- [ ] During a long Notes recording, a non-modal reliability warning appears before the 120-minute maximum session length.
+- [ ] A stronger final-warning appears in the final minutes before the maximum session length.
+- [ ] Warning copy uses reliability/max-session wording (no plan, pricing, or upgrade language).
+- [ ] If the backend finalises at the maximum session length, the UI shows that the session was finalised and advises starting a new session.
+- [ ] After cap finalisation, current notes remain visible and editable/exportable as expected.
+- [ ] Starting/resuming recording begins a fresh per-recording timer window and warning state.
+- [ ] New session/reset clears the session-length warning state.
+
 ## Notes Layout
 
 - [ ] Notes template sidebar header no longer shows a saved-count pill.

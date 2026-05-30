@@ -30,6 +30,11 @@ interface ServerMessage {
 type WSStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "error";
 type RecordStatus = "idle" | "recording" | "finalizing" | "paused";
 type NoteStyle = "general" | "clinical" | "meeting" | "study";
+type SessionLimitWarningLevel = "none" | "warning" | "final-warning" | "reached";
+
+const MAX_NOTES_SESSION_MS = 120 * 60_000;
+const NOTES_SESSION_WARNING_MS = 10 * 60_000;
+const NOTES_SESSION_FINAL_WARNING_MS = 2 * 60_000;
 
 type NotesStartPayload = {
     action: "start";
@@ -83,6 +88,13 @@ function buildMarkdownFilename(title: string): string {
         .toLowerCase();
 
     return `${safe || "formify-notes"}.md`;
+}
+
+function getSessionWarningLevel(remainingMs: number): SessionLimitWarningLevel {
+    if (remainingMs <= 0) return "reached";
+    if (remainingMs <= NOTES_SESSION_FINAL_WARNING_MS) return "final-warning";
+    if (remainingMs <= NOTES_SESSION_WARNING_MS) return "warning";
+    return "none";
 }
 
 // ─── Simple markdown renderer ────────────────────────────────────────────────
@@ -181,6 +193,10 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const [micError, setMicError] = useState<string | null>(null);
     const sessionReadyRef = useRef(false);
     const [, setSessionReady] = useState(false);
+    const recordingSessionStartedAtRef = useRef<number | null>(null);
+    const manualStopRequestedRef = useRef(false);
+    const [sessionLimitWarningLevel, setSessionLimitWarningLevel] = useState<SessionLimitWarningLevel>("none");
+    const [sessionLimitRemainingMs, setSessionLimitRemainingMs] = useState<number | null>(null);
 
     // Token
     const getSessionToken = api.transcription.getSessionToken.useMutation();
@@ -220,11 +236,58 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const canRecord = isConnected && !isFinalizing;
     const canSelectTemplate = recordStatus === "idle";
     const errorMessage = wsError ?? micError;
+    const sessionLimitRemainingMinutes =
+        sessionLimitRemainingMs === null ? null : Math.max(0, Math.ceil(sessionLimitRemainingMs / 60_000));
+    const showSessionLimitWarning = sessionLimitWarningLevel !== "none";
+    const sessionLimitWarningCopy = (() => {
+        if (sessionLimitWarningLevel === "warning") {
+            const minutesLabel = sessionLimitRemainingMinutes === 1 ? "1 minute" : `${sessionLimitRemainingMinutes ?? 0} minutes`;
+            return `For reliability, this Notes session has a maximum session length of 120 minutes. About ${minutesLabel} remaining in this recording window.`;
+        }
+        if (sessionLimitWarningLevel === "final-warning") {
+            const minutesLabel = sessionLimitRemainingMinutes === 1 ? "1 minute" : `${sessionLimitRemainingMinutes ?? 0} minutes`;
+            return `Approaching maximum session length for reliability — about ${minutesLabel} remaining.`;
+        }
+        if (sessionLimitWarningLevel === "reached") {
+            return "This Notes session reached the maximum session length for reliability and was finalised. Start a new session to continue. Your notes so far are preserved.";
+        }
+        return "";
+    })();
+    const sessionLimitWarningClasses: Record<SessionLimitWarningLevel, string> = {
+        none: "",
+        warning:
+            "border-yellow-200 bg-yellow-50 text-yellow-800 " +
+            "dark:border-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-200",
+        "final-warning":
+            "border-orange-300 bg-orange-50 text-orange-800 " +
+            "dark:border-orange-500/40 dark:bg-orange-500/10 dark:text-orange-200",
+        reached:
+            "border-red-300 bg-red-50 text-red-800 " +
+            "dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200",
+    };
 
     const visibleNotesMarkdown = isEditingNotes ? draftNotesMarkdown : notesMarkdown;
     const hasNotes = notesMarkdown.trim().length > 0;
     const hasVisibleNotes = visibleNotesMarkdown.trim().length > 0;
     const canEditNotes = hasNotes && isFinal && !isRecording && !isFinalizing;
+
+    useEffect(() => {
+        if (recordStatus !== "recording" && recordStatus !== "finalizing") return;
+        if (recordingSessionStartedAtRef.current === null) return;
+
+        const tick = () => {
+            const startedAt = recordingSessionStartedAtRef.current;
+            if (startedAt === null) return;
+            const elapsedMs = Date.now() - startedAt;
+            const remainingMs = Math.max(0, MAX_NOTES_SESSION_MS - elapsedMs);
+            setSessionLimitRemainingMs(remainingMs);
+            setSessionLimitWarningLevel(getSessionWarningLevel(remainingMs));
+        };
+
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, [recordStatus]);
 
     // Auto-scroll notes panel as content grows
     useEffect(() => {
@@ -426,9 +489,26 @@ export default function NotesClient({ user: _user }: { user: User }) {
                             setNotesMarkdown(md);
                         }
                     }
+
+                    const startedAt = recordingSessionStartedAtRef.current;
+                    const capReachedByTime =
+                        startedAt !== null && (Date.now() - startedAt) >= MAX_NOTES_SESSION_MS;
+                    const capFinalized = capReachedByTime && !manualStopRequestedRef.current;
+
+                    if (capFinalized) {
+                        stopLocalRecorder();
+                        setSessionLimitWarningLevel("reached");
+                        setSessionLimitRemainingMs(0);
+                    } else {
+                        setSessionLimitWarningLevel("none");
+                        setSessionLimitRemainingMs(null);
+                    }
+
                     setIsFinal(true);
                     setRecordStatus("paused");
                     recordStatusRef.current = "paused";
+                    manualStopRequestedRef.current = false;
+                    recordingSessionStartedAtRef.current = null;
                     return;
                 }
             } catch {
@@ -479,6 +559,22 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
     // ── Recording ─────────────────────────────────────────────────────────────
 
+    const stopLocalRecorder = () => {
+        const recorder = recorderRef.current;
+        if (!recorder) return;
+
+        if (recorder.state !== "inactive") {
+            try {
+                recorder.stop();
+            } catch {
+                // Ignore stop races if the recorder already became inactive.
+            }
+        }
+
+        recorder.stream.getTracks().forEach((track) => track.stop());
+        recorderRef.current = null;
+    };
+
     const startRecording = async () => {
         if (isEditingNotesRef.current) {
             setMicError("Finish editing before starting a new recording.");
@@ -486,6 +582,10 @@ export default function NotesClient({ user: _user }: { user: User }) {
         }
 
         setMicError(null);
+        manualStopRequestedRef.current = false;
+        recordingSessionStartedAtRef.current = null;
+        setSessionLimitWarningLevel("none");
+        setSessionLimitRemainingMs(null);
         const ws = wsRef.current;
         if (ws?.readyState !== WebSocket.OPEN) return;
 
@@ -542,7 +642,9 @@ export default function NotesClient({ user: _user }: { user: User }) {
                 }
             };
 
-            recorder.start(2000); // 2s chunks — combined with MIN_CHUNK_NUM=6, first GPT pass fires after ~12s
+            recorder.start(2000); // 2s chunks — chunk delivery can jitter, so session-limit timing uses wall clock start time.
+            recordingSessionStartedAtRef.current = Date.now();
+            setSessionLimitRemainingMs(MAX_NOTES_SESSION_MS);
             clearNotesEditState();
             setNotesManualEdits(false);
             setIsFinal(false);
@@ -559,12 +661,10 @@ export default function NotesClient({ user: _user }: { user: User }) {
     };
 
     const stopRecording = () => {
-        const recorder = recorderRef.current;
-        if (!recorder) return;
+        if (!recorderRef.current) return;
 
-        recorder.stop();
-        recorder.stream.getTracks().forEach((t) => t.stop());
-        recorderRef.current = null;
+        manualStopRequestedRef.current = true;
+        stopLocalRecorder();
         setRecordStatus("finalizing");
         recordStatusRef.current = "finalizing";
         setIsFinal(false);
@@ -575,11 +675,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
     };
 
     const handleReset = () => {
-        if (recorderRef.current) {
-            recorderRef.current.stop();
-            recorderRef.current.stream.getTracks().forEach((t) => t.stop());
-            recorderRef.current = null;
-        }
+        stopLocalRecorder();
         if (reconnectTimerRef.current) {
             clearTimeout(reconnectTimerRef.current);
             reconnectTimerRef.current = null;
@@ -593,6 +689,10 @@ export default function NotesClient({ user: _user }: { user: User }) {
         setNotesManualEdits(false);
         setMicError(null);
         setWsError(null);
+        manualStopRequestedRef.current = false;
+        recordingSessionStartedAtRef.current = null;
+        setSessionLimitWarningLevel("none");
+        setSessionLimitRemainingMs(null);
         sessionReadyRef.current = false;
         setSessionReady(false);
 
@@ -1040,6 +1140,14 @@ export default function NotesClient({ user: _user }: { user: User }) {
                     <div className="flex items-center gap-2.5 bg-[#e8eef9] border border-[#2149A1]/20 text-[#2149A1] text-sm rounded-lg px-4 py-3 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200">
                         <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
                         Generating final notes — this may take a moment…
+                    </div>
+                )}
+
+                {/* Session length warning */}
+                {showSessionLimitWarning && (
+                    <div className={`flex items-start gap-2.5 rounded-lg border px-4 py-3 text-sm ${sessionLimitWarningClasses[sessionLimitWarningLevel]}`}>
+                        <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                        <p>{sessionLimitWarningCopy}</p>
                     </div>
                 )}
 
