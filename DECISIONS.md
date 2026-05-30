@@ -28,6 +28,10 @@ Summarise, reorganise, and similar notes post-processing are **not** live WS pro
 
 In Notes mode, client audio chunks must only be sent after the socket is open and the server confirms session readiness via `{ type: "started" }`. Readiness must reset on start, close/reconnect, and explicit reset/new-session transitions so stale state cannot leak audio into a new or unauthenticated WS session.
 
+### D-019 Notes WebSocket exists only during recording/finalising
+
+The Notes client does not pre-connect or keep an idle socket. It opens a WebSocket on demand when recording starts and closes it intentionally once the session ends (`notes_final`, reset, or unmount). Intentional closes must not surface an interruption banner, and the client must never auto-reconnect while idle/paused — only an explicit start/resume opens a new socket (resume continues with current `notesMarkdown`). This keeps backend idle/1006 socket churn from accumulating. Unexpected closes *during* recording/finalising remain real failures (see D-018 readiness handling).
+
 ## Product model
 
 ### D-006 Formify is a genuinely free app

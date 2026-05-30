@@ -233,7 +233,12 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const isRecording = recordStatus === "recording";
     const isFinalizing = recordStatus === "finalizing";
     const isPaused = recordStatus === "paused";
-    const canRecord = isConnected && !isFinalizing;
+    // Sockets open on demand at record time (T-018), so starting does not
+    // require an existing connection; only block while finalising or connecting.
+    const canRecord = !isFinalizing && wsStatus !== "connecting";
+    // The connection pill is only meaningful while a session is being
+    // established or is active; hide it when idle/paused with no socket.
+    const showConnectionPill = isRecording || isFinalizing || wsStatus === "connecting" || wsStatus === "error";
     const canSelectTemplate = recordStatus === "idle";
     const errorMessage = wsError ?? micError;
     const sessionLimitRemainingMinutes =
@@ -410,49 +415,50 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
     // ── WebSocket ─────────────────────────────────────────────────────────────
 
-    // Auto-reconnect state
-    const reconnectAttemptsRef = useRef(0);
-    const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Sockets exist only during active recording/finalising (T-018). Track
+    // intentional closes (notes_final, reset, unmount) so they neither surface
+    // as interruptions nor trigger any reconnect.
     const recordStatusRef = useRef<RecordStatus>("idle");
-    const MAX_RECONNECT_ATTEMPTS = 4;
+    const intentionalCloseRef = useRef(false);
 
-    const connectWS = useCallback((isReconnect = false) => {
-        if (
-            wsRef.current?.readyState === WebSocket.OPEN ||
-            wsRef.current?.readyState === WebSocket.CONNECTING
-        ) return;
-        wsSessionReadyRef.current = false;
-        setSessionReady(false);
-
-        if (isReconnect) {
-            setWsStatus("reconnecting");
-        } else {
-            setWsStatus("connecting");
-            setWsError(null);
-            reconnectAttemptsRef.current = 0;
+    // Opens a WebSocket on demand and resolves once it is OPEN. There is no
+    // idle/pre-connected socket and no auto-reconnect — the connection only
+    // lives for the duration of a recording/finalising session.
+    const connectWS = useCallback((): Promise<WebSocket> => {
+        const existing = wsRef.current;
+        if (existing?.readyState === WebSocket.OPEN) {
+            return Promise.resolve(existing);
         }
 
-        const ws = new WebSocket(getWSUrl());
-        wsRef.current = ws;
-
-        // 8s connection timeout — gives enough time for slow cold-starts
-        const connectionTimeout = setTimeout(() => {
-            if (ws.readyState !== WebSocket.OPEN) ws.close();
-        }, 8000);
-
-        ws.onopen = () => {
-            clearTimeout(connectionTimeout);
-            setWsStatus("connected");
+        return new Promise<WebSocket>((resolve, reject) => {
+            intentionalCloseRef.current = false;
+            wsSessionReadyRef.current = false;
+            setSessionReady(false);
+            setWsStatus("connecting");
             setWsError(null);
-            reconnectAttemptsRef.current = 0;
-            if (reconnectTimerRef.current) {
-                clearTimeout(reconnectTimerRef.current);
-                reconnectTimerRef.current = null;
-            }
-            // Do NOT send start here — deferred to startRecording after token mint.
-        };
 
-        ws.onmessage = (event) => {
+            let settled = false;
+            const ws = new WebSocket(getWSUrl());
+            wsRef.current = ws;
+
+            // 8s connection timeout — gives enough time for slow cold-starts
+            const connectionTimeout = setTimeout(() => {
+                if (ws.readyState !== WebSocket.OPEN) {
+                    intentionalCloseRef.current = true;
+                    ws.close();
+                }
+            }, 8000);
+
+            ws.onopen = () => {
+                clearTimeout(connectionTimeout);
+                setWsStatus("connected");
+                setWsError(null);
+                settled = true;
+                resolve(ws);
+                // Do NOT send start here — startRecording sends it after token mint.
+            };
+
+            ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data as string) as ServerMessage;
 
@@ -517,57 +523,88 @@ export default function NotesClient({ user: _user }: { user: User }) {
                     recordStatusRef.current = "paused";
                     manualStopRequestedRef.current = false;
                     recordingSessionStartedAtRef.current = null;
+
+                    // Session is finished — close the socket intentionally so no
+                    // idle connection lingers or churns after finalisation.
+                    intentionalCloseRef.current = true;
+                    wsSessionReadyRef.current = false;
+                    setSessionReady(false);
+                    ws.close(1000, "notes-final");
                     return;
                 }
             } catch {
                 console.warn("[Notes] Non-JSON WS message");
             }
-        };
+            };
 
-        ws.onerror = () => {
-            // onerror always fires before onclose — don't set error state here.
-            // onclose handles all state transitions so we only act once.
-        };
+            ws.onerror = () => {
+                // onerror always fires before onclose — don't set error state here.
+                // onclose handles all state transitions so we only act once.
+            };
 
-        ws.onclose = () => {
-            clearTimeout(connectionTimeout);
-            wsSessionReadyRef.current = false;
-            setSessionReady(false);
+            ws.onclose = () => {
+                clearTimeout(connectionTimeout);
+                wsSessionReadyRef.current = false;
+                setSessionReady(false);
 
-            const currentStatus = recordStatusRef.current;
+                const wasIntentional = intentionalCloseRef.current;
+                intentionalCloseRef.current = false;
+                if (wsRef.current === ws) wsRef.current = null;
 
-            // A disconnect during recording/finalizing is a real failure — stop local
-            // audio capture and let the user recover without losing notes.
-            if (currentStatus === "recording" || currentStatus === "finalizing") {
-                stopLocalRecorder();
-                setRecordStatus("paused");
-                recordStatusRef.current = "paused";
-                setWsError("The recording connection was interrupted. Your notes so far are preserved. Start a new recording segment to continue.");
-                setWsStatus("error");
-                return;
-            }
+                // Never opened — reject the pending connect so startRecording can surface it.
+                if (!settled) {
+                    settled = true;
+                    setWsStatus("disconnected");
+                    reject(new Error("connection-failed"));
+                    return;
+                }
 
-            // 1001 = idle going-away (server-side idle timeout), 1000 = clean close.
-            // Both are expected for pre-connected idle sockets — attempt quiet reconnect.
-            const attempt = ++reconnectAttemptsRef.current;
-            if (attempt <= MAX_RECONNECT_ATTEMPTS) {
-                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 16000);
-                reconnectTimerRef.current = setTimeout(() => connectWS(true), delay);
-            } else {
-                // Exhausted retries — show a manual retry option
-                setWsStatus("error");
-                setWsError("Connection lost. Click Retry to reconnect.");
-            }
-        };
+                // Intentional close (notes_final, reset, unmount, connect timeout):
+                // go quiet, no banner, no reconnect.
+                if (wasIntentional) {
+                    setWsStatus("disconnected");
+                    return;
+                }
+
+                // A disconnect during recording/finalizing is a real failure — stop
+                // local audio capture and let the user recover without losing notes.
+                const currentStatus = recordStatusRef.current;
+                if (currentStatus === "recording" || currentStatus === "finalizing") {
+                    stopLocalRecorder();
+                    setRecordStatus("paused");
+                    recordStatusRef.current = "paused";
+                    setWsError("The recording connection was interrupted. Your notes so far are preserved. Start a new recording segment to continue.");
+                    setWsStatus("error");
+                    return;
+                }
+
+                // Otherwise idle/paused — sockets only live during recording, so
+                // do not reconnect.
+                setWsStatus("disconnected");
+            };
+        });
     }, []);
 
+    // Close the active socket intentionally (reset / unmount). Sockets are only
+    // meant to exist during recording, so this never reconnects.
+    const closeWsIntentionally = useCallback(() => {
+        intentionalCloseRef.current = true;
+        wsSessionReadyRef.current = false;
+        setSessionReady(false);
+        const ws = wsRef.current;
+        if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+            ws.close(1000, "client-intentional");
+        }
+    }, []);
+
+    // No socket on mount — it is opened on demand when recording starts.
+    // On unmount, close any active socket intentionally.
     useEffect(() => {
-        connectWS();
         return () => {
-            if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-            wsRef.current?.close();
+            intentionalCloseRef.current = true;
+            wsRef.current?.close(1000, "client-unmount");
         };
-    }, [connectWS]);
+    }, []);
 
     // ── Recording ─────────────────────────────────────────────────────────────
 
@@ -598,8 +635,6 @@ export default function NotesClient({ user: _user }: { user: User }) {
         recordingSessionStartedAtRef.current = null;
         setSessionLimitWarningLevel("none");
         setSessionLimitRemainingMs(null);
-        const ws = wsRef.current;
-        if (ws?.readyState !== WebSocket.OPEN) return;
 
         // ── Mint session token (auth + usage enforcement happens server-side) ──
         let token: string;
@@ -611,6 +646,16 @@ export default function NotesClient({ user: _user }: { user: User }) {
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : "Failed to start session";
             setMicError(msg);
+            return;
+        }
+
+        // ── Open a fresh WebSocket on demand (sockets only live during recording) ──
+        let ws: WebSocket;
+        try {
+            ws = await connectWS();
+        } catch {
+            setWsError("Could not connect to the transcription service. Please try again.");
+            setWsStatus("error");
             return;
         }
 
@@ -693,11 +738,9 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
     const handleReset = () => {
         stopLocalRecorder();
-        if (reconnectTimerRef.current) {
-            clearTimeout(reconnectTimerRef.current);
-            reconnectTimerRef.current = null;
-        }
-        reconnectAttemptsRef.current = 0;
+        // Close any active socket intentionally and do not reconnect — a new
+        // socket opens only when the user starts recording again.
+        closeWsIntentionally();
         setRecordStatus("idle");
         recordStatusRef.current = "idle";
         setNotesMarkdown("");
@@ -706,15 +749,11 @@ export default function NotesClient({ user: _user }: { user: User }) {
         setNotesManualEdits(false);
         setMicError(null);
         setWsError(null);
+        setWsStatus("disconnected");
         manualStopRequestedRef.current = false;
         recordingSessionStartedAtRef.current = null;
         setSessionLimitWarningLevel("none");
         setSessionLimitRemainingMs(null);
-        wsSessionReadyRef.current = false;
-        setSessionReady(false);
-
-        wsRef.current?.close();
-        setTimeout(() => connectWS(), 100);
     };
 
     // ── PDF Export ────────────────────────────────────────────────────────────
@@ -1126,16 +1165,18 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                 </button>
                             </div>
 
-                            {/* WS status pill */}
-                            <div className={`flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${isConnected
-                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                : (wsStatus === "connecting" || wsStatus === "reconnecting")
-                                    ? "border-yellow-200 bg-yellow-50 text-yellow-700"
-                                    : "border-red-200 bg-red-50 text-red-600"
-                                }`}>
-                                {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                                {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
-                            </div>
+                            {/* WS status pill — only shown while connecting/active/error */}
+                            {showConnectionPill && (
+                                <div className={`flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${isConnected
+                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    : (wsStatus === "connecting" || wsStatus === "reconnecting")
+                                        ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+                                        : "border-red-200 bg-red-50 text-red-600"
+                                    }`}>
+                                    {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                                    {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
+                                </div>
+                            )}
                         </div>
 
                 {/* Error banner */}
@@ -1144,10 +1185,10 @@ export default function NotesClient({ user: _user }: { user: User }) {
                         <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <p className="flex-1">{errorMessage}</p>
                         <button
-                            onClick={() => { setWsError(null); setMicError(null); connectWS(); }}
+                            onClick={() => { setWsError(null); setMicError(null); setWsStatus("disconnected"); }}
                             className="flex items-center gap-1 font-medium text-xs text-red-600 hover:text-red-800 whitespace-nowrap transition-opacity active:opacity-80 dark:text-red-300 dark:hover:text-red-200"
                         >
-                            <RotateCcw className="w-3 h-3" /> Retry
+                            <RotateCcw className="w-3 h-3" /> Dismiss
                         </button>
                     </div>
                 )}

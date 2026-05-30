@@ -39,7 +39,11 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] Missing/invalid WS token shows a recoverable recording error and does not leave recording active.
 - [ ] Unexpected WS close during Notes `recording` stops local mic capture and keeps current notes visible.
 - [ ] Unexpected WS close during Notes `finalizing` stops local mic capture and keeps current notes visible.
-- [ ] After an unexpected Notes WS close, Retry reconnects and user can start recording again.
+- [ ] After an unexpected Notes WS close, Dismiss clears the banner and the user can start recording again (a fresh socket opens on Start).
+- [ ] No Notes WebSocket opens on page mount/idle — a socket only opens when recording starts.
+- [ ] After `notes_final`, the Notes WebSocket closes intentionally with no interruption banner.
+- [ ] After finalisation, waiting several minutes opens no new idle socket (no 1006 churn / reconnect loop).
+- [ ] Resume after finalisation opens a fresh socket and sends continuation notes normally.
 
 ## Exports
 
