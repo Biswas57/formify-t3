@@ -33,6 +33,14 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] Notes page is accessible to signed-in users.
 - [ ] Template builder is accessible to signed-in users.
 
+## WebSocket Recording Lifecycle
+
+- [ ] Notes recording does not stream binary audio before the WS session receives `started`.
+- [ ] Missing/invalid WS token shows a recoverable recording error and does not leave recording active.
+- [ ] Unexpected WS close during Notes `recording` stops local mic capture and keeps current notes visible.
+- [ ] Unexpected WS close during Notes `finalizing` stops local mic capture and keeps current notes visible.
+- [ ] After an unexpected Notes WS close, Retry reconnects and user can start recording again.
+
 ## Exports
 
 - [ ] Forms PDF export works.

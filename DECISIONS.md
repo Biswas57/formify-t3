@@ -24,6 +24,10 @@ On `start`, forms mode sends `{ action, mode: "forms", blocks, token }` where `b
 
 Summarise, reorganise, and similar notes post-processing are **not** live WS protocol features. `ws-transcription` exposes authenticated HTTP transform endpoints; `formify-web` calls them from protected tRPC mutations. These transforms must not persist notes to the DB, stream audio, or change the browser WS recording contract.
 
+### D-018 Do not stream audio before Notes session is ready
+
+In Notes mode, client audio chunks must only be sent after the socket is open and the server confirms session readiness via `{ type: "started" }`. Readiness must reset on start, close/reconnect, and explicit reset/new-session transitions so stale state cannot leak audio into a new or unauthenticated WS session.
+
 ## Product model
 
 ### D-006 Formify is a genuinely free app

@@ -191,7 +191,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const recorderRef = useRef<MediaRecorder | null>(null);
     const [recordStatus, setRecordStatus] = useState<RecordStatus>("idle");
     const [micError, setMicError] = useState<string | null>(null);
-    const sessionReadyRef = useRef(false);
+    const wsSessionReadyRef = useRef(false);
     const [, setSessionReady] = useState(false);
     const recordingSessionStartedAtRef = useRef<number | null>(null);
     const manualStopRequestedRef = useRef(false);
@@ -421,6 +421,8 @@ export default function NotesClient({ user: _user }: { user: User }) {
             wsRef.current?.readyState === WebSocket.OPEN ||
             wsRef.current?.readyState === WebSocket.CONNECTING
         ) return;
+        wsSessionReadyRef.current = false;
+        setSessionReady(false);
 
         if (isReconnect) {
             setWsStatus("reconnecting");
@@ -463,7 +465,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                 }
 
                 if (msg.type === "started") {
-                    sessionReadyRef.current = true;
+                    wsSessionReadyRef.current = true;
                     setSessionReady(true);
                     return;
                 }
@@ -523,14 +525,18 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
         ws.onclose = () => {
             clearTimeout(connectionTimeout);
-            sessionReadyRef.current = false;
+            wsSessionReadyRef.current = false;
             setSessionReady(false);
 
             const currentStatus = recordStatusRef.current;
 
-            // A disconnect during active recording is a real failure — surface it.
-            if (currentStatus === "recording") {
-                setWsError("Connection lost during recording. Please stop and try again.");
+            // A disconnect during recording/finalizing is a real failure — stop local
+            // audio capture and let the user recover without losing notes.
+            if (currentStatus === "recording" || currentStatus === "finalizing") {
+                stopLocalRecorder();
+                setRecordStatus("paused");
+                recordStatusRef.current = "paused";
+                setWsError("Connection lost while recording. Notes are preserved. Click Retry to reconnect, then start recording again.");
                 setWsStatus("error");
                 return;
             }
@@ -604,7 +610,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
         // ── Send start with locked-in config + token ───────────────────────
         // Config is captured NOW — what the user sees is what gets sent.
-        sessionReadyRef.current = false;
+        wsSessionReadyRef.current = false;
         setSessionReady(false);
 
         const sections = sectionsRaw
@@ -637,7 +643,11 @@ export default function NotesClient({ user: _user }: { user: User }) {
             recorderRef.current = recorder;
 
             recorder.ondataavailable = (e) => {
-                if (e.data.size > 0 && wsRef.current?.readyState === WebSocket.OPEN) {
+                if (
+                    e.data.size > 0 &&
+                    wsRef.current?.readyState === WebSocket.OPEN &&
+                    wsSessionReadyRef.current
+                ) {
                     wsRef.current.send(e.data);
                 }
             };
@@ -693,7 +703,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
         recordingSessionStartedAtRef.current = null;
         setSessionLimitWarningLevel("none");
         setSessionLimitRemainingMs(null);
-        sessionReadyRef.current = false;
+        wsSessionReadyRef.current = false;
         setSessionReady(false);
 
         wsRef.current?.close();
