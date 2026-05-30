@@ -459,7 +459,13 @@ export default function NotesClient({ user: _user }: { user: User }) {
                 if (msg.error) {
                     console.warn("[Notes] Server error:", msg.error);
                     if (msg.error === "invalid-token" || msg.error === "missing-token") {
+                        wsSessionReadyRef.current = false;
+                        setSessionReady(false);
+                        stopLocalRecorder();
+                        setRecordStatus("paused");
+                        recordStatusRef.current = "paused";
                         setMicError("Session expired. Please try starting again.");
+                        setWsStatus("error");
                     }
                     return;
                 }
@@ -536,7 +542,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                 stopLocalRecorder();
                 setRecordStatus("paused");
                 recordStatusRef.current = "paused";
-                setWsError("Connection lost while recording. Notes are preserved. Click Retry to reconnect, then start recording again.");
+                setWsError("The recording connection was interrupted. Your notes so far are preserved. Start a new recording segment to continue.");
                 setWsStatus("error");
                 return;
             }
@@ -645,6 +651,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
             recorder.ondataavailable = (e) => {
                 if (
                     e.data.size > 0 &&
+                    recordStatusRef.current === "recording" &&
                     wsRef.current?.readyState === WebSocket.OPEN &&
                     wsSessionReadyRef.current
                 ) {
