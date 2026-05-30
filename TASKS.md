@@ -29,8 +29,6 @@
 | T-119 Polish notes template sidebar truncation and toggle placement | Completed | Moved desktop hide toggle into the sidebar header, kept a lightweight collapsed reopen control, and made row actions hover/focus revealed so titles/sections use more width by default. |
 | T-132 Fix note template inline rename commit | Completed | Rename now commits directly on Enter and on blur, skips unchanged/blank titles without submitting, preserves typed value on failure, and refetches the template list after success. |
 | T-013b Add Notes session limit warning UX | Completed | Added frontend wall-clock session-length warnings (10m + 2m + reached) for the Notes 120-minute reliability cap, including calm non-modal callout copy and reached/finalised guidance to start a new session while preserving notes. |
-| T-017 Notes WS readiness and close resilience | Completed | Notes client now gates audio chunk sending on WS `OPEN` plus server `started` readiness, resets readiness on start/close/reconnect/reset, and on unexpected close during recording/finalizing stops local recorder tracks while preserving notes and surfacing a recoverable retry message. |
-| T-018 Close Notes WS after finalisation and avoid idle reconnects | Completed | Notes sockets now open on demand at record start and never on mount; after `notes_final` (or reset/unmount) the socket is closed intentionally so no idle connection lingers or churns, idle/paused closes no longer auto-reconnect, and resume opens a fresh socket with continuation notes. Notes/edits/template state are preserved. |
 | T-129 Design notes AI transform integration | Completed | Decision recorded in D-005: use authenticated HTTP transform endpoints in `ws-transcription`, called by protected `formify-web` tRPC mutations. |
 | T-117 Manual smoke test T-113/T-114/T-115/T-116 | Completed | Feasible smoke tests passed for form-field locking, all-fields-locked blocking, note template create/list/delete/limit, desktop sidebar, and mobile drawer. Rename issue tracked as T-132; PDF export, mic-dependent recording checks, ownership boundary, and active-recording template actions remain deferred/blocked. |
 | T-124 Stripe/payment/paywall audit | Completed | Audit found hard backend gates in WS token minting, template create/duplicate, custom block CRUD, note-template creation, optional NotesGate, and paywall UI/env/Stripe risks. T-122 should proceed as a phased free-app implementation. |
@@ -50,7 +48,6 @@ _None._
 
 | ID | Status | Notes |
 | --- | --- | --- |
-| T-013 Free-app usage safety limits and observability | Backlog | P1/P2, production hardening. Add fair-use session/cost protection and internal observability without paid tiers or Pro gates. |
 | T-120 Review and polish PDF export formatting | Backlog | P1, medium risk, PDF/export. Inspect and improve form + notes PDF branding, title/date/style, pagination, wrapped text, blank lines, footers, and page numbers. |
 | T-123 Support table-style form fields | Backlog | P3, high risk, likely UI/API/DB/export. Needs product/design spec before implementation. |
 | T-126 Notes local autosave and recovery | Backlog | P3, medium risk, frontend-only. Autosave current visible notes/session config locally with expiry and restore/discard UX; no audio, raw transcript, DB history, or WS changes. |
