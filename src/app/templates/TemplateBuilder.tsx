@@ -429,7 +429,7 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                             </p>
                         </div>
                     ) : (
-                        <div className="max-w-2xl space-y-3">
+                        <div className="mx-auto w-full max-w-2xl space-y-3">
                             {blocks.map((block, idx) => (
                                 <div
                                     key={block.instanceId}

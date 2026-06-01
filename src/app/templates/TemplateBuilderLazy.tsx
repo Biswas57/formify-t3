@@ -19,17 +19,19 @@ function TemplateBuilderSkeleton() {
             </div>
             {/* Body skeleton */}
             <div className="flex flex-1 min-h-0">
-                <div className="flex-1 px-4 md:px-6 py-6 space-y-3">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
-                            <div className="h-4 bg-slate-200 rounded animate-pulse w-32 mb-3" />
-                            <div className="grid grid-cols-2 gap-2">
-                                {[1, 2, 3, 4].map((j) => (
-                                    <div key={j} className="h-10 bg-slate-100 rounded-lg animate-pulse" />
-                                ))}
+                <div className="flex-1 px-4 md:px-6 py-6">
+                    <div className="mx-auto w-full max-w-2xl space-y-3">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
+                                <div className="h-4 bg-slate-200 rounded animate-pulse w-32 mb-3" />
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[1, 2, 3, 4].map((j) => (
+                                        <div key={j} className="h-10 bg-slate-100 rounded-lg animate-pulse" />
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
                 {/* Library panel skeleton — desktop only */}
                 <div className="hidden md:flex md:flex-col w-72 border-l border-slate-200 bg-white px-4 py-4 space-y-2">
