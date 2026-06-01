@@ -88,7 +88,7 @@ export default function RegisterPage() {
                 router.push("/login?registered=true");
             } else {
                 setSuccess(true);
-                setTimeout(() => router.push("/dashboard"), 1200);
+                setTimeout(() => router.push("/templates"), 1200);
             }
         } catch {
             setError("Network error. Please check your connection and try again.");
@@ -98,7 +98,7 @@ export default function RegisterPage() {
 
     const handleGoogleSignIn = async () => {
         setIsGoogleLoading(true);
-        await signIn("google", { callbackUrl: "/dashboard" });
+        await signIn("google", { callbackUrl: "/templates" });
     };
 
     if (success) {

@@ -5,9 +5,9 @@ import LandingPageClient from "./_landing/LandingPageClient";
 export default async function HomePage() {
   const session = await auth();
 
-  // Logged-in users go straight to dashboard — no need to see the marketing page.
+  // Logged-in users go straight to their templates — no need to see the marketing page.
   if (session?.user) {
-    redirect("/dashboard");
+    redirect("/templates");
   }
 
   return <LandingPageClient />;

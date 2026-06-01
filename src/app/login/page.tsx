@@ -9,7 +9,7 @@ import { Eye, EyeOff, Loader2, AlertCircle, Mic } from "lucide-react";
 function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+    const callbackUrl = searchParams.get("callbackUrl") ?? "/templates";
     const urlError = searchParams.get("error");
 
     const [email, setEmail] = useState("");
