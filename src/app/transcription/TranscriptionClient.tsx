@@ -22,11 +22,14 @@ interface User {
 
 interface ServerMessage {
     type?: "started" | "attributes_update" | "final_attributes" | "error";
+    mode?: "forms" | "notes";
     // forms mode
     attributes?: Record<string, string>;
     template_size?: number;
     // error
     error?: string;
+    code?: string;
+    message?: string;
 }
 
 type WSStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "error";
@@ -85,6 +88,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
     // Recording
     const recorderRef = useRef<MediaRecorder | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
     const [recordStatus, setRecordStatus] = useState<RecordStatus>("idle");
     const [micError, setMicError] = useState<string | null>(null);
     const blocksReadyRef = useRef(false);
@@ -186,7 +190,66 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const reconnectAttemptsRef = useRef(0);
     const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const recordStatusRef = useRef<RecordStatus>("idle");
+    const wsSessionReadyRef = useRef(false);
+    const intentionalCloseRef = useRef(false);
+    const reconnectAfterIntentionalCloseRef = useRef(false);
+    const sessionGenerationRef = useRef(0);
+    const activeSessionGenerationRef = useRef<number | null>(null);
+    const startInFlightRef = useRef(false);
+    const stopInFlightRef = useRef(false);
+    // Short-lived WS session token minted by the server just before recording starts.
+    // Stored in a ref so sendBlocks can include it without a stale closure.
+    const wsTokenRef = useRef<string | null>(null);
     const MAX_RECONNECT_ATTEMPTS = 4;
+
+    const markSessionInactive = useCallback(() => {
+        wsSessionReadyRef.current = false;
+        blocksReadyRef.current = false;
+        setBlocksReady(false);
+        activeSessionGenerationRef.current = null;
+        wsTokenRef.current = null;
+    }, []);
+
+    const stopLocalRecorder = useCallback(() => {
+        const recorder = recorderRef.current;
+        const stream = streamRef.current ?? recorder?.stream ?? null;
+
+        if (recorder && recorder.state !== "inactive") {
+            try {
+                recorder.stop();
+            } catch {
+                // Ignore stop races if the recorder already became inactive.
+            }
+        }
+
+        stream?.getTracks().forEach((track) => track.stop());
+        recorderRef.current = null;
+        streamRef.current = null;
+    }, []);
+
+    const waitForSessionStarted = useCallback((sessionGeneration: number) => (
+        new Promise<void>((resolve, reject) => {
+            const startedAt = Date.now();
+            const interval = setInterval(() => {
+                if (activeSessionGenerationRef.current !== sessionGeneration) {
+                    clearInterval(interval);
+                    reject(new Error("session-ended"));
+                    return;
+                }
+
+                if (wsSessionReadyRef.current) {
+                    clearInterval(interval);
+                    resolve();
+                    return;
+                }
+
+                if (Date.now() - startedAt > 8000) {
+                    clearInterval(interval);
+                    reject(new Error("session-start-timeout"));
+                }
+            }, 50);
+        })
+    ), []);
 
     const connectWS = useCallback((isReconnect = false) => {
         if (
@@ -200,6 +263,8 @@ export default function TranscriptionClient({ user }: { user: User }) {
             setWsStatus("connecting");
             setWsError(null);
             reconnectAttemptsRef.current = 0;
+            intentionalCloseRef.current = false;
+            reconnectAfterIntentionalCloseRef.current = false;
         }
 
         const ws = new WebSocket(getWSUrl());
@@ -227,15 +292,31 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
         ws.onclose = () => {
             clearTimeout(connectionTimeout);
-            blocksReadyRef.current = false;
-            setBlocksReady(false);
+            markSessionInactive();
+            startInFlightRef.current = false;
+            stopInFlightRef.current = false;
+            if (wsRef.current === ws) wsRef.current = null;
+
+            const wasIntentional = intentionalCloseRef.current;
+            const shouldReconnect = reconnectAfterIntentionalCloseRef.current;
+            intentionalCloseRef.current = false;
+            reconnectAfterIntentionalCloseRef.current = false;
+
+            if (wasIntentional) {
+                setWsStatus("disconnected");
+                if (shouldReconnect) connectWS();
+                return;
+            }
 
             const currentStatus = recordStatusRef.current;
 
             // Disconnect during active recording is a real failure
-            if (currentStatus === "recording") {
+            if (currentStatus === "recording" || currentStatus === "finalizing") {
+                stopLocalRecorder();
+                setRecordStatus("paused");
+                recordStatusRef.current = "paused";
                 setWsStatus("error");
-                setWsError("Connection lost during recording. Please pause and try again.");
+                setWsError("Connection lost during recording. Your form so far is preserved. Start a new recording segment to continue.");
                 return;
             }
 
@@ -255,27 +336,58 @@ export default function TranscriptionClient({ user }: { user: User }) {
         };
 
         ws.onmessage = (ev: MessageEvent) => {
+            if (wsRef.current !== ws) return;
+
             try {
                 const msg = JSON.parse(ev.data as string) as ServerMessage;
+                const serverError =
+                    msg.error ?? (msg.type === "error" ? msg.code ?? msg.message ?? "server-error" : null);
 
-                if (msg.error) {
-                    console.warn("[Formify] Server error:", msg.error);
+                if (serverError) {
+                    console.warn("[Formify] Server error:", serverError);
                     // If token was rejected, surface it clearly
-                    if (msg.error === "invalid-token" || msg.error === "missing-token") {
+                    if (serverError === "invalid-token" || serverError === "missing-token") {
                         setMicError("Session expired. Please try starting again.");
+                    } else {
+                        setMicError(msg.message ?? "The transcription session ended unexpectedly. Please try again.");
+                    }
+
+                    if (
+                        activeSessionGenerationRef.current !== null ||
+                        recordStatusRef.current === "recording" ||
+                        recordStatusRef.current === "finalizing"
+                    ) {
+                        stopLocalRecorder();
+                        setRecordStatus("paused");
+                        recordStatusRef.current = "paused";
+                    }
+
+                    markSessionInactive();
+                    startInFlightRef.current = false;
+                    stopInFlightRef.current = false;
+                    setWsStatus("error");
+                    intentionalCloseRef.current = true;
+                    reconnectAfterIntentionalCloseRef.current = false;
+                    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                        ws.close(1000, "server-error");
                     }
                     return;
                 }
 
                 // Session confirmed by server
                 if (msg.type === "started") {
-                    blocksReadyRef.current = true;
-                    setBlocksReady(true);
+                    if (activeSessionGenerationRef.current !== null) {
+                        wsSessionReadyRef.current = true;
+                        blocksReadyRef.current = true;
+                        setBlocksReady(true);
+                    }
                     return;
                 }
 
                 // Incremental attribute update
                 if (msg.type === "attributes_update" && msg.attributes !== undefined) {
+                    if (activeSessionGenerationRef.current === null) return;
+
                     setAttributes((prev) => {
                         const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
                         const locked = lockedFieldsRef.current;
@@ -295,6 +407,8 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
                 // Final attributes — stop finalizing state
                 if (msg.type === "final_attributes" && msg.attributes !== undefined) {
+                    if (activeSessionGenerationRef.current === null) return;
+
                     setAttributes((prev) => {
                         const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
                         const locked = lockedFieldsRef.current;
@@ -312,30 +426,38 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         recordStatusRef.current = next;
                         return next;
                     });
+                    markSessionInactive();
+                    stopInFlightRef.current = false;
                     return;
                 }
             } catch {
                 console.warn("[Formify] Non-JSON WS message");
             }
         };
-    }, []);
+    }, [markSessionInactive, stopLocalRecorder]);
 
     useEffect(() => {
         connectWS();
         return () => {
             if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-            wsRef.current?.close();
+            stopLocalRecorder();
+            const ws = wsRef.current;
+            if (activeSessionGenerationRef.current !== null && ws?.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: "stop" }));
+            }
+            markSessionInactive();
+            startInFlightRef.current = false;
+            stopInFlightRef.current = false;
+            intentionalCloseRef.current = true;
+            reconnectAfterIntentionalCloseRef.current = false;
+            ws?.close(1000, "client-unmount");
         };
-    }, [connectWS]);
-
-    // Short-lived WS session token minted by the server just before recording starts.
-    // Stored in a ref so sendBlocks can include it without a stale closure.
-    const wsTokenRef = useRef<string | null>(null);
+    }, [connectWS, markSessionInactive, stopLocalRecorder]);
 
     // ── Auto-send blocks once connected AND template is ready ────────────────
 
-    const sendBlocks = useCallback((token: string): boolean => {
-        const ws = wsRef.current;
+    const sendBlocks = useCallback((token: string, targetWs = wsRef.current): boolean => {
+        const ws = targetWs;
         if (ws?.readyState !== WebSocket.OPEN) return false;
         const parsed = parseBlocks(templateRaw);
         if (Object.keys(parsed).length === 0) return false;
@@ -364,13 +486,23 @@ export default function TranscriptionClient({ user }: { user: User }) {
     // ── Recording ─────────────────────────────────────────────────────────────
 
     const startRecording = useCallback(async () => {
+        if (startInFlightRef.current || recordStatusRef.current === "recording" || recordStatusRef.current === "finalizing") {
+            return;
+        }
+
+        startInFlightRef.current = true;
         setMicError(null);
-        const ws = wsRef.current;
-        if (ws?.readyState !== WebSocket.OPEN) return;
+
+        const initialWs = wsRef.current;
+        if (initialWs?.readyState !== WebSocket.OPEN) {
+            setMicError("Could not connect to the transcription service. Please try again.");
+            startInFlightRef.current = false;
+            return;
+        }
 
         // ── Pre-mint check: bail early if every field is already locked ────
-        // Avoids minting a token, opening the mic, or entering recording state
-        // when there are no unlocked fields for the server to fill.
+        // Avoids opening the mic or minting a token when there are no unlocked
+        // fields for the server to fill.
         const parsed = parseBlocks(templateRaw);
         const locked = lockedFieldsRef.current;
         const hasUnlocked = Object.values(parsed).some((fields) =>
@@ -378,78 +510,158 @@ export default function TranscriptionClient({ user }: { user: User }) {
         );
         if (!hasUnlocked) {
             setMicError("All fields are locked. Unlock a field to continue AI filling.");
+            startInFlightRef.current = false;
             return;
         }
 
-        // ── Mint session token (enforces auth + usage limits server-side) ──
-        // This is the single enforcement point. If the server returns FORBIDDEN,
-        // the daily limit has been reached. No client-side limit check needed.
-        let token: string;
-        try {
-            const result = await getSessionToken.mutateAsync({ mode: "forms" });
-            token = result.token;
-            wsTokenRef.current = token;
-            // Refresh usage display so the profile page count stays fresh
-            void utils.usage.getToday.invalidate();
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : "Failed to start session";
-            setMicError(msg);
-            return;
-        }
-
-        // ── Send start payload with token ──────────────────────────────────
-        // Reset and send blocks now that we have a valid token.
-        // sendBlocks returns false only if all fields became locked between the
-        // pre-mint check above and now (an unexpected race). Abort cleanly.
-        blocksReadyRef.current = false;
-        setBlocksReady(false);
-        if (!sendBlocks(token)) {
-            setMicError("All fields are locked. Unlock a field to continue AI filling.");
-            return;
-        }
+        let stream: MediaStream | null = null;
+        let recorder: MediaRecorder | null = null;
 
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const recorder = new MediaRecorder(stream, { mimeType: SUPPORTED_MIME });
-            recorderRef.current = recorder;
-
-            recorder.ondataavailable = (e) => {
-                if (e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-                    void e.data.arrayBuffer().then((buf) => ws.send(buf));
-                }
-            };
-
-            recorder.onstart = () => {
-                setRecordStatus("recording");
-                recordStatusRef.current = "recording";
-            };
-
-            recorder.onstop = () => stream.getTracks().forEach((t) => t.stop());
-
-            recorder.start(1000); // 1s chunks — aligns with notes mode, reduces WS message overhead
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            streamRef.current = stream;
+            recorder = new MediaRecorder(stream, { mimeType: SUPPORTED_MIME });
         } catch (err) {
+            stream?.getTracks().forEach((track) => track.stop());
+            streamRef.current = null;
             const msg = err instanceof Error ? err.message : String(err);
             setMicError(
                 msg.toLowerCase().includes("permission")
                     ? "Microphone permission was denied. Please allow microphone access in your browser and retry."
                     : `Could not start recording: ${msg}`
             );
+            startInFlightRef.current = false;
+            return;
         }
-    }, [getSessionToken, sendBlocks, templateRaw, utils]);
+
+        // ── Mint session token (auth + analytics only; no paywall gate) ──
+        let token: string;
+        try {
+            const result = await getSessionToken.mutateAsync({ mode: "forms" });
+            token = result.token;
+            wsTokenRef.current = token;
+            // Refresh usage display so the profile page count stays fresh.
+            void utils.usage.getToday.invalidate();
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : "Failed to start session";
+            stopLocalRecorder();
+            setMicError(msg);
+            startInFlightRef.current = false;
+            return;
+        }
+
+        const ws = wsRef.current;
+        if (ws?.readyState !== WebSocket.OPEN) {
+            stopLocalRecorder();
+            wsTokenRef.current = null;
+            setMicError("The transcription connection changed while starting. Please try again.");
+            startInFlightRef.current = false;
+            return;
+        }
+
+        const sessionGeneration = sessionGenerationRef.current + 1;
+        sessionGenerationRef.current = sessionGeneration;
+        activeSessionGenerationRef.current = sessionGeneration;
+        wsSessionReadyRef.current = false;
+        blocksReadyRef.current = false;
+        setBlocksReady(false);
+
+        // ── Send start payload with token ──────────────────────────────────
+        if (!sendBlocks(token, ws)) {
+            markSessionInactive();
+            stopLocalRecorder();
+            setMicError("All fields are locked. Unlock a field to continue AI filling.");
+            startInFlightRef.current = false;
+            return;
+        }
+
+        if (!stream || !recorder) {
+            markSessionInactive();
+            stopLocalRecorder();
+            setMicError("Could not start recording. Please try again.");
+            startInFlightRef.current = false;
+            return;
+        }
+
+        const activeStream = stream;
+        const activeRecorder = recorder;
+
+        try {
+            recorderRef.current = activeRecorder;
+
+            activeRecorder.ondataavailable = (e) => {
+                if (
+                    e.data.size > 0 &&
+                    recordStatusRef.current === "recording" &&
+                    activeSessionGenerationRef.current === sessionGeneration &&
+                    wsRef.current === ws &&
+                    ws.readyState === WebSocket.OPEN &&
+                    wsSessionReadyRef.current
+                ) {
+                    void e.data.arrayBuffer().then((buf) => {
+                        if (
+                            recordStatusRef.current === "recording" &&
+                            activeSessionGenerationRef.current === sessionGeneration &&
+                            wsRef.current === ws &&
+                            ws.readyState === WebSocket.OPEN &&
+                            wsSessionReadyRef.current
+                        ) {
+                            ws.send(buf);
+                        }
+                    });
+                }
+            };
+
+            activeRecorder.onstop = () => activeStream.getTracks().forEach((track) => track.stop());
+
+            await waitForSessionStarted(sessionGeneration);
+
+            activeRecorder.start(1000); // 1s chunks — aligns with notes mode, reduces WS message overhead.
+            setRecordStatus("recording");
+            recordStatusRef.current = "recording";
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            if (activeSessionGenerationRef.current === sessionGeneration && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: "stop" }));
+            }
+            markSessionInactive();
+            stopLocalRecorder();
+            setMicError(
+                msg === "session-start-timeout"
+                    ? "The transcription session did not start in time. Please try again."
+                    : `Could not start recording: ${msg}`
+            );
+        } finally {
+            startInFlightRef.current = false;
+        }
+    }, [getSessionToken, markSessionInactive, sendBlocks, stopLocalRecorder, templateRaw, utils, waitForSessionStarted]);
 
     // ── Pause ─────────────────────────────────────────────────────────────────
 
     const pauseRecording = useCallback(() => {
-        recorderRef.current?.stop();
+        if (stopInFlightRef.current || recordStatusRef.current !== "recording") return;
+
+        stopInFlightRef.current = true;
+        wsSessionReadyRef.current = false;
+        blocksReadyRef.current = false;
+        setBlocksReady(false);
         setRecordStatus("finalizing");
         recordStatusRef.current = "finalizing";
+        stopLocalRecorder();
         const ws = wsRef.current;
-        if (ws?.readyState === WebSocket.OPEN) {
+        if (ws?.readyState === WebSocket.OPEN && activeSessionGenerationRef.current !== null) {
             ws.send(JSON.stringify({ action: "stop" }));
+        } else {
+            markSessionInactive();
+            stopInFlightRef.current = false;
+            setRecordStatus("paused");
+            recordStatusRef.current = "paused";
+            setWsError("The recording connection was unavailable. Your form so far is preserved.");
+            setWsStatus("error");
         }
         // Usage was already counted when the session token was minted in startRecording.
         // No additional mutation needed here.
-    }, []);
+    }, [markSessionInactive, stopLocalRecorder]);
 
     // ── Per-field edit and lock ────────────────────────────────────────────────
 
@@ -480,12 +692,30 @@ export default function TranscriptionClient({ user }: { user: User }) {
     // ── Reset ─────────────────────────────────────────────────────────────────
 
     const handleReset = () => {
-        recorderRef.current?.stop();
+        const ws = wsRef.current;
+        const hadActiveSession = activeSessionGenerationRef.current !== null;
+
+        sessionGenerationRef.current += 1;
+        startInFlightRef.current = false;
+        stopInFlightRef.current = false;
+        stopLocalRecorder();
+
         if (reconnectTimerRef.current) {
             clearTimeout(reconnectTimerRef.current);
             reconnectTimerRef.current = null;
         }
         reconnectAttemptsRef.current = 0;
+        if (hadActiveSession && ws?.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ action: "stop" }));
+        }
+        markSessionInactive();
+        if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+            intentionalCloseRef.current = true;
+            reconnectAfterIntentionalCloseRef.current = true;
+            ws.close(1000, "form-reset");
+        } else {
+            connectWS();
+        }
         setRecordStatus("idle");
         recordStatusRef.current = "idle";
         setMicError(null);
