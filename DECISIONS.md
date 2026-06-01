@@ -30,7 +30,13 @@ In Notes mode, client audio chunks must only be sent after the socket is open an
 
 ### D-019 Notes WebSocket exists only during recording/finalising
 
-The Notes client does not pre-connect or keep an idle socket. It opens a WebSocket on demand when recording starts and closes it intentionally once the session ends (`notes_final`, reset, or unmount). Intentional closes must not surface an interruption banner, and the client must never auto-reconnect while idle/paused — only an explicit start/resume opens a new socket (resume continues with current `notesMarkdown`). This keeps backend idle/1006 socket churn from accumulating. Unexpected closes *during* recording/finalising remain real failures (see D-018 readiness handling).
+The Notes client does not pre-connect or keep an idle socket. It opens a WebSocket on demand when recording starts and closes it intentionally once the session ends (`notes_final`, reset, or unmount). Intentional closes must not surface an interruption banner, and the client must never auto-reconnect while idle/paused — only an explicit start/resume opens a new socket (resume continues with current `notesMarkdown`). This keeps backend idle/1006 socket churn from accumulating. Unexpected closes _during_ recording/finalising remain real failures (see D-018 readiness handling).
+
+### D-020 Forms recording lifecycle is session-guarded
+
+Forms mode must not leave browser microphone capture alive after backend/session failure. Local media capture stops on unexpected WS close, token/session errors, fatal session-level errors, reset, and unmount. Reset intentionally abandons the active session, invalidates the frontend session generation, and must ignore late `attributes_update` / `final_attributes` from the abandoned session.
+
+Forms audio chunks must only be sent when the socket is open, the server has sent `{ type: "started" }`, the active session generation still matches, the UI is recording, and the blob has data. Forms and Notes both acquire microphone access before sending backend `start`; denying mic permission must not leave a started backend session open.
 
 ## Product model
 
@@ -49,6 +55,33 @@ Any future session/cost protection must be framed as reliability fair-use for th
 ### D-009 Donations are optional support only
 
 Donation UI (if added) must not reintroduce subscriptions, pricing tables, upgrade prompts, or app-owned billing routes.
+
+### D-021 Authenticated navigation target
+
+The authenticated app navigation target is: `My Templates | Forms | Notes | New Template`.
+
+`My Templates` is the authenticated home/dashboard for saved form templates. It should let users use/fill, edit, delete, and create form templates, and navigate to Forms or Notes. `Forms` is a first-class form filling workspace. `Notes` remains the existing notes recording/generation workspace. `New Template` creates a form template.
+
+`/forms` must be accessible directly. With no `templateId`, it should show:
+
+```txt
+No form template selected.
+
+Select a template to start filling a form, or create a new template first.
+
+[Choose Template]
+[+ New Template]
+```
+
+Do not auto-select the most recent template, because recording into the wrong structured form is worse than one extra click. “Use Template” / “Fill Form” from My Templates should route to `/forms?templateId=<templateId>`.
+
+Desktop Forms should use a persistent saved-template sidebar. Mobile Forms should use a Choose Template overlay drawer similar to Notes. Template switching is allowed when idle/reset/completed, disabled while recording/finalising, and should warn before switching if the current form has filled/generated unsaved values. Stale session results must not apply after template switch/reset.
+
+New Template remains standalone. Save should save only, stay on the page, and show saved/success state with `Use in Forms` and `Back to My Templates`. `Use in Forms` always routes to `/forms?templateId=<newTemplateId>`. Any `returnTo` support should stay simple and only affect back navigation, defaulting to My Templates.
+
+### D-022 Form templates and note templates stay separate
+
+Do not merge form templates and note templates. Form templates are structured field/block definitions for Forms mode. Note templates are Notes-only style + sections config and stay in the Notes sidebar/drawer.
 
 ## Domain behaviour
 
@@ -87,3 +120,13 @@ Typography uses a local system font stack in `globals.css` / Tailwind — not `n
 ### D-017 Notes max session warning model (reliability guard)
 
 For Notes mode, frontend warns against a 120-minute maximum session length as a reliability safeguard (not monetisation). Warning UX is local wall-clock timing from recording start for the active backend recording window, not MediaRecorder chunk cadence. Resume/start creates a new backend recording window, so warning timing resets per window. If the backend finalises at the cap, UI should show the session was finalised, advise starting a new session, and confirm notes are preserved.
+
+### D-023 PDF exports use a shared light document style
+
+Future PDF work should use a consistent light-themed document style for Notes and Forms regardless of app theme: header, document title, metadata row, content body, section headings, footer, and page numbers.
+
+Notes PDF source is the current visible/canonical `notesMarkdown`, including manual edits and future applied summaries/reorganisations. Notes PDFs should improve title/session heading, export date/time, note style label where available, markdown formatting, heading hierarchy, spacing, wrapped text, bullet indentation, page breaks, footer/page numbers, and light Formify branding.
+
+Forms PDF source is the current filled form state. Forms PDFs should improve template title, export date/time, clear section/block layout, field labels and filled values, consistent empty-value handling, spacing, page breaks, footer/page numbers, and light Formify branding.
+
+Do not add paid export branding, Pro watermarks, export paywalls, custom PDF themes, user-uploaded logos, or database persistence as part of this PDF design pass.

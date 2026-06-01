@@ -4,13 +4,14 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 
 ## Status
 
-- Scope: final free-app verification after T-138.
-- Automated validation: completed on 2026-05-27.
-- Manual browser testing: not yet run.
+- Scope: free-app verification plus critical Forms/Notes recording lifecycle stabilisation QA.
+- Automated validation: critical lifecycle pass completed on 2026-06-01 with `git diff --check`, `npm run typecheck`, `npm run lint`, and `npm run build`.
+- Manual browser testing: deferred; this checklist is not a blocker for the next feature implementation phase.
+- Known validation notes: `npm run lint` and `npm run build` pass with the pre-existing unused eslint-disable warning in `src/server/auth/config.ts:27`; `npm run build` also reports the existing Prisma config deprecation notice.
 - Test accounts:
   - New account: pending.
   - Existing free account: pending.
-  - Old/existing pro account: pending if such an account exists.
+  - Old paid-era account: pending if such an account exists.
 
 ## Auth
 
@@ -35,8 +36,18 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 
 ## WebSocket Recording Lifecycle
 
+- [ ] Forms: denying microphone permission does not leave a lingering started WS/backend session.
+- [ ] Forms: unexpected WS close during `recording` stops local mic capture and preserves current form values.
+- [ ] Forms: unexpected WS close during `finalizing` stops local mic capture and preserves current form values.
+- [ ] Forms: Reset during/after recording stops local capture, stops/closes/abandons the active session, and leaves the UI idle.
+- [ ] Forms: late `attributes_update` or `final_attributes` from an abandoned/reset session do not refill fields.
+- [ ] Forms: binary audio is not sent before the WS session receives `started`.
+- [ ] Forms: rapid Start clicks do not create duplicate recorders or sessions.
+- [ ] Forms: rapid Stop clicks do not send conflicting duplicate stop flows.
+- [ ] Forms: missing/invalid WS token shows a recoverable recording error and does not leave recording active.
 - [ ] Notes recording does not stream binary audio before the WS session receives `started`.
 - [ ] Missing/invalid WS token shows a recoverable recording error and does not leave recording active.
+- [ ] Notes: denying microphone permission does not leave a lingering started WS/backend session.
 - [ ] Unexpected WS close during Notes `recording` stops local mic capture and keeps current notes visible.
 - [ ] Unexpected WS close during Notes `finalizing` stops local mic capture and keeps current notes visible.
 - [ ] After an unexpected Notes WS close, Dismiss clears the banner and the user can start recording again (a fresh socket opens on Start).
@@ -44,6 +55,8 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] After `notes_final`, the Notes WebSocket closes intentionally with no interruption banner.
 - [ ] After finalisation, waiting several minutes opens no new idle socket (no 1006 churn / reconnect loop).
 - [ ] Resume after finalisation opens a fresh socket and sends continuation notes normally.
+- [ ] Notes: rapid Start clicks do not create duplicate recorders or sessions.
+- [ ] Notes: rapid Stop clicks do not send conflicting duplicate stop flows.
 
 ## Exports
 
@@ -71,6 +84,8 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 ## Notes Continuity
 
 - [ ] Stop/finalise/edit/Done/resume preserves manual edits.
+- [ ] Resume sends `continuation: true`.
+- [ ] Resume sends canonical `currentNotesMarkdown` from the current visible notes.
 - [ ] New spoken content merges into existing edited notes.
 - [ ] Final notes after a second stop preserve previous edits and include new content.
 - [ ] Reset/new session clears notes intentionally.

@@ -39,6 +39,11 @@
 | T-109 Harden email HTML handling | Completed | `/api/email` no longer accepts client-rendered `formHTML`; the client sends structured `blocks` and the server zod-validates shape/size and renders the email while HTML-escaping every dynamic value (D-014). `<script>`, inline `on*=` handlers, and `javascript:` URLs in form values are escaped to inert text. Auth intact; no raw HTML/PII logged; no new dependency. |
 | T-110 Review server-side logging for PII | Completed | Audited server/API logs (D-013). Removed reset-URL/token + recipient-email logs in forgot-password, redacted raw `Error` objects to safe reason codes in forgot-password/register, and dropped the Resend `error.message` (recipient echo) to log only `error.name`. Safe metadata logs (timings, messageId, error.message-only) retained; no behaviour or response changes. |
 | T-111 Avoid Google Fonts build network dependency | Completed | `next/font/google` (Geist) was present and fetched fonts at build time. Removed the import and `--font-geist-sans` plumbing from `layout.tsx`, `globals.css`, and `tailwind.config.ts`, replacing it with a professional system font stack (D-016). Tightened CSP `font-src`/`style-src` (no Google Fonts hosts). Build no longer fetches fonts; layout and dark mode preserved. |
+| T-WEB-CRIT-001 Stop Forms recorder/mic on WS close and session errors | Completed | Forms now stops local media capture, clears session readiness, and moves to a recoverable paused/error state when the WS closes unexpectedly or the backend returns session/auth errors. |
+| T-WEB-CRIT-002 Stop/reset Forms backend sessions safely | Completed | Forms reset invalidates the active frontend session generation, stops local capture, sends stop for active sessions, intentionally closes/reconnects the WS, and ignores late messages from abandoned sessions. |
+| T-WEB-CRIT-003 Avoid backend sessions when mic acquisition fails | Completed | Forms and Notes now acquire/create local media before sending WS start; start failures stop local tracks and terminate/close started sessions where needed. |
+| T-WEB-CRIT-004 Gate Forms audio on server started | Completed | Forms now sets WS session readiness only after `started` and sends binary audio only while recording, ready, open, and on the current session generation. |
+| T-WEB-HIGH-005 Add recording start/stop in-flight guards | Completed | Forms and Notes now use synchronous start/stop refs so rapid clicks do not create duplicate recorders, sockets, or conflicting stop flows. |
 
 ## Active
 
@@ -53,5 +58,25 @@ _None._
 | T-126 Notes local autosave and recovery | Backlog | P3, medium risk, frontend-only. Autosave current visible notes/session config locally with expiry and restore/discard UX; no audio, raw transcript, DB history, or WS changes. |
 | T-127 Summarise current generated notes | Backlog | P1, medium-high risk, depends on backend transform endpoint availability. Use current visible `notesMarkdown`, show preview first, and only replace notes on explicit user action. |
 | T-128 Reorganise current notes into new sections | Backlog | P1/P2, high risk, depends on backend transform endpoint availability. Use current visible `notesMarkdown`, one-section-per-line input, preview first, and apply only on explicit user action. |
+| T-130 Coordinate notes transform HTTP endpoints | Backlog | Backend coordination ticket for `ws-transcription` transform endpoints before T-127/T-128 implementation. Preserve the live WS recording contract; transforms use authenticated HTTP and operate on canonical `notesMarkdown`. |
 | T-131 Polish TranscriptionClient field locking UI | Backlog | P2, low risk, UI-only. Make locked/edited field state neater after T-113 behavior is smoke-tested. Formerly tracked as T-119 before the notes-sidebar follow-up reused that ID. |
 | T-144 Add Donate button and donation page | Backlog | P2, low-medium risk. Add optional support/donate entry point without paywalls, Pro tiers, pricing tables, subscription logic, or feature gates. |
+| T-WEB-HIGH-006 Add fair-use/abuse controls | Backlog | High operational risk, frontend/API coordination. Add non-monetised fair-use/cost-safety controls for token minting and email export: server-side rate limits, daily/session counters, safe metadata logging, and clear reliability wording only. Do not add Pro/upgrade/pricing/paywall language. |
+| T-146 Header/navigation restructure | Backlog | Next feature phase. Authenticated header target: My Templates, Forms, Notes, New Template. Preserve Notes as a separate workspace and do not merge form templates with note templates. |
+| T-147 My Templates as authenticated home | Backlog | Make saved form templates the authenticated home/dashboard. Users can use/fill, edit, delete, create templates, and navigate to Forms or Notes. |
+| T-148 First-class `/forms` route with empty state | Backlog | `/forms` should work directly. With no `templateId`, show an empty state and do not auto-select the most recent template because recording into the wrong form is worse than one extra click. |
+| T-149 Forms template sidebar/drawer | Backlog | Add saved form-template selection to Forms: persistent desktop sidebar and mobile overlay drawer. Switching is allowed only idle/reset/completed, disabled while recording/finalising, and must guard stale session results. |
+| T-150 My Templates Use Template to Forms | Backlog | “Use Template” / “Fill Form” from My Templates should route to `/forms?templateId=<templateId>`. |
+| T-151 Form filling UI cleanup | Backlog | Cleanup/polish current Forms filling workspace after direct `/forms` routing and template selection are stable. Preserve locked-field ownership and recording lifecycle safeguards. |
+| T-152 PDF design improvements for Notes and Forms | Backlog | Canonical PDF ticket. Improve light-themed exported PDFs with consistent header/title/metadata/body/section/footer/page-number treatment. Notes source is current visible/canonical `notesMarkdown` including manual edits and future applied transforms. Forms source is current filled form state. No paid export branding, Pro watermark, export paywall, custom themes, or DB persistence. Suggested split: T-152a audit, T-152b shared PDF utilities, T-152c Notes PDF, T-152d Forms PDF, T-152e manual export QA. |
+
+## Recommended Implementation Order
+
+1. T-146 Header/navigation restructure.
+2. T-147 My Templates as authenticated home.
+3. T-148 First-class `/forms` route with empty state.
+4. T-150 My Templates “Use template” -> `/forms?templateId=<id>`.
+5. T-149 Forms template sidebar/drawer.
+6. T-151 Form filling UI cleanup.
+7. T-152 PDF design improvements for Notes and Forms.
+8. Later: T-130, T-127, T-128, and T-126 with backend/privacy coordination as needed.
