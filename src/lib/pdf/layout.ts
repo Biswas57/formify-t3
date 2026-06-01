@@ -1,5 +1,6 @@
 import type { jsPDF as JsPDF } from "jspdf";
 import { PDF, PDF_COLORS, PDF_CONTENT_WIDTH, type Rgb } from "./constants";
+import { renderFormifyBrand } from "./branding";
 
 export interface PdfCursor {
     pdf: JsPDF;
@@ -58,59 +59,53 @@ export function ensureSpace(cursor: PdfCursor, needed: number, newPageY = 18) {
     cursor.y = newPageY;
 }
 
+export function addPdfPage(cursor: PdfCursor, newPageY = 18) {
+    cursor.pdf.addPage();
+    drawTopStripe(cursor.pdf);
+    cursor.y = newPageY;
+}
+
 export function renderPdfHeader(
     pdf: JsPDF,
     {
-        title,
         descriptor,
         rightMeta,
+        logoDataUrl,
     }: {
-        title: string;
         descriptor: string;
         rightMeta?: string;
+        logoDataUrl: string | null;
     }
 ): number {
     drawTopStripe(pdf);
 
-    setFillColor(pdf, PDF_COLORS.headerBg);
-    pdf.rect(0, PDF.topStripeHeight, PDF.pageWidth, 34, "F");
+    setFillColor(pdf, PDF_COLORS.white);
+    pdf.rect(0, PDF.topStripeHeight, PDF.pageWidth, 26, "F");
 
-    setFillColor(pdf, PDF_COLORS.brandBlue);
-    setDrawColor(pdf, PDF_COLORS.brandBlue);
-    pdf.roundedRect(PDF.margin, 9, 11, 11, 2.5, 2.5, "F");
-
-    setTextColor(pdf, PDF_COLORS.white);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(8.5);
-    pdf.text("F", PDF.margin + 4.1, 16.1);
-
-    setTextColor(pdf, PDF_COLORS.brandBlue);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(14);
-    pdf.text("Formify", PDF.margin + 15, 14.4);
+    renderFormifyBrand(pdf, {
+        x: PDF.margin,
+        y: 8,
+        logoDataUrl,
+        markSize: 9.5,
+    });
 
     setTextColor(pdf, PDF_COLORS.slate500);
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(7.5);
-    pdf.text(descriptor, PDF.margin + 15, 19.1);
-
-    setTextColor(pdf, PDF_COLORS.slate900);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(10.5);
-    pdf.text(clampText(pdf, title, 86, 10.5), PDF.pageWidth - PDF.margin, 14, { align: "right" });
+    pdf.setFontSize(7);
+    pdf.text(descriptor, PDF.margin + 13, 20.1);
 
     if (rightMeta) {
         setTextColor(pdf, PDF_COLORS.slate500);
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(7.5);
-        pdf.text(clampText(pdf, rightMeta, 86, 7.5), PDF.pageWidth - PDF.margin, 19.3, { align: "right" });
+        pdf.text(clampText(pdf, rightMeta, 82, 7.5), PDF.pageWidth - PDF.margin, 13.8, { align: "right" });
     }
 
     setDrawColor(pdf, PDF_COLORS.border);
-    pdf.setLineWidth(0.3);
-    pdf.line(0, 36, PDF.pageWidth, 36);
+    pdf.setLineWidth(0.25);
+    pdf.line(PDF.margin, 29, PDF.pageWidth - PDF.margin, 29);
 
-    return 47;
+    return 40;
 }
 
 export function renderDocumentTitle(
@@ -135,6 +130,45 @@ export function renderDocumentTitle(
     setTextColor(pdf, PDF_COLORS.slate500);
     pdf.text(subtitle, PDF.margin, cursor.y);
     cursor.y += 8;
+}
+
+export function renderCompactTitle(
+    cursor: PdfCursor,
+    title: string,
+    subtitle: string,
+) {
+    const { pdf } = cursor;
+    const titleLines = splitText(pdf, title, PDF_CONTENT_WIDTH);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(16);
+    setTextColor(pdf, PDF_COLORS.slate900);
+
+    for (const line of titleLines) {
+        ensureSpace(cursor, 7.5);
+        pdf.text(line.toUpperCase(), PDF.margin, cursor.y);
+        cursor.y += 7.5;
+    }
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8.2);
+    setTextColor(pdf, PDF_COLORS.slate500);
+    pdf.text(subtitle, PDF.margin, cursor.y);
+    cursor.y += 6;
+}
+
+export function renderMetadataLine(cursor: PdfCursor, text: string) {
+    const { pdf } = cursor;
+    ensureSpace(cursor, 9);
+
+    setFillColor(pdf, PDF_COLORS.slate50);
+    setDrawColor(pdf, PDF_COLORS.borderLight);
+    pdf.rect(PDF.margin, cursor.y, PDF_CONTENT_WIDTH, 6.8, "FD");
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7.4);
+    setTextColor(pdf, PDF_COLORS.slate600);
+    pdf.text(clampText(pdf, text, PDF_CONTENT_WIDTH - 6, 7.4), PDF.margin + 3, cursor.y + 4.5);
+    cursor.y += 10;
 }
 
 export function renderMetadataPanel(cursor: PdfCursor, items: MetadataItem[]) {

@@ -127,7 +127,9 @@ For Notes mode, frontend warns against a 120-minute maximum session length as a 
 
 Forms and Notes PDFs use the shared client-side utilities in `src/lib/pdf`. Keep the high-level export surface small: `exportFormPdf(input)` and `exportNotesPdf(input)`. `jspdf` should stay dynamically imported inside those export functions so it is only loaded when the user exports.
 
-All PDFs use a consistent light-themed document style regardless of app theme: text-based Formify header, document title, metadata panel, content body, section headings, footer, page numbers, safe title/date filenames, and readable wrapping/page breaks. The repo currently has favicon assets but no exportable Formify wordmark, so PDF branding is text-based until a proper SVG/PNG wordmark asset is added.
+All PDFs use a consistent light-themed document style regardless of app theme: Formify header, document title, compact metadata line, content body, section headings, footer, page numbers, safe title/date filenames, and readable wrapping/page breaks. The PDF header uses the repo-owned `public/favicon.svg` mark when the browser can rasterize it for jsPDF and pairs it with text "Formify", matching the site header structure. The repo still has no separate exportable wordmark asset.
+
+Forms PDFs should stay compact and printable: one dominant title, slim metadata, section bars, thin borders, row-based fields, visible empty values, and no web-card field layout. Typical short or mostly empty forms should fit on one page when content permits.
 
 Notes PDF source is the current visible/canonical `notesMarkdown`, including manual edits and future applied summaries/reorganisations. Forms PDF source is the current filled form state in template-defined block/field order. Do not render Forms PDFs from unordered `attributes` entries.
 

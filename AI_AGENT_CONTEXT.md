@@ -164,4 +164,4 @@ Current frontend form messages expect `{ type, attributes }`; `corrected_audio` 
 
 - Historical billing migrations remain; do not delete old migrations casually.
 - Fair-use session/cost limits are not implemented yet (see D-008 in `DECISIONS.md`).
-- PDF exports currently use text-based Formify branding because there is no exportable wordmark asset in the repo.
+- PDF exports embed the repo-owned `public/favicon.svg` mark when available and render the "Formify" wordmark as text. A separate exportable wordmark asset still does not exist.
