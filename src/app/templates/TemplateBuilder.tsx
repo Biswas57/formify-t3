@@ -412,16 +412,6 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                 </p>
             )}
 
-            {saved && (
-                <div
-                    aria-live="polite"
-                    className="flex items-center gap-2 border-b border-emerald-100 bg-emerald-50/70 px-4 py-2 text-xs font-medium text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-200 md:px-6"
-                >
-                    <Check className="h-4 w-4 flex-shrink-0" />
-                    Template saved.
-                </div>
-            )}
-
             {/* ── Body: canvas + library ── */}
             <div className="flex flex-1 min-h-0 overflow-hidden">
 
