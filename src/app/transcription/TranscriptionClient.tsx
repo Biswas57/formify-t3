@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import {
     Mic, Square, Wifi, WifiOff, RotateCcw, ChevronDown,
     Lock, AlertCircle, RefreshCw, Loader2,
-    Download, Mail, X
+    Download, Mail, X, FileText, Plus, Check
 } from "lucide-react";
 import { formatFieldLabel } from "@/lib/format-field-label";
 import { env } from "@/env";
@@ -34,6 +34,15 @@ interface ServerMessage {
 
 type WSStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "error";
 type RecordStatus = "idle" | "recording" | "finalizing" | "paused";
+
+interface TemplateSummary {
+    id: string;
+    name: string;
+    updatedAt: Date;
+    blockCount: number;
+    fieldCount: number;
+    previewTitles: string[];
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -78,9 +87,115 @@ const DEFAULT_TEMPLATE = `ID: name, date of birth, email, phone
 Medical: chief complaint, medications, allergies
 Social: occupation, address`;
 
+function TemplateSelector({
+    templates,
+    selectedTemplateId,
+    loading,
+    disabled,
+    onSelect,
+}: {
+    templates: TemplateSummary[];
+    selectedTemplateId: string | null;
+    loading: boolean;
+    disabled: boolean;
+    onSelect: (id: string) => void;
+}) {
+    return (
+        <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 dark:border-slate-800">
+                <div>
+                    <h2 className="text-xs font-semibold uppercase tracking-widest text-[#868C94] dark:text-slate-400">
+                        Form Templates
+                    </h2>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Select one before recording.
+                    </p>
+                </div>
+                {disabled ? (
+                    <button
+                        type="button"
+                        disabled
+                        className="inline-flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-lg text-slate-300 dark:text-slate-700"
+                        title="Stop recording before creating a new template"
+                    >
+                        <Plus className="h-4 w-4" />
+                    </button>
+                ) : (
+                    <Link
+                        href="/templates/new?returnTo=/forms"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#2149A1] transition-colors hover:bg-[#e8eef9] active:scale-95 active:opacity-80 dark:text-blue-300 dark:hover:bg-blue-500/15"
+                        title="New template"
+                    >
+                        <Plus className="h-4 w-4" />
+                    </Link>
+                )}
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+                {loading ? (
+                    <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading templates…
+                    </div>
+                ) : templates.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-6 text-center dark:border-slate-700 dark:bg-slate-900">
+                        <FileText className="mx-auto mb-3 h-8 w-8 text-slate-300 dark:text-slate-600" />
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">No templates yet</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Create one before filling forms.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        {templates.map((template) => {
+                            const selected = template.id === selectedTemplateId;
+                            return (
+                                <button
+                                    key={template.id}
+                                    type="button"
+                                    disabled={disabled && !selected}
+                                    onClick={() => onSelect(template.id)}
+                                    className={`w-full rounded-xl border px-3 py-3 text-left transition-[border-color,background-color,opacity,transform] active:scale-[0.99] ${selected
+                                        ? "border-[#2149A1] bg-[#e8eef9] text-[#2149A1] dark:border-blue-400/60 dark:bg-blue-500/15 dark:text-blue-200"
+                                        : "border-slate-200 bg-white text-slate-700 hover:border-[#2149A1]/30 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-400/30 dark:hover:bg-slate-800"
+                                        }`}
+                                >
+                                    <div className="flex items-start gap-2">
+                                        <FileText className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <p className="truncate text-sm font-semibold">{template.name}</p>
+                                                {selected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
+                                            </div>
+                                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                                {template.blockCount} block{template.blockCount !== 1 ? "s" : ""} · {template.fieldCount} field{template.fieldCount !== 1 ? "s" : ""}
+                                            </p>
+                                            {template.previewTitles.length > 0 && (
+                                                <div className="mt-2 flex flex-wrap gap-1">
+                                                    {template.previewTitles.slice(0, 2).map((title) => (
+                                                        <span
+                                                            key={title}
+                                                            className="truncate rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                                        >
+                                                            {title}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function TranscriptionClient({ user }: { user: User }) {
+    const router = useRouter();
     // Connection
     const wsRef = useRef<WebSocket | null>(null);
     const [wsStatus, setWsStatus] = useState<WSStatus>("disconnected");
@@ -95,13 +210,17 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const [, setBlocksReady] = useState(false);
 
     // Template
-    const [templateRaw, setTemplateRaw] = useState(DEFAULT_TEMPLATE);
+    const [templateRaw, setTemplateRaw] = useState("");
     // Ref so the WS onmessage closure always sees the current template,
     // even though connectWS has [] deps and can't re-capture templateRaw state.
     const templateRawRef = useRef(templateRaw);
     useEffect(() => { templateRawRef.current = templateRaw; }, [templateRaw]);
     const [templateOpen, setTemplateOpen] = useState(false);
-    const [formTitle, setFormTitle] = useState("New Form");
+    const [formTitle, setFormTitle] = useState("");
+    const [templateDrawerOpen, setTemplateDrawerOpen] = useState(false);
+    const [templateDrawerVisible, setTemplateDrawerVisible] = useState(false);
+    const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
+    const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
 
     // Form data
     const [attributes, setAttributes] = useState<Record<string, string>>({});
@@ -128,8 +247,8 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const searchParams = useSearchParams();
     const templateId = searchParams.get("templateId");
 
-    // True once we know what template to send: either no templateId (use default immediately),
-    // or templateId exists and the query has resolved (loaded OR failed).
+    // Forms mode requires a saved template. With no templateId, the workspace
+    // stays in the select-template state and never falls back to a default form.
     const { data: preloadedTemplate, isLoading: templateLoading } = api.template.get.useQuery(
         { id: templateId! },
         {
@@ -141,8 +260,15 @@ export default function TranscriptionClient({ user }: { user: User }) {
         }
     );
 
-    // Template is ready to send when: no templateId, OR the query has settled (data or null)
-    const templateReady = !templateId || !templateLoading;
+    const { data: templateSummaries = [], isLoading: templatesLoading } = api.template.listSummary.useQuery(undefined, {
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+
+    const hasTemplateId = Boolean(templateId);
+    const hasValidTemplate = Boolean(preloadedTemplate);
+    const templateReady = hasTemplateId && !templateLoading;
+    const templateNotFound = hasTemplateId && !templateLoading && !preloadedTemplate;
 
     // Derived
     const blocks = parseBlocks(templateRaw);
@@ -151,11 +277,22 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const isRecording = recordStatus === "recording";
     const isFinalizing = recordStatus === "finalizing";
     const isPaused = recordStatus === "paused";
-    const canRecord = isConnected && !isFinalizing && templateReady;
+    const canRecord = isConnected && !isFinalizing && hasValidTemplate;
     const errorMessage = wsError ?? micError;
+    const hasFilledContent =
+        Object.values(attributes).some((value) => value.trim().length > 0) ||
+        lockedFields.size > 0;
+    const templateSwitchDisabled = isRecording || isFinalizing;
+    const showAdvancedTemplateEditor = false;
 
     useEffect(() => {
-        if (!preloadedTemplate) return;
+        if (!preloadedTemplate) {
+            if (!templateId || (!templateLoading && !preloadedTemplate)) {
+                setFormTitle("");
+                setTemplateRaw("");
+            }
+            return;
+        }
         setFormTitle(preloadedTemplate.name);
         // Build raw template string — field keys will be normalized by parseBlocks
         const raw = preloadedTemplate.blocks
@@ -168,7 +305,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
             )
             .join("\n");
         setTemplateRaw(raw);
-    }, [preloadedTemplate]);
+    }, [preloadedTemplate, templateId, templateLoading]);
 
     // ── Re-initialise fields when template changes ────────────────────────────
 
@@ -493,6 +630,12 @@ export default function TranscriptionClient({ user }: { user: User }) {
         startInFlightRef.current = true;
         setMicError(null);
 
+        if (!hasValidTemplate) {
+            setMicError("Select a template before recording.");
+            startInFlightRef.current = false;
+            return;
+        }
+
         const initialWs = wsRef.current;
         if (initialWs?.readyState !== WebSocket.OPEN) {
             setMicError("Could not connect to the transcription service. Please try again.");
@@ -634,7 +777,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
         } finally {
             startInFlightRef.current = false;
         }
-    }, [getSessionToken, markSessionInactive, sendBlocks, stopLocalRecorder, templateRaw, utils, waitForSessionStarted]);
+    }, [getSessionToken, hasValidTemplate, markSessionInactive, sendBlocks, stopLocalRecorder, templateRaw, utils, waitForSessionStarted]);
 
     // ── Pause ─────────────────────────────────────────────────────────────────
 
@@ -730,6 +873,49 @@ export default function TranscriptionClient({ user }: { user: User }) {
         // wsStatus + blocksReady will fire and call sendBlocks() once.
         blocksReadyRef.current = false;
         setBlocksReady(false);
+    };
+
+    const openTemplateDrawer = () => {
+        setTemplateDrawerVisible(true);
+        requestAnimationFrame(() => setTemplateDrawerOpen(true));
+    };
+
+    const closeTemplateDrawer = () => {
+        setTemplateDrawerOpen(false);
+        window.setTimeout(() => setTemplateDrawerVisible(false), 200);
+    };
+
+    useEffect(() => {
+        if (templateDrawerVisible) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [templateDrawerVisible]);
+
+    const switchToTemplate = (nextTemplateId: string) => {
+        handleReset();
+        setShowSwitchConfirm(false);
+        setPendingTemplateId(null);
+        closeTemplateDrawer();
+        router.push(`/forms?templateId=${nextTemplateId}`);
+    };
+
+    const requestTemplateSwitch = (nextTemplateId: string) => {
+        if (nextTemplateId === templateId) {
+            closeTemplateDrawer();
+            return;
+        }
+        if (templateSwitchDisabled) return;
+        if (hasFilledContent) {
+            setPendingTemplateId(nextTemplateId);
+            setShowSwitchConfirm(true);
+            return;
+        }
+        switchToTemplate(nextTemplateId);
     };
 
 
@@ -989,63 +1175,87 @@ export default function TranscriptionClient({ user }: { user: User }) {
     // ─────────────────────────────────────────────────────────────────────────
 
     return (
-        <div className="min-h-screen bg-[#FBFBFB] dark:bg-slate-950 dark:text-slate-100">
+        <div className="flex min-h-0 flex-1 bg-[#FBFBFB] dark:bg-slate-950 dark:text-slate-100">
+            <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 md:flex">
+                <TemplateSelector
+                    templates={templateSummaries as TemplateSummary[]}
+                    selectedTemplateId={templateId}
+                    loading={templatesLoading}
+                    disabled={templateSwitchDisabled}
+                    onSelect={requestTemplateSwitch}
+                />
+            </aside>
 
-            {/* ── Header ── */}
-            <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 dark:border-slate-800 dark:bg-slate-950/90">
-                <div className="container mx-auto px-4 py-3.5 flex items-center justify-between">
-                    <Link href="/dashboard" className="flex items-center gap-2.5 transition-opacity active:opacity-80">
-                        <div className="flex items-center gap-2.5 animate-fade-in">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                                <Mic className="w-6 h-6 text-white" />
-                            </div>
-                            <span className="text-3xl font-extrabold tracking-tight text-black dark:text-slate-100">
-                                Formify
-                            </span>
+            {templateDrawerVisible && (
+                <div className="fixed inset-0 z-50 md:hidden">
+                    <button
+                        type="button"
+                        aria-label="Close template drawer"
+                        className={`absolute inset-0 bg-black/30 transition-opacity duration-200 dark:bg-black/50 ${templateDrawerOpen ? "opacity-100" : "opacity-0"}`}
+                        onClick={closeTemplateDrawer}
+                    />
+                    <div
+                        className={`absolute inset-y-0 left-0 flex w-80 max-w-[86vw] transform flex-col bg-white shadow-2xl transition-transform duration-200 ease-out dark:bg-slate-950 ${templateDrawerOpen ? "translate-x-0" : "-translate-x-full"}`}
+                    >
+                        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Choose Template</p>
+                            <button
+                                type="button"
+                                onClick={closeTemplateDrawer}
+                                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 active:scale-95 active:opacity-80 dark:text-slate-400 dark:hover:bg-slate-900"
+                                aria-label="Close template drawer"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
                         </div>
-                    </Link>
-
-                    <div className="flex items-center gap-3">
-                        {/* Subtle recording indicator */}
-                        {isRecording && (
-                            <span className="flex items-center gap-1.5 text-xs font-medium text-red-500">
-                                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-                                Recording
-                            </span>
-                        )}
-                        {isFinalizing && (
-                            <span className="flex items-center gap-1.5 text-xs text-[#868C94] dark:text-slate-400">
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                                Finalizing…
-                            </span>
-                        )}
-
-                        {/* WS pill */}
-                        <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${isConnected
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : (wsStatus === "connecting" || wsStatus === "reconnecting")
-                                ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                : "bg-red-50 text-red-600 border-red-200"
-                            }`}>
-                            {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-                            {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
-                        </div>
-
-                        {/* User */}
-                        <Link href="/dashboard/profile" className="flex items-center gap-2 pl-3 border-l border-slate-200 hover:opacity-80 transition-opacity active:opacity-70 dark:border-slate-800">
-                            <div className="w-7 h-7 rounded-full bg-[#2149A1] flex items-center justify-center text-xs font-bold text-white">
-                                {user.name?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? "?"}
-                            </div>
-                            <span className="text-sm text-[#868C94] hidden sm:block dark:text-slate-400">
-                                {user.name ?? user.email}
-                            </span>
-                        </Link>
+                        <TemplateSelector
+                            templates={templateSummaries as TemplateSummary[]}
+                            selectedTemplateId={templateId}
+                            loading={templatesLoading}
+                            disabled={templateSwitchDisabled}
+                            onSelect={requestTemplateSwitch}
+                        />
                     </div>
                 </div>
-            </header>
+            )}
 
-            {/* ── Main ── */}
-            <div className="container mx-auto px-4 py-8 max-w-3xl">
+            <section className="min-w-0 flex-1 overflow-y-auto">
+                <div className="mx-auto max-w-3xl px-4 py-6 md:py-8">
+                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                        <button
+                            type="button"
+                            onClick={openTemplateDrawer}
+                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-[border-color,color,transform,opacity] active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 md:hidden"
+                        >
+                            <FileText className="h-4 w-4" />
+                            Choose Template
+                        </button>
+                        <div className="ml-auto flex items-center gap-3">
+                            {isRecording && (
+                                <span className="flex items-center gap-1.5 text-xs font-medium text-red-500">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                                    Recording
+                                </span>
+                            )}
+                            {isFinalizing && (
+                                <span className="flex items-center gap-1.5 text-xs text-[#868C94] dark:text-slate-400">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    Finalizing…
+                                </span>
+                            )}
+                            {hasValidTemplate && (
+                                <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${isConnected
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                    : (wsStatus === "connecting" || wsStatus === "reconnecting")
+                                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                        : "bg-red-50 text-red-600 border-red-200"
+                                    }`}>
+                                    {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                                    {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
                 {/* Template loading state — only shown when waiting for a preloaded template */}
                 {templateId && !templateReady && (
@@ -1054,6 +1264,48 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         Loading template…
                     </div>
                 )}
+
+                {!templateLoading && !hasValidTemplate ? (
+                    <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8eef9] dark:bg-blue-500/15">
+                            <FileText className="h-7 w-7 text-[#2149A1] dark:text-blue-300" />
+                        </div>
+                        {templateNotFound && (
+                            <p className="mb-2 text-sm font-semibold text-red-600 dark:text-red-300">
+                                Template not found.
+                            </p>
+                        )}
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                            No form template selected.
+                        </h1>
+                        <p className="mx-auto mt-3 max-w-md text-sm text-[#868C94] dark:text-slate-400">
+                            {templateNotFound
+                                ? "Select another template to start filling a form, or create a new template first."
+                                : "Select a template to start filling a form, or create a new template first."}
+                        </p>
+                        <div className="mt-6 flex flex-wrap justify-center gap-3">
+                            <button
+                                type="button"
+                                onClick={openTemplateDrawer}
+                                className="inline-flex items-center gap-2 rounded-lg bg-[#2149A1] px-4 py-2.5 text-sm font-medium text-white transition-[background-color,transform,opacity] hover:bg-[#1a3a87] active:scale-[0.98] active:opacity-90 md:hidden"
+                            >
+                                <FileText className="h-4 w-4" />
+                                Choose Template
+                            </button>
+                            <Link
+                                href="/templates/new?returnTo=/forms"
+                                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-[border-color,color,transform,opacity] hover:border-[#2149A1] hover:text-[#2149A1] active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:text-blue-300"
+                            >
+                                <Plus className="h-4 w-4" />
+                                New Template
+                            </Link>
+                        </div>
+                        <p className="mt-5 hidden text-xs text-slate-500 dark:text-slate-400 md:block">
+                            Choose a saved template from the sidebar to enable recording.
+                        </p>
+                    </div>
+                ) : hasValidTemplate ? (
+                    <>
 
                 {/* Error banner */}
                 {errorMessage && (
@@ -1224,6 +1476,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                 </div>
 
                 {/* ── Advanced accordion ── */}
+                {showAdvancedTemplateEditor && (
                 <div className="mt-8 rounded-xl border border-slate-200 overflow-hidden dark:border-slate-800">
                     <button
                         onClick={() => setTemplateOpen((v) => !v)}
@@ -1261,12 +1514,46 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         </div>
                     )}
                 </div>
+                )}
 
                 {/* ── Footer ── */}
                 <p className="text-xs text-slate-400 text-center mt-8 pb-4 dark:text-slate-400">
                     Not saved — refreshing this page will clear the form.
                 </p>
-            </div>
+                    </>
+                ) : null}
+                </div>
+            </section>
+
+            {showSwitchConfirm && pendingTemplateId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:shadow-slate-950/60">
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Switch templates?</h3>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                            Your current filled values will be cleared.
+                        </p>
+                        <div className="mt-6 flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => switchToTemplate(pendingTemplateId)}
+                                className="flex-1 rounded-lg bg-[#2149A1] px-4 py-2 text-sm font-medium text-white transition-[background-color,transform,opacity] hover:bg-[#1a3a87] active:scale-[0.98] active:opacity-90"
+                            >
+                                Switch Template
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowSwitchConfirm(false);
+                                    setPendingTemplateId(null);
+                                }}
+                                className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── Email Modal ── */}
             {showEmailModal && (
