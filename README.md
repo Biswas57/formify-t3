@@ -27,13 +27,18 @@ Recording, notes, form templates, note templates, and custom blocks are availabl
 Forms mode:
 
 1. The user opens `/transcription`, optionally with `?templateId=...`.
-2. The client calls `transcription.getSessionToken` with `mode: "forms"`.
-3. The server verifies the signed-in user and mints a short-lived JWT signed with `WS_TOKEN_SECRET`.
-4. The browser sends `{ action: "start", mode: "forms", blocks, token }` over WebSocket.
-5. Audio chunks stream as binary WebM/Opus frames.
-6. The transcription server returns `started`, `attributes_update`, and `final_attributes` messages.
+2. The client acquires microphone access before starting a backend session.
+3. The client calls `transcription.getSessionToken` with `mode: "forms"`.
+4. The server verifies the signed-in user and mints a short-lived JWT signed with `WS_TOKEN_SECRET`.
+5. The browser sends `{ action: "start", mode: "forms", blocks, token }` over WebSocket.
+6. Audio chunks stream as binary WebM/Opus frames only after the transcription server confirms `started`.
+7. The transcription server returns `started`, `attributes_update`, and `final_attributes` messages.
 
-Notes mode follows the same token/audio flow with `mode: "notes"` and expects `notes_update` / `notes_final` messages.
+Forms reset abandons the active session and ignores late attributes from the abandoned session. Unexpected recording connection loss should stop local microphone capture and leave the UI in a recoverable state.
+
+Notes mode follows the same mic-first token/audio flow with `mode: "notes"` and expects `notes_update` / `notes_final` messages. Notes resume treats the current visible `notesMarkdown` as canonical and sends it as `currentNotesMarkdown` with `continuation: true`.
+
+Additional manual browser/microphone checks, when needed, are tracked in `MANUAL_SMOKE_TESTS.md`.
 
 ## Free-App Model
 

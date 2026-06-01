@@ -96,7 +96,7 @@ Billing runtime code, Stripe env vars, and active billing schema have been remov
 Token request:
 
 ```ts
-api.transcription.getSessionToken.mutate({ mode: "forms" | "notes" })
+api.transcription.getSessionToken.mutate({ mode: "forms" | "notes" });
 ```
 
 Forms start:
@@ -136,6 +136,14 @@ Expected inbound messages from transcription server:
 
 Current frontend form messages expect `{ type, attributes }`; `corrected_audio` is not used.
 
+## WebSocket Lifecycle Invariants
+
+- Local microphone capture must stop when a recording session fails, resets, closes unexpectedly, or unmounts.
+- Start flows should acquire microphone access before sending backend `start` so denied mic permission does not leave a started backend session open.
+- Audio chunks should only be sent after the backend confirms `{ type: "started" }` for the active session.
+- Reset/new-session flows should invalidate abandoned sessions so late backend messages cannot repopulate stale UI state.
+- Notes resume treats visible `notesMarkdown` as canonical and sends it as `currentNotesMarkdown` with `continuation: true`.
+
 ## Safe-Change Rules
 
 - Work only on the requested ticket from `TASKS.md`.
@@ -152,6 +160,5 @@ Current frontend form messages expect `{ type, attributes }`; `corrected_audio` 
 
 ## Known Risks
 
-- Full manual smoke testing for the free-app migration is still deferred.
 - Historical billing migrations remain; do not delete old migrations casually.
 - Fair-use session/cost limits are not implemented yet (see D-008 in `DECISIONS.md`).
