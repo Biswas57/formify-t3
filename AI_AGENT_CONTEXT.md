@@ -23,11 +23,12 @@ Formify is now free-app-first. Do not add Free/Pro distinctions, paywall gates, 
 - `src/server/api/routers/noteTemplate.ts`: note template CRUD.
 - `src/server/api/routers/block.ts`: active block library and custom block API.
 - `src/server/api/routers/usage.ts`: non-blocking usage state via `getToday`.
-- `src/app/transcription/TranscriptionClient.tsx`: forms-mode recording and WebSocket UI.
+- `src/app/forms/page.tsx`: canonical Forms route, reusing the forms-mode recording client.
+- `src/app/transcription/TranscriptionClient.tsx`: forms-mode recording and WebSocket UI. Keep for now; future cleanup may rename it to Forms terminology.
 - `src/app/dashboard/notes/NotesClient.tsx`: notes-mode recording and WebSocket UI.
 - `src/app/dashboard/notes/NoteTemplateSidebar.tsx`: saved note template UI.
-- `src/app/dashboard/TemplateBuilder.tsx`: template builder.
-- `src/app/dashboard/formbank/TemplateList.tsx`: Form Bank list.
+- `src/app/templates/TemplateBuilder.tsx`: form template builder.
+- `src/app/templates/TemplateList.tsx`: My Templates list.
 - `src/app/api/email/route.ts`: email export endpoint.
 - `prisma/schema.prisma`: database schema.
 

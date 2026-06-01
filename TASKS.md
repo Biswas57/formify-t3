@@ -44,6 +44,17 @@
 | T-WEB-CRIT-003 Avoid backend sessions when mic acquisition fails | Completed | Forms and Notes now acquire/create local media before sending WS start; start failures stop local tracks and terminate/close started sessions where needed. |
 | T-WEB-CRIT-004 Gate Forms audio on server started | Completed | Forms now sets WS session readiness only after `started` and sends binary audio only while recording, ready, open, and on the current session generation. |
 | T-WEB-HIGH-005 Add recording start/stop in-flight guards | Completed | Forms and Notes now use synchronous start/stop refs so rapid clicks do not create duplicate recorders, sockets, or conflicting stop flows. |
+| T-146a Canonical route setup | Completed | Added canonical `/templates`, `/forms`, `/templates/new`, and `/templates/[id]` routes, moved route files/components under canonical folders, and kept old dashboard/transcription compatibility routes as redirect-only files. |
+| T-146b Header navigation | Completed | Authenticated navigation now targets My Templates, Forms, Notes, and New Template; logo and signed-in defaults route to My Templates. |
+| T-146c Context-aware New Template back arrow | Completed | New Template accepts only `/templates` or `/forms` as safe `returnTo` values and falls back to `/templates`. |
+| T-147 My Templates as authenticated home | Completed | `/templates` is the canonical saved form templates page; `/`, `/dashboard`, and `/dashboard/formbank` now send signed-in users there. |
+| T-148a Forms route with select-template state | Completed | `/forms` works directly and shows a no-template selected state with no recording controls, no default template fallback, and no mic/token/start path. |
+| T-148b Invalid templateId handling | Completed | Invalid or missing `/forms?templateId=...` shows the select-template state with "Template not found" guidance and cannot record. |
+| T-149a Desktop Forms template sidebar | Completed | Forms now has a persistent desktop saved-template sidebar with selected state and a New Template shortcut. |
+| T-149b Mobile Forms template drawer | Completed | Forms now has a mobile Choose Template drawer following the Notes drawer pattern. |
+| T-149c Template switching guard | Completed | Template switching is disabled while recording/finalising and warns only when filled/generated/manual-edited content exists; confirmed switching resets state and routes to the selected template. |
+| T-150 My Templates Use Template to Forms | Completed | Saved template primary CTA is now "Use Template" and routes to `/forms?templateId=<templateId>`. |
+| T-151a Forms UI cleanup | Completed | Forms uses the shared authenticated shell, hides the old advanced template editor from the Forms workflow, and keeps form filling focused on selected saved templates. |
 
 ## Active
 
@@ -62,21 +73,14 @@ _None._
 | T-131 Polish TranscriptionClient field locking UI | Backlog | P2, low risk, UI-only. Make locked/edited field state neater after T-113 behavior is smoke-tested. Formerly tracked as T-119 before the notes-sidebar follow-up reused that ID. |
 | T-144 Add Donate button and donation page | Backlog | P2, low-medium risk. Add optional support/donate entry point without paywalls, Pro tiers, pricing tables, subscription logic, or feature gates. |
 | T-WEB-HIGH-006 Add fair-use/abuse controls | Backlog | High operational risk, frontend/API coordination. Add non-monetised fair-use/cost-safety controls for token minting and email export: server-side rate limits, daily/session counters, safe metadata logging, and clear reliability wording only. Do not add Pro/upgrade/pricing/paywall language. |
-| T-146 Header/navigation restructure | Backlog | Next feature phase. Authenticated header target: My Templates, Forms, Notes, New Template. Preserve Notes as a separate workspace and do not merge form templates with note templates. |
-| T-147 My Templates as authenticated home | Backlog | Make saved form templates the authenticated home/dashboard. Users can use/fill, edit, delete, create templates, and navigate to Forms or Notes. |
-| T-148 First-class `/forms` route with empty state | Backlog | `/forms` should work directly. With no `templateId`, show an empty state and do not auto-select the most recent template because recording into the wrong form is worse than one extra click. |
-| T-149 Forms template sidebar/drawer | Backlog | Add saved form-template selection to Forms: persistent desktop sidebar and mobile overlay drawer. Switching is allowed only idle/reset/completed, disabled while recording/finalising, and must guard stale session results. |
-| T-150 My Templates Use Template to Forms | Backlog | “Use Template” / “Fill Form” from My Templates should route to `/forms?templateId=<templateId>`. |
-| T-151 Form filling UI cleanup | Backlog | Cleanup/polish current Forms filling workspace after direct `/forms` routing and template selection are stable. Preserve locked-field ownership and recording lifecycle safeguards. |
 | T-152 PDF design improvements for Notes and Forms | Backlog | Canonical PDF ticket. Improve light-themed exported PDFs with consistent header/title/metadata/body/section/footer/page-number treatment. Notes source is current visible/canonical `notesMarkdown` including manual edits and future applied transforms. Forms source is current filled form state. No paid export branding, Pro watermark, export paywall, custom themes, or DB persistence. Suggested split: T-152a audit, T-152b shared PDF utilities, T-152c Notes PDF, T-152d Forms PDF, T-152e manual export QA. |
+| T-FOLLOW Remove stale route/link residue after navigation stabilises | Backlog | Later cleanup after compatibility window: remove `/transcription` and old dashboard compatibility routes/links/references, remove old "transcription page" wording, and optionally rename `TranscriptionClient`/files to Forms terminology. |
 
 ## Recommended Implementation Order
 
-1. T-146 Header/navigation restructure.
-2. T-147 My Templates as authenticated home.
-3. T-148 First-class `/forms` route with empty state.
-4. T-150 My Templates “Use template” -> `/forms?templateId=<id>`.
-5. T-149 Forms template sidebar/drawer.
-6. T-151 Form filling UI cleanup.
-7. T-152 PDF design improvements for Notes and Forms.
-8. Later: T-130, T-127, T-128, and T-126 with backend/privacy coordination as needed.
+1. T-152 PDF design improvements for Notes and Forms.
+2. T-WEB-HIGH-006 fair-use/abuse controls before public scale.
+3. T-130 coordinate notes transform HTTP endpoints.
+4. T-127 and T-128 notes transform UI after backend contracts exist.
+5. T-126 notes local autosave and recovery.
+6. T-FOLLOW stale route/link cleanup after compatibility redirects have had time to settle.

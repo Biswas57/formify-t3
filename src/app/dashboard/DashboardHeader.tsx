@@ -14,9 +14,10 @@ interface HeaderUser {
 }
 
 const NAV = [
-    { label: "My Templates", href: "/dashboard/formbank", icon: FileText },
-    { label: "New Template", href: "/dashboard/create", icon: Plus },
+    { label: "My Templates", href: "/templates", icon: FileText },
+    { label: "Forms", href: "/forms", icon: Mic },
     { label: "Notes", href: "/dashboard/notes", icon: NotebookPen },
+    { label: "New Template", href: "/templates/new", icon: Plus },
 ];
 
 export default function DashboardHeader({ user }: { user: HeaderUser }) {
@@ -26,11 +27,19 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const isActive = (href: string) => {
-        if (href === "/dashboard/formbank") {
+        if (href === "/templates") {
             return (
+                pathname === "/templates" ||
+                (pathname.startsWith("/templates/") && !pathname.startsWith("/templates/new")) ||
                 pathname.startsWith("/dashboard/formbank") ||
                 pathname.startsWith("/dashboard/templates")
             );
+        }
+        if (href === "/forms") {
+            return pathname.startsWith("/forms") || pathname.startsWith("/transcription");
+        }
+        if (href === "/templates/new") {
+            return pathname.startsWith("/templates/new") || pathname.startsWith("/dashboard/create");
         }
         return pathname === href || pathname.startsWith(href);
     };
@@ -75,7 +84,7 @@ export default function DashboardHeader({ user }: { user: HeaderUser }) {
         <>
             <header className="h-16 md:h-20 bg-white border-b border-slate-200 flex items-center px-4 md:px-6 gap-4 md:gap-8 sticky top-0 z-40 dark:border-slate-800 dark:bg-slate-950/95">
                 {/* Logo */}
-                <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0 transition-opacity active:opacity-80">
+                <Link href="/templates" className="flex items-center gap-2 flex-shrink-0 transition-opacity active:opacity-80">
                     <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
                         <Mic className="w-4 h-4 md:w-6 md:h-6 text-white" />
                     </div>

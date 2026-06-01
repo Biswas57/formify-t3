@@ -75,7 +75,7 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
     });
 
     const createFromExample = api.template.create.useMutation({
-        onSuccess: (t) => router.push(`/dashboard/templates/${t.id}`),
+        onSuccess: (t) => router.push(`/templates/${t.id}`),
     });
 
     const filtered = (templates as TemplateSummary[]).filter((t) =>
@@ -124,7 +124,7 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
             <div>
                 <div className="flex items-start justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Form Bank</h1>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">My Templates</h1>
                         <p className="text-sm text-[#868C94] mt-1 dark:text-slate-400">Your saved templates</p>
                     </div>
                     <div className="w-36 h-10 bg-slate-200 rounded-lg animate-pulse dark:bg-slate-800" />
@@ -151,10 +151,10 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
             {/* Header */}
             <div className="flex items-start justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Form Bank</h1>
-                    <p className="text-sm text-[#868C94] mt-1 dark:text-slate-400">Your saved templates</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">My Templates</h1>
+                    <p className="text-sm text-[#868C94] mt-1 dark:text-slate-400">Your saved form templates</p>
                 </div>
-                <Link href="/dashboard/create">
+                <Link href="/templates/new?returnTo=/templates">
                     <button className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-[background-color,transform,opacity] duration-150 hover:scale-[1.02] active:scale-[0.98] active:opacity-90">
                         <Plus className="w-4 h-4" />
                         New Template
@@ -202,7 +202,7 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
                     <p className="text-sm text-[#868C94] mb-5 dark:text-slate-400">
                         Create your first template or start from an example below.
                     </p>
-                    <Link href="/dashboard/create">
+                    <Link href="/templates/new?returnTo=/templates">
                         <button className="bg-[#2149A1] hover:bg-[#1a3a87] text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-[background-color,transform,opacity] duration-150 active:scale-[0.98] active:opacity-90">
                             Create Template
                         </button>
@@ -317,13 +317,13 @@ function TemplateRow({
 
                 {/* Actions */}
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <Link href={`/transcription?templateId=${template.id}`}>
+                    <Link href={`/forms?templateId=${template.id}`}>
                         <button className="flex items-center gap-1.5 bg-[#2149A1] hover:bg-[#1a3a87] text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors active:scale-[0.98] active:opacity-90 min-h-[36px]">
                             <Mic className="w-3 h-3" />
-                            <span className="hidden sm:inline">Record</span>
+                            <span className="hidden sm:inline">Use Template</span>
                         </button>
                     </Link>
-                    <Link href={`/dashboard/templates/${template.id}`} className="hidden sm:block">
+                    <Link href={`/templates/${template.id}`} className="hidden sm:block">
                         <button className="flex items-center gap-1.5 border border-slate-200 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-xs font-medium px-3 py-2 rounded-lg transition-colors active:scale-[0.98] active:opacity-80 min-h-[36px] dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300">
                             <Pencil className="w-3 h-3" />
                             Edit
@@ -341,7 +341,7 @@ function TemplateRow({
 
                         {openMenu === template.id && (
                             <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-20 py-1 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40">
-                                <Link href={`/dashboard/templates/${template.id}`} className="sm:hidden">
+                                <Link href={`/templates/${template.id}`} className="sm:hidden">
                                     <button className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors active:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800">
                                         <Pencil className="w-3.5 h-3.5" />
                                         Edit

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
 import {
@@ -114,17 +113,17 @@ function canvasToSavePayload(name: string, blocks: CanvasBlock[]) {
 
 interface Props {
     initialTemplate?: DBTemplate;
+    returnTo?: "/templates" | "/forms";
 }
 
-export default function TemplateBuilder({ initialTemplate }: Props) {
-    const router = useRouter();
-
+export default function TemplateBuilder({ initialTemplate, returnTo = "/templates" }: Props) {
     // Canvas state
     const [templateName, setTemplateName] = useState(initialTemplate?.name ?? "Untitled Template");
     const [blocks, setBlocks] = useState<CanvasBlock[]>(
         initialTemplate ? dbBlocksToCanvas(initialTemplate) : []
     );
     const [saved, setSaved] = useState(false);
+    const [createdTemplateId, setCreatedTemplateId] = useState<string | null>(null);
 
     // Drag state
     const dragIndex = useRef<number | null>(null);
@@ -142,8 +141,10 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
 
     const createMutation = api.template.create.useMutation({
         onSuccess: (t: { id: string }) => {
+            setCreatedTemplateId(t.id);
             setSaved(true);
-            setTimeout(() => router.push(`/dashboard/templates/${t.id}`), 600);
+            void utils.template.list.invalidate();
+            void utils.template.listSummary.invalidate();
         },
         onError: (err) => {
             console.error("[TemplateBuilder] Create failed:", err.message);
@@ -155,7 +156,9 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
             setSaved(true);
             void utils.template.list.invalidate();
             void utils.template.listSummary.invalidate();
-            setTimeout(() => setSaved(false), 2500);
+            if (initialTemplate) {
+                setTimeout(() => setSaved(false), 2500);
+            }
         },
         onError: (err) => {
             console.error("[TemplateBuilder] Update failed:", err.message);
@@ -274,14 +277,17 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
 
     const handleSave = () => {
         const payload = canvasToSavePayload(templateName, blocks);
-        if (initialTemplate) {
-            updateMutation.mutate({ id: initialTemplate.id, ...payload });
+        const existingId = initialTemplate?.id ?? createdTemplateId;
+        if (existingId) {
+            updateMutation.mutate({ id: existingId, ...payload });
         } else {
             createMutation.mutate(payload);
         }
     };
 
     const isSaving = createMutation.isPending || updateMutation.isPending;
+    const savedTemplateId = initialTemplate?.id ?? createdTemplateId;
+    const backLabel = returnTo === "/forms" ? "Forms" : "My Templates";
 
     // ── Custom block modal ────────────────────────────────────────────────────
 
@@ -329,11 +335,11 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
             {/* ── Top bar ── */}
             <header className="flex items-center gap-3 px-4 md:px-6 py-3 md:py-3.5 border-b border-slate-200 bg-white sticky top-0 z-30 md:static dark:border-slate-800 dark:bg-slate-950">
                 <Link
-                    href="/dashboard/formbank"
+                    href={returnTo}
                     className="flex items-center gap-1.5 text-sm text-[#868C94] hover:text-slate-700 transition-opacity active:opacity-80 flex-shrink-0 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    <span className="hidden sm:inline">Form Bank</span>
+                    <span className="hidden sm:inline">{backLabel}</span>
                 </Link>
 
                 <div className="w-px h-5 bg-slate-200 flex-shrink-0 dark:bg-slate-800" />
@@ -364,6 +370,27 @@ export default function TemplateBuilder({ initialTemplate }: Props) {
                     {isSaving ? "Saving…" : saved ? "Saved!" : "Save"}
                 </button>
             </header>
+
+            {savedTemplateId && saved && (
+                <div className="flex flex-wrap items-center gap-3 border-b border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200 md:px-6">
+                    <Check className="h-4 w-4 flex-shrink-0" />
+                    <span className="font-medium">Template saved.</span>
+                    <div className="flex flex-wrap gap-2">
+                        <Link
+                            href={`/forms?templateId=${savedTemplateId}`}
+                            className="rounded-lg bg-[#2149A1] px-3 py-1.5 text-xs font-medium text-white transition-[background-color,transform,opacity] active:scale-[0.98] active:opacity-90 hover:bg-[#1a3a87]"
+                        >
+                            Use in Forms
+                        </Link>
+                        <Link
+                            href="/templates"
+                            className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-medium text-emerald-800 transition-[background-color,transform,opacity] active:scale-[0.98] active:opacity-80 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-slate-900 dark:text-emerald-200 dark:hover:bg-emerald-950/40"
+                        >
+                            Back to My Templates
+                        </Link>
+                    </div>
+                </div>
+            )}
 
             {/* ── Body: canvas + library ── */}
             <div className="flex flex-1 min-h-0 overflow-hidden">
