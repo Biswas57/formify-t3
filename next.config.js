@@ -16,6 +16,36 @@ const config = {
         ],
     },
 
+    async redirects() {
+        return [
+            {
+                source: "/dashboard",
+                destination: "/templates",
+                permanent: false,
+            },
+            {
+                source: "/dashboard/formbank",
+                destination: "/templates",
+                permanent: false,
+            },
+            {
+                source: "/dashboard/create",
+                destination: "/templates/new",
+                permanent: false,
+            },
+            {
+                source: "/dashboard/templates/:id",
+                destination: "/templates/:id",
+                permanent: false,
+            },
+            {
+                source: "/transcription",
+                destination: "/forms",
+                permanent: false,
+            },
+        ];
+    },
+
     async headers() {
         return [
             {

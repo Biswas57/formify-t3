@@ -1,4 +1,6 @@
 import { api, HydrateClient } from "@/trpc/server";
+import { auth } from "@/server/auth";
+import { redirect } from "next/navigation";
 import TemplateBuilderLazy from "../TemplateBuilderLazy";
 
 export const metadata = { title: "New Template — Formify" };
@@ -13,10 +15,14 @@ export default async function NewTemplatePage({
 }: {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-    void api.block.listLibrary.prefetch();
-
     const params = await searchParams;
     const returnTo = safeReturnTo(params.returnTo);
+    const callbackUrl = returnTo === "/forms" ? "/templates/new?returnTo=/forms" : "/templates/new";
+
+    const session = await auth();
+    if (!session?.user) redirect(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+
+    void api.block.listLibrary.prefetch();
 
     return (
         <HydrateClient>

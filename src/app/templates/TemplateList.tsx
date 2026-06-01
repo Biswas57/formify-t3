@@ -248,7 +248,7 @@ export default function TemplateList({ exampleTemplates, systemBlocks }: Props) 
                                 >
                                     {createFromExample.isPending
                                         ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                        : <>Use this template <ChevronRight className="w-3.5 h-3.5" /></>
+                                        : <>Use Template <ChevronRight className="w-3.5 h-3.5" /></>
                                     }
                                 </button>
                             </div>

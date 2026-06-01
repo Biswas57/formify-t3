@@ -109,7 +109,7 @@ export default function RegisterPage() {
                         <CheckCircle2 className="w-8 h-8 text-[#2149A1]" />
                     </div>
                     <h2 className="text-xl font-bold text-slate-900 mb-2">Account created!</h2>
-                    <p className="text-[#868C94]">Redirecting you to your dashboard…</p>
+                    <p className="text-[#868C94]">Redirecting you to My Templates…</p>
                 </div>
             </div>
         );

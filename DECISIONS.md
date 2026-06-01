@@ -62,7 +62,7 @@ The authenticated app navigation target is: `My Templates | Forms | Notes | New 
 
 `My Templates` is the authenticated home/dashboard for saved form templates. It should let users use/fill, edit, delete, and create form templates, and navigate to Forms or Notes. `Forms` is a first-class form filling workspace. `Notes` remains the existing notes recording/generation workspace. `New Template` creates a form template.
 
-Canonical authenticated routes are `/templates`, `/forms`, `/templates/new`, and `/templates/[id]`. Legacy `/dashboard`, `/dashboard/formbank`, `/dashboard/create`, `/dashboard/templates/[id]`, and `/transcription` routes may remain as compatibility redirects until a later stale-route cleanup.
+Canonical authenticated routes are `/templates`, `/forms`, `/templates/new`, and `/templates/[id]`. Legacy `/dashboard`, `/dashboard/formbank`, `/dashboard/create`, `/dashboard/templates/[id]`, and `/transcription` routes may remain as compatibility redirects until a later stale-route cleanup. Keep compatibility redirects direct and lightweight so old routes do not render the dashboard app tree before reaching canonical routes.
 
 `/forms` must be accessible directly. With no `templateId`, it should show:
 
@@ -79,7 +79,7 @@ Do not auto-select the most recent template, because recording into the wrong st
 
 Desktop Forms should use a persistent saved-template sidebar. Mobile Forms should use a Choose Template overlay drawer similar to Notes. Template switching is allowed when idle/reset/completed, disabled while recording/finalising, and should warn before switching if the current form has filled/generated unsaved values. Stale session results must not apply after template switch/reset.
 
-New Template remains standalone. Save should save only, stay on the page, and show saved/success state with `Use in Forms` and `Back to My Templates`. `Use in Forms` always routes to `/forms?templateId=<newTemplateId>`. Any `returnTo` support should stay simple and only affect back navigation, defaulting to My Templates.
+New Template remains standalone. Save should save only and stay on the page. `Use in Forms` should be visible near Save, disabled until the template has a persisted id, and then route to `/forms?templateId=<templateId>`. Saving a new template creates it once and later saves update that same template. Post-save feedback should stay small and non-intrusive; My Templates remains available through the header/logo and the context-aware back arrow. Any `returnTo` support should stay simple and only affect back navigation, defaulting to My Templates.
 
 ### D-022 Form templates and note templates stay separate
 

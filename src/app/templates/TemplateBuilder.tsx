@@ -287,7 +287,39 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
 
     const isSaving = createMutation.isPending || updateMutation.isPending;
     const savedTemplateId = initialTemplate?.id ?? createdTemplateId;
+    const useInFormsHref = savedTemplateId ? `/forms?templateId=${savedTemplateId}` : null;
     const backLabel = returnTo === "/forms" ? "Forms" : "My Templates";
+    const useInFormsDisabledText = "Save the template before using it in Forms.";
+
+    const renderUseInFormsAction = (variant: "header" | "mobile" = "header") => {
+        const sizeClass =
+            variant === "mobile"
+                ? "w-full rounded-xl px-4 py-3 text-sm"
+                : "rounded-lg px-3 py-2 text-sm sm:px-4";
+        const baseClass = `inline-flex items-center justify-center font-medium transition-[background-color,border-color,transform,opacity] duration-150 active:scale-[0.98] active:opacity-90 ${sizeClass}`;
+
+        if (useInFormsHref) {
+            return (
+                <Link
+                    href={useInFormsHref}
+                    className={`${baseClass} border border-[#2149A1] bg-white text-[#2149A1] hover:bg-[#e8eef9] dark:border-blue-400 dark:bg-slate-950 dark:text-blue-200 dark:hover:bg-blue-500/10`}
+                >
+                    Use in Forms
+                </Link>
+            );
+        }
+
+        return (
+            <button
+                type="button"
+                disabled
+                title={useInFormsDisabledText}
+                className={`${baseClass} cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400 opacity-80 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500`}
+            >
+                Use in Forms
+            </button>
+        );
+    };
 
     // ── Custom block modal ────────────────────────────────────────────────────
 
@@ -352,43 +384,41 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                     className="flex-1 min-w-0 text-base font-semibold text-slate-900 bg-transparent border-none outline-none placeholder-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
                 />
 
-                <button
-                    onClick={handleSave}
-                    disabled={isSaving || blocks.length === 0 || !templateName.trim()}
-                    className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-[background-color,transform,opacity] duration-150 active:scale-[0.98] active:opacity-90 flex-shrink-0 ${saved
-                        ? "bg-emerald-600 hover:bg-emerald-700"
-                        : "bg-[#2149A1] hover:bg-[#1a3a87]"
-                        }`}
-                >
-                    {isSaving ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : saved ? (
-                        <Check className="w-4 h-4" />
-                    ) : (
-                        <Save className="w-4 h-4" />
-                    )}
-                    {isSaving ? "Saving…" : saved ? "Saved!" : "Save"}
-                </button>
+                <div className="flex flex-shrink-0 items-center gap-2">
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving || blocks.length === 0 || !templateName.trim()}
+                        className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition-[background-color,transform,opacity] duration-150 active:scale-[0.98] active:opacity-90 ${saved
+                            ? "bg-emerald-600 hover:bg-emerald-700"
+                            : "bg-[#2149A1] hover:bg-[#1a3a87]"
+                            }`}
+                    >
+                        {isSaving ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : saved ? (
+                            <Check className="w-4 h-4" />
+                        ) : (
+                            <Save className="w-4 h-4" />
+                        )}
+                        {isSaving ? "Saving…" : saved ? "Saved!" : "Save"}
+                    </button>
+                    {renderUseInFormsAction()}
+                </div>
             </header>
 
-            {savedTemplateId && saved && (
-                <div className="flex flex-wrap items-center gap-3 border-b border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200 md:px-6">
+            {!savedTemplateId && (
+                <p className="border-b border-slate-100 bg-white px-4 py-2 text-xs text-[#868C94] dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 md:px-6">
+                    Save the template before using it in Forms.
+                </p>
+            )}
+
+            {saved && (
+                <div
+                    aria-live="polite"
+                    className="flex items-center gap-2 border-b border-emerald-100 bg-emerald-50/70 px-4 py-2 text-xs font-medium text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-200 md:px-6"
+                >
                     <Check className="h-4 w-4 flex-shrink-0" />
-                    <span className="font-medium">Template saved.</span>
-                    <div className="flex flex-wrap gap-2">
-                        <Link
-                            href={`/forms?templateId=${savedTemplateId}`}
-                            className="rounded-lg bg-[#2149A1] px-3 py-1.5 text-xs font-medium text-white transition-[background-color,transform,opacity] active:scale-[0.98] active:opacity-90 hover:bg-[#1a3a87]"
-                        >
-                            Use in Forms
-                        </Link>
-                        <Link
-                            href="/templates"
-                            className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-medium text-emerald-800 transition-[background-color,transform,opacity] active:scale-[0.98] active:opacity-80 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-slate-900 dark:text-emerald-200 dark:hover:bg-emerald-950/40"
-                        >
-                            Back to My Templates
-                        </Link>
-                    </div>
+                    Template saved.
                 </div>
             )}
 
@@ -396,7 +426,7 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
             <div className="flex flex-1 min-h-0 overflow-hidden">
 
                 {/* ── Canvas ── */}
-                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 pb-28 md:pb-6">
+                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 pb-40 md:pb-6">
                     {blocks.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center py-20">
                             <div className="w-16 h-16 bg-[#e8eef9] rounded-2xl flex items-center justify-center mb-4">
@@ -696,31 +726,34 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                 className="fixed bottom-0 left-0 right-0 md:hidden z-30 bg-white border-t border-slate-200 px-4 py-3 dark:border-slate-800 dark:bg-slate-950"
                 style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
             >
-                <div className="flex gap-3">
-                    <button
-                        onClick={() => setShowLibrary(true)}
-                        className="flex-1 flex items-center justify-center gap-2 border border-slate-200 text-slate-700 text-sm font-medium py-3 rounded-xl hover:bg-slate-50 transition-colors active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Block
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={isSaving || blocks.length === 0 || !templateName.trim()}
-                        className={`flex-1 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium py-3 rounded-xl transition-[background-color,transform,opacity] active:scale-[0.98] active:opacity-90 ${saved
-                            ? "bg-emerald-600 hover:bg-emerald-700"
-                            : "bg-[#2149A1] hover:bg-[#1a3a87]"
-                            }`}
-                    >
-                        {isSaving ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : saved ? (
-                            <Check className="w-4 h-4" />
-                        ) : (
-                            <Save className="w-4 h-4" />
-                        )}
-                        {isSaving ? "Saving…" : saved ? "Saved" : "Save"}
-                    </button>
+                <div className="flex flex-col gap-2">
+                    <div className="grid grid-cols-2 gap-3">
+                        <button
+                            onClick={() => setShowLibrary(true)}
+                            className="flex items-center justify-center gap-2 border border-slate-200 text-slate-700 text-sm font-medium py-3 rounded-xl hover:bg-slate-50 transition-colors active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Block
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaving || blocks.length === 0 || !templateName.trim()}
+                            className={`flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium py-3 rounded-xl transition-[background-color,transform,opacity] active:scale-[0.98] active:opacity-90 ${saved
+                                ? "bg-emerald-600 hover:bg-emerald-700"
+                                : "bg-[#2149A1] hover:bg-[#1a3a87]"
+                                }`}
+                        >
+                            {isSaving ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : saved ? (
+                                <Check className="w-4 h-4" />
+                            ) : (
+                                <Save className="w-4 h-4" />
+                            )}
+                            {isSaving ? "Saving…" : saved ? "Saved" : "Save"}
+                        </button>
+                    </div>
+                    {renderUseInFormsAction("mobile")}
                 </div>
             </div>
 

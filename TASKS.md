@@ -48,6 +48,8 @@
 | T-151 Form filling UI cleanup | Completed | Forms uses the shared authenticated shell, hides the old advanced template editor from the Forms workflow without deleting it, and keeps form filling focused on selected saved templates. |
 | T-120 Review and polish PDF export formatting | Completed | Superseded by T-152: Forms and Notes now share branded light-themed PDF utilities with improved headers, metadata, section/content styling, wrapping, filenames, and page numbers. |
 | T-152 PDF design improvements for Notes and Forms | Completed | Shared `src/lib/pdf` exports now provide `exportFormPdf` and `exportNotesPdf` with dynamic jsPDF import, favicon mark branding, compact light-themed headers/metadata/footer/page numbers, compact printable Forms rows in template order, polished Notes markdown output from canonical visible notes, safe filenames, and no raw transcript/audio, paid branding, paywall, or persistence. |
+| T-157 Simplify New Template save/use UX | Completed | `Use in Forms` now appears next to Save and in the mobile sticky action area, stays disabled until the template has a persisted id, routes to `/forms?templateId=<id>` after create/update, and replaces the old post-save navigation strip with a small saved confirmation. Create-once/update-after-create semantics are preserved. |
+| T-158 Route performance and redirect optimisation | Completed | Legacy dashboard/transcription routes now redirect to canonical routes from `next.config.js` before the old app tree/layout renders; page-level compatibility redirects remain as fallback. Protected template pages auth-check before tRPC prefetches, `/dashboard/create` preserves safe `returnTo` values, login callback URLs canonicalise old dashboard/transcription destinations, and registration/template CTA wording now targets My Templates/Forms. Root `/` already redirects signed-in users directly to `/templates` while preserving the unauthenticated landing page. |
 
 ## Active
 
@@ -66,14 +68,17 @@ _None._
 | T-144 Add Donate button and donation page | Backlog | P2, low-medium risk. Add optional support/donate entry point without paywalls, Pro tiers, pricing tables, subscription logic, or feature gates. |
 | T-WEB-HIGH-006 Add fair-use/abuse controls | Backlog | High operational risk, frontend/API coordination. Add non-monetised fair-use/cost-safety controls for token minting and email export: server-side rate limits, daily/session counters, safe metadata logging, and clear reliability wording only. Do not add Pro/upgrade/pricing/paywall language. |
 | T-FOLLOW Remove stale route/link residue after navigation stabilises | Backlog | Later cleanup after compatibility window: remove `/transcription` and old dashboard compatibility routes/links/references, remove old "transcription page" wording, and optionally rename `TranscriptionClient`/files to Forms terminology. |
+| T-FOLLOW Landing/root route performance investigation | Backlog | Medium risk, performance. Root `/` preserves the public landing page and redirects signed-in users directly to `/templates`, but production Speed Insights should guide deeper landing/auth optimisation if `/` remains slow. Avoid changing the public landing experience without design review. |
+| T-156 PDF rendering strategy and high-quality export redesign | Backlog | P1/P2, medium-high risk, export architecture. Evaluate the current jsPDF drawing approach, `@react-pdf/renderer`, HTML/CSS print templates, server-side HTML-to-PDF with Playwright/Puppeteer, and `pdfmake`; prototype one Forms PDF and one Notes PDF before replacing current implementation. Preserve Forms source as current filled form state, Notes source as current visible/canonical markdown, support a real Formify logo/wordmark strategy, keep exports maintainable, fit a mostly-empty 17-field Forms PDF on one page where practical, and do not add paywall/export-limit language. |
 | T-153 Add exportable Formify wordmark asset for PDFs | Backlog | Low risk, design asset. Add a repo-owned SVG/PNG Formify wordmark suitable for embedding in generated PDFs. Current PDFs embed the repo-owned favicon mark and render the wordmark as text because no separate wordmark asset exists. |
 | T-154 Advanced PDF markdown/table support | Backlog | Medium risk, export polish. Improve Notes PDF rendering for tables, richer code blocks, nested lists, and more complete inline emphasis if product usage requires it. Current v1 degrades advanced markdown safely. |
 
 ## Recommended Implementation Order
 
 1. T-WEB-HIGH-006 fair-use/abuse controls before public scale.
-2. T-153 exportable Formify wordmark asset for PDFs.
-3. T-130 coordinate notes transform HTTP endpoints.
-4. T-127 and T-128 notes transform UI after backend contracts exist.
-5. T-126 notes local autosave and recovery.
-6. T-FOLLOW stale route/link cleanup after compatibility redirects have had time to settle.
+2. T-156 PDF rendering strategy and high-quality export redesign.
+3. T-153 exportable Formify wordmark asset for PDFs.
+4. T-130 coordinate notes transform HTTP endpoints.
+5. T-127 and T-128 notes transform UI after backend contracts exist.
+6. T-126 notes local autosave and recovery.
+7. T-FOLLOW stale route/link cleanup after compatibility redirects have had time to settle.

@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { api, HydrateClient } from "@/trpc/server";
+import { auth } from "@/server/auth";
 import TemplateBuilderLazy from "../TemplateBuilderLazy";
 
 export const metadata = { title: "Edit Template — Formify" };
@@ -10,6 +11,11 @@ export default async function EditTemplatePage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
+
+    const session = await auth();
+    if (!session?.user) {
+        redirect(`/login?callbackUrl=${encodeURIComponent(`/templates/${id}`)}`);
+    }
 
     void api.block.listLibrary.prefetch();
 

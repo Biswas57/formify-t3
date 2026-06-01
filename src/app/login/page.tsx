@@ -6,10 +6,46 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, AlertCircle, Mic } from "lucide-react";
 
+function canonicalCallbackUrl(value: string | null) {
+    if (!value || !value.startsWith("/") || value.startsWith("//")) {
+        return "/templates";
+    }
+
+    if (value === "/dashboard" || value === "/dashboard/formbank") {
+        return "/templates";
+    }
+
+    if (value.startsWith("/dashboard/formbank?")) {
+        return `/templates${value.slice("/dashboard/formbank".length)}`;
+    }
+
+    if (value === "/dashboard/create") {
+        return "/templates/new";
+    }
+
+    if (value.startsWith("/dashboard/create?")) {
+        return `/templates/new${value.slice("/dashboard/create".length)}`;
+    }
+
+    if (value.startsWith("/dashboard/templates/")) {
+        return value.replace("/dashboard/templates/", "/templates/");
+    }
+
+    if (value === "/transcription") {
+        return "/forms";
+    }
+
+    if (value.startsWith("/transcription?")) {
+        return `/forms${value.slice("/transcription".length)}`;
+    }
+
+    return value;
+}
+
 function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const callbackUrl = searchParams.get("callbackUrl") ?? "/templates";
+    const callbackUrl = canonicalCallbackUrl(searchParams.get("callbackUrl"));
     const urlError = searchParams.get("error");
 
     const [email, setEmail] = useState("");

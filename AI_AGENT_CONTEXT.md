@@ -27,7 +27,7 @@ Formify is now free-app-first. Do not add Free/Pro distinctions, paywall gates, 
 - `src/app/transcription/TranscriptionClient.tsx`: forms-mode recording and WebSocket UI. Keep for now; future cleanup may rename it to Forms terminology.
 - `src/app/dashboard/notes/NotesClient.tsx`: notes-mode recording and WebSocket UI.
 - `src/app/dashboard/notes/NoteTemplateSidebar.tsx`: saved note template UI.
-- `src/app/templates/TemplateBuilder.tsx`: form template builder.
+- `src/app/templates/TemplateBuilder.tsx`: form template builder. New templates save in place, create only once before switching to update semantics, and expose `Use in Forms` only after a persisted template id exists.
 - `src/app/templates/TemplateList.tsx`: My Templates list.
 - `src/lib/pdf`: shared client-side PDF export utilities for Forms and Notes.
 - `src/app/api/email/route.ts`: email export endpoint.
