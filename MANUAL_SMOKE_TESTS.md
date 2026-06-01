@@ -34,6 +34,32 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] Notes page is accessible to signed-in users.
 - [ ] Template builder is accessible to signed-in users.
 
+## Navigation And Forms Workspace
+
+- [ ] `/templates` loads My Templates.
+- [ ] `/forms` loads the Forms select-template state.
+- [ ] `/forms?templateId=<valid>` loads the selected saved template and stays idle until the user starts recording.
+- [ ] `/forms?templateId=missing` shows the select-template state with "Template not found."
+- [ ] `/templates/new` loads New Template with the back arrow returning to My Templates.
+- [ ] `/templates/new?returnTo=/templates` returns to My Templates.
+- [ ] `/templates/new?returnTo=/forms` returns to Forms.
+- [ ] `/templates/<id>` loads template editing.
+- [ ] `/dashboard`, `/dashboard/formbank`, `/dashboard/create`, `/dashboard/templates/<id>`, `/transcription`, and `/transcription?templateId=<id>` redirect to their canonical routes.
+- [ ] `/dashboard/notes` remains unchanged.
+- [ ] `/forms` with no template cannot record and does not request mic, session token, or backend start.
+- [ ] Invalid template cannot record.
+- [ ] My Templates `Use Template` routes to `/forms?templateId=<id>`.
+- [ ] Desktop Forms sidebar selects templates and shows selected state.
+- [ ] Mobile Forms drawer opens, closes, and selects templates.
+- [ ] `+ New Template` from Forms routes to `/templates/new?returnTo=/forms`.
+- [ ] `+ New Template` from My Templates routes to `/templates/new?returnTo=/templates`.
+- [ ] Header New Template defaults the back arrow to `/templates`.
+- [ ] New Template first save creates once; later saves update that same template.
+- [ ] New Template post-save buttons route to Forms and My Templates correctly.
+- [ ] Template switch warning appears only after actual filled/generated/manual-edited content.
+- [ ] Switching while recording/finalising is disabled.
+- [ ] Notes templates remain separate from form templates.
+
 ## WebSocket Recording Lifecycle
 
 - [ ] Forms: denying microphone permission does not leave a lingering started WS/backend session.
@@ -170,7 +196,7 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 ## Dark Mode Core Surfaces
 
 - [ ] Dashboard/header and mobile menu are readable in dark mode.
-- [ ] Form Bank template list and menus are readable in dark mode.
+- [ ] My Templates list and menus are readable in dark mode.
 - [ ] Notes page is readable in dark mode.
 - [ ] Notes empty state, including "Ready to take notes", is readable in dark mode.
 - [ ] Notes template sidebar, collapsed rail, and mobile drawer are readable in dark mode.
@@ -178,7 +204,7 @@ Use this checklist after the free-app cleanup to verify normal product flows. Do
 - [ ] Notes edit/copy/download controls remain readable in dark mode.
 - [ ] Markdown headings, body text, bullets, and horizontal rules are readable in dark mode.
 - [ ] Template builder canvas, library, modal, and mobile bottom bar are readable in dark mode.
-- [ ] Transcription page fields, locked amber state, recording controls, and email modal are readable in dark mode.
+- [ ] Forms page fields, locked amber state, recording controls, and email modal are readable in dark mode.
 - [ ] Profile page and account forms are readable in dark mode.
 - [ ] Labels and helper/muted text are readable in dark mode.
 - [ ] Placeholder text is visible but clearly secondary in dark mode.

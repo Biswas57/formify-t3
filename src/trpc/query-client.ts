@@ -25,7 +25,7 @@ export const createQueryClient = () =>
         // every refetchOnWindowFocus burst produces a matching auth round-trip.
         //
         // Queries that genuinely need fresh data on focus (e.g. usage.getToday
-        // on the transcription page) should opt back in explicitly:
+        // on the Forms page) should opt back in explicitly:
         //   useQuery(key, { refetchOnWindowFocus: true })
         refetchOnWindowFocus: false,
       },

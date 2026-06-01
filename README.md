@@ -26,7 +26,7 @@ Recording, notes, form templates, note templates, and custom blocks are availabl
 
 Forms mode:
 
-1. The user opens `/transcription`, optionally with `?templateId=...`.
+1. The user opens `/forms?templateId=...` from a saved template. `/transcription` remains a compatibility redirect only.
 2. The client acquires microphone access before starting a backend session.
 3. The client calls `transcription.getSessionToken` with `mode: "forms"`.
 4. The server verifies the signed-in user and mints a short-lived JWT signed with `WS_TOKEN_SECRET`.

@@ -62,6 +62,8 @@ The authenticated app navigation target is: `My Templates | Forms | Notes | New 
 
 `My Templates` is the authenticated home/dashboard for saved form templates. It should let users use/fill, edit, delete, and create form templates, and navigate to Forms or Notes. `Forms` is a first-class form filling workspace. `Notes` remains the existing notes recording/generation workspace. `New Template` creates a form template.
 
+Canonical authenticated routes are `/templates`, `/forms`, `/templates/new`, and `/templates/[id]`. Legacy `/dashboard`, `/dashboard/formbank`, `/dashboard/create`, `/dashboard/templates/[id]`, and `/transcription` routes may remain as compatibility redirects until a later stale-route cleanup.
+
 `/forms` must be accessible directly. With no `templateId`, it should show:
 
 ```txt
