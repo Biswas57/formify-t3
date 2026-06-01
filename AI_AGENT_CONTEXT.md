@@ -29,6 +29,7 @@ Formify is now free-app-first. Do not add Free/Pro distinctions, paywall gates, 
 - `src/app/dashboard/notes/NoteTemplateSidebar.tsx`: saved note template UI.
 - `src/app/templates/TemplateBuilder.tsx`: form template builder.
 - `src/app/templates/TemplateList.tsx`: My Templates list.
+- `src/lib/pdf`: shared client-side PDF export utilities for Forms and Notes.
 - `src/app/api/email/route.ts`: email export endpoint.
 - `prisma/schema.prisma`: database schema.
 
@@ -163,3 +164,4 @@ Current frontend form messages expect `{ type, attributes }`; `corrected_audio` 
 
 - Historical billing migrations remain; do not delete old migrations casually.
 - Fair-use session/cost limits are not implemented yet (see D-008 in `DECISIONS.md`).
+- PDF exports currently use text-based Formify branding because there is no exportable wordmark asset in the repo.

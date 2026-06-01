@@ -38,8 +38,6 @@ Forms reset abandons the active session and ignores late attributes from the aba
 
 Notes mode follows the same mic-first token/audio flow with `mode: "notes"` and expects `notes_update` / `notes_final` messages. Notes resume treats the current visible `notesMarkdown` as canonical and sends it as `currentNotesMarkdown` with `continuation: true`.
 
-Additional manual browser/microphone checks, when needed, are tracked in `MANUAL_SMOKE_TESTS.md`.
-
 ## Free-App Model
 
 Formify should present as a free app in normal product flows:

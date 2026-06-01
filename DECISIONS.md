@@ -125,10 +125,10 @@ For Notes mode, frontend warns against a 120-minute maximum session length as a 
 
 ### D-023 PDF exports use a shared light document style
 
-Future PDF work should use a consistent light-themed document style for Notes and Forms regardless of app theme: header, document title, metadata row, content body, section headings, footer, and page numbers.
+Forms and Notes PDFs use the shared client-side utilities in `src/lib/pdf`. Keep the high-level export surface small: `exportFormPdf(input)` and `exportNotesPdf(input)`. `jspdf` should stay dynamically imported inside those export functions so it is only loaded when the user exports.
 
-Notes PDF source is the current visible/canonical `notesMarkdown`, including manual edits and future applied summaries/reorganisations. Notes PDFs should improve title/session heading, export date/time, note style label where available, markdown formatting, heading hierarchy, spacing, wrapped text, bullet indentation, page breaks, footer/page numbers, and light Formify branding.
+All PDFs use a consistent light-themed document style regardless of app theme: text-based Formify header, document title, metadata panel, content body, section headings, footer, page numbers, safe title/date filenames, and readable wrapping/page breaks. The repo currently has favicon assets but no exportable Formify wordmark, so PDF branding is text-based until a proper SVG/PNG wordmark asset is added.
 
-Forms PDF source is the current filled form state. Forms PDFs should improve template title, export date/time, clear section/block layout, field labels and filled values, consistent empty-value handling, spacing, page breaks, footer/page numbers, and light Formify branding.
+Notes PDF source is the current visible/canonical `notesMarkdown`, including manual edits and future applied summaries/reorganisations. Forms PDF source is the current filled form state in template-defined block/field order. Do not render Forms PDFs from unordered `attributes` entries.
 
-Do not add paid export branding, Pro watermarks, export paywalls, custom PDF themes, user-uploaded logos, or database persistence as part of this PDF design pass.
+Do not add paid export branding, Pro watermarks, export paywalls, custom PDF themes, user-uploaded logos, or database persistence to PDF export.

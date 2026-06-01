@@ -10,6 +10,7 @@ import {
     Download, Mail, X, FileText, Plus, Check
 } from "lucide-react";
 import { formatFieldLabel } from "@/lib/format-field-label";
+import { exportFormPdf } from "@/lib/pdf";
 import { env } from "@/env";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -923,187 +924,17 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
     const handleSavePDF = async () => {
         try {
-            const { default: jsPDF } = await import("jspdf");
-
-            const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-
-            // ── Constants ──────────────────────────────────────────────────────
-            const PAGE_W = 210;
-            const PAGE_H = 297;
-            const MARGIN = 14;
-            const CONTENT_W = PAGE_W - MARGIN * 2;
-            const COL_W = (CONTENT_W - 6) / 2; // 6mm gutter
-
-            // Colours
-            const BRAND_BLUE: [number, number, number] = [33, 73, 161];
-            const HEADER_BG: [number, number, number] = [245, 247, 252];
-            const BLOCK_HDR_BG: [number, number, number] = [248, 249, 251];
-            const BORDER_COL: [number, number, number] = [220, 224, 232];
-            const LABEL_COL: [number, number, number] = [134, 140, 148];
-            const VALUE_COL: [number, number, number] = [15, 23, 42];
-            const EMPTY_COL: [number, number, number] = [190, 194, 200];
-            const WHITE: [number, number, number] = [255, 255, 255];
-
-            // Helper: filled rounded rect
-            const filledRect = (
-                x: number, y: number, w: number, h: number, r: number,
-                fill: [number, number, number], stroke?: [number, number, number]
-            ) => {
-                pdf.setFillColor(...fill);
-                pdf.setDrawColor(...(stroke ?? fill));
-                pdf.roundedRect(x, y, w, h, r, r, stroke ? "FD" : "F");
-            };
-
-            // Helper: clamp text to width with ellipsis
-            const clampText = (text: string, maxW: number, fs: number) => {
-                pdf.setFontSize(fs);
-                if (pdf.getTextWidth(text) <= maxW) return text;
-                while (text.length > 1 && pdf.getTextWidth(text + "…") > maxW) {
-                    text = text.slice(0, -1);
-                }
-                return text + "…";
-            };
-
-            let y = 0;
-
-            // Page-break guard — redraws top stripe on new pages
-            const ensureSpace = (needed: number) => {
-                if (y + needed > PAGE_H - 14) {
-                    pdf.addPage();
-                    pdf.setFillColor(...BRAND_BLUE);
-                    pdf.rect(0, 0, PAGE_W, 2, "F");
-                    y = 10;
-                }
-            };
-
-            // ── HEADER ─────────────────────────────────────────────────────────
-            pdf.setFillColor(...BRAND_BLUE);
-            pdf.rect(0, 0, PAGE_W, 2, "F");
-
-            pdf.setFillColor(...HEADER_BG);
-            pdf.rect(0, 2, PAGE_W, 32, "F");
-
-            // Logo mark
-            filledRect(MARGIN, 8, 10, 10, 2, BRAND_BLUE);
-            pdf.setTextColor(...WHITE);
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(8);
-            pdf.text("F", MARGIN + 3.5, 14.8);
-
-            // Brand name
-            pdf.setTextColor(...BRAND_BLUE);
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(13);
-            pdf.text("Formify", MARGIN + 13, 14.2);
-
-            // Tagline
-            pdf.setFont("helvetica", "normal");
-            pdf.setFontSize(7);
-            pdf.setTextColor(...LABEL_COL);
-            pdf.text("Voice-powered form filling", MARGIN + 13, 18.5);
-
-            // Form title (right-aligned)
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(11);
-            pdf.setTextColor(...VALUE_COL);
-            pdf.text(clampText(formTitle, 90, 11), PAGE_W - MARGIN, 13, { align: "right" });
-
-            // Date
-            pdf.setFont("helvetica", "normal");
-            pdf.setFontSize(8);
-            pdf.setTextColor(...LABEL_COL);
-            const dateStr = new Date().toLocaleDateString("en-AU", {
-                day: "numeric", month: "long", year: "numeric",
+            await exportFormPdf({
+                title: formTitle,
+                blocks: Object.entries(blocks).map(([blockName, fields]) => ({
+                    title: blockName,
+                    fields: fields.map((field) => ({
+                        key: field,
+                        label: formatFieldLabel(field),
+                        value: attributes[field] ?? "",
+                    })),
+                })),
             });
-            pdf.text(dateStr, PAGE_W - MARGIN, 19, { align: "right" });
-
-            // Header divider
-            pdf.setDrawColor(...BORDER_COL);
-            pdf.setLineWidth(0.3);
-            pdf.line(0, 34, PAGE_W, 34);
-
-            y = 40;
-
-            // ── BLOCKS ─────────────────────────────────────────────────────────
-            for (const [blockName, fields] of Object.entries(blocks)) {
-                const fieldRows = Math.ceil(fields.length / 2);
-                const bodyH = fieldRows * 16 + 6;
-                const blockTotal = 10 + bodyH;
-
-                ensureSpace(blockTotal + 4);
-
-                // Outer border
-                pdf.setDrawColor(...BORDER_COL);
-                pdf.setLineWidth(0.3);
-                pdf.roundedRect(MARGIN, y, CONTENT_W, blockTotal, 3, 3, "S");
-
-                // Block header band
-                filledRect(MARGIN, y, CONTENT_W, 10, 3, BLOCK_HDR_BG);
-                pdf.setDrawColor(...BORDER_COL);
-                pdf.line(MARGIN, y + 10, MARGIN + CONTENT_W, y + 10);
-
-                // Block title
-                pdf.setFont("helvetica", "bold");
-                pdf.setFontSize(8);
-                pdf.setTextColor(...BRAND_BLUE);
-                pdf.text(blockName.toUpperCase(), MARGIN + 5, y + 6.5);
-
-                // Fields — two per row
-                let fieldY = y + 14;
-
-                const drawField = (field: string, fx: number) => {
-                    const rawValue = attributes[field] ?? "";
-                    const label = formatFieldLabel(field);
-                    const BOX_H = 7.5;
-
-                    // Label
-                    pdf.setFont("helvetica", "normal");
-                    pdf.setFontSize(7);
-                    pdf.setTextColor(...LABEL_COL);
-                    pdf.text(label, fx, fieldY);
-
-                    // Input box
-                    const boxY = fieldY + 1.5;
-                    filledRect(fx, boxY, COL_W, BOX_H, 1.5, WHITE, BORDER_COL);
-
-                    // Value — vertically centred inside box
-                    pdf.setFont("helvetica", "normal");
-                    pdf.setFontSize(8.5);
-                    if (rawValue) {
-                        pdf.setTextColor(...VALUE_COL);
-                        pdf.text(clampText(rawValue, COL_W - 6, 8.5), fx + 3, boxY + BOX_H / 2 + 1.5);
-                    } else {
-                        pdf.setTextColor(...EMPTY_COL);
-                        pdf.text("—", fx + 3, boxY + BOX_H / 2 + 1.5);
-                    }
-                };
-
-                for (let i = 0; i < fields.length; i += 2) {
-                    drawField(fields[i]!, MARGIN + 2);
-                    if (fields[i + 1]) drawField(fields[i + 1]!, MARGIN + 2 + COL_W + 6);
-                    fieldY += 16;
-                }
-
-                y += blockTotal + 5;
-            }
-
-            // ── FOOTER on every page ────────────────────────────────────────────
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            const totalPages: number = (pdf as any).internal.getNumberOfPages();
-            for (let p = 1; p <= totalPages; p++) {
-                pdf.setPage(p);
-                pdf.setDrawColor(...BORDER_COL);
-                pdf.setLineWidth(0.2);
-                pdf.line(MARGIN, PAGE_H - 10, PAGE_W - MARGIN, PAGE_H - 10);
-                pdf.setFont("helvetica", "normal");
-                pdf.setFontSize(7);
-                pdf.setTextColor(...LABEL_COL);
-                pdf.text("Generated by Formify · formify-webapp.vercel.app", MARGIN, PAGE_H - 6);
-                pdf.text(`Page ${p} of ${totalPages}`, PAGE_W - MARGIN, PAGE_H - 6, { align: "right" });
-            }
-
-            // ── Save ───────────────────────────────────────────────────────────
-            pdf.save(`${formTitle.replace(/[^a-z0-9]/gi, "_")}_${new Date().toISOString().split("T")[0]}.pdf`);
         } catch (error) {
             console.error("PDF generation error:", error);
             alert("Failed to generate PDF. Please try again.");
