@@ -7,7 +7,7 @@ import Link from "next/link";
 import {
     Mic, Square, Wifi, WifiOff, RotateCcw, ChevronDown,
     Lock, AlertCircle, RefreshCw, Loader2,
-    Download, Mail, X, FileText, Plus, Check
+    Download, Mail, X, FileText, Plus, Check, PanelLeftClose, PanelLeftOpen
 } from "lucide-react";
 import { formatFieldLabel } from "@/lib/format-field-label";
 import { exportFormPdf } from "@/lib/pdf";
@@ -16,6 +16,7 @@ import { env } from "@/env";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface User {
+    id?: string | null;
     name?: string | null;
     email?: string | null;
     image?: string | null;
@@ -35,6 +36,7 @@ interface ServerMessage {
 
 type WSStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "error";
 type RecordStatus = "idle" | "recording" | "finalizing" | "paused";
+type RestoredRecordStatus = "idle" | "paused";
 
 interface TemplateSummary {
     id: string;
@@ -44,6 +46,16 @@ interface TemplateSummary {
     fieldCount: number;
     previewTitles: string[];
 }
+
+type FormsDraft = {
+    version: 1;
+    templateId: string;
+    templateTitle: string;
+    attributes: Record<string, string>;
+    lockedFields: string[];
+    recordStatus: RestoredRecordStatus;
+    updatedAt: string;
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -88,64 +100,122 @@ const DEFAULT_TEMPLATE = `ID: name, date of birth, email, phone
 Medical: chief complaint, medications, allergies
 Social: occupation, address`;
 
+const FORMS_DRAFT_STORAGE_PREFIX = "formify:forms:draft:v1";
+const FORMS_DRAFT_SAVE_DEBOUNCE_MS = 300;
+
+function getFormsDraftStorageKey(user: User): string | null {
+    const stableIdentifier = user.id ?? user.email;
+    return stableIdentifier ? `${FORMS_DRAFT_STORAGE_PREFIX}:${stableIdentifier}` : null;
+}
+
+function parseFormsDraft(raw: string | null): FormsDraft | null {
+    if (!raw) return null;
+
+    try {
+        const value = JSON.parse(raw) as Partial<FormsDraft>;
+        if (value.version !== 1) return null;
+        if (typeof value.templateId !== "string" || !value.templateId) return null;
+
+        const attributes: Record<string, string> = {};
+        if (value.attributes && typeof value.attributes === "object" && !Array.isArray(value.attributes)) {
+            for (const [key, val] of Object.entries(value.attributes)) {
+                if (typeof key === "string" && typeof val === "string") {
+                    attributes[normalizeKey(key)] = val;
+                }
+            }
+        }
+
+        return {
+            version: 1,
+            templateId: value.templateId,
+            templateTitle: typeof value.templateTitle === "string" ? value.templateTitle : "",
+            attributes,
+            lockedFields: Array.isArray(value.lockedFields)
+                ? value.lockedFields.filter((field): field is string => typeof field === "string").map(normalizeKey)
+                : [],
+            recordStatus: value.recordStatus === "paused" ? "paused" : "idle",
+            updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : new Date().toISOString(),
+        };
+    } catch {
+        return null;
+    }
+}
+
 function TemplateSelector({
     templates,
     selectedTemplateId,
     loading,
     disabled,
     onSelect,
+    onToggleSidebar,
 }: {
     templates: TemplateSummary[];
     selectedTemplateId: string | null;
     loading: boolean;
     disabled: boolean;
     onSelect: (id: string) => void;
+    onToggleSidebar?: () => void;
 }) {
     return (
-        <div className="flex min-h-0 flex-1 flex-col">
-            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 dark:border-slate-800">
-                <div>
-                    <h2 className="text-xs font-semibold uppercase tracking-widest text-[#868C94] dark:text-slate-400">
-                        Form Templates
-                    </h2>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        Select one before recording.
-                    </p>
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-white dark:bg-slate-950">
+            <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+                <div className="flex min-w-0 items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <FileText className="h-4 w-4 flex-shrink-0 text-[#2149A1] dark:text-blue-300" />
+                            <span className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">Form Templates</span>
+                        </div>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-1">
+                        {disabled ? (
+                            <button
+                                type="button"
+                                disabled
+                                className="inline-flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-lg text-slate-300 dark:text-slate-700"
+                                title="Stop recording before creating a new template"
+                            >
+                                <Plus className="h-4 w-4" />
+                            </button>
+                        ) : (
+                            <Link
+                                href="/templates/new?returnTo=/forms"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#2149A1] transition-colors hover:bg-[#e8eef9] active:scale-95 active:opacity-80 dark:text-blue-300 dark:hover:bg-blue-500/15"
+                                title="New template"
+                                aria-label="New form template"
+                            >
+                                <Plus className="h-4 w-4" />
+                            </Link>
+                        )}
+                        {onToggleSidebar && (
+                            <button
+                                type="button"
+                                onClick={onToggleSidebar}
+                                className="hidden rounded-lg p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-[#2149A1] md:inline-flex dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
+                                aria-label="Hide form templates sidebar"
+                                title="Hide templates sidebar"
+                            >
+                                <PanelLeftClose className="h-4 w-4" />
+                            </button>
+                        )}
+                    </div>
                 </div>
-                {disabled ? (
-                    <button
-                        type="button"
-                        disabled
-                        className="inline-flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-lg text-slate-300 dark:text-slate-700"
-                        title="Stop recording before creating a new template"
-                    >
-                        <Plus className="h-4 w-4" />
-                    </button>
-                ) : (
-                    <Link
-                        href="/templates/new?returnTo=/forms"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#2149A1] transition-colors hover:bg-[#e8eef9] active:scale-95 active:opacity-80 dark:text-blue-300 dark:hover:bg-blue-500/15"
-                        title="New template"
-                    >
-                        <Plus className="h-4 w-4" />
-                    </Link>
-                )}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-3">
                 {loading ? (
-                    <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+                    <div className="flex items-center justify-center py-10 text-slate-400 dark:text-slate-400">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading templates…
                     </div>
                 ) : templates.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-6 text-center dark:border-slate-700 dark:bg-slate-900">
-                        <FileText className="mx-auto mb-3 h-8 w-8 text-slate-300 dark:text-slate-600" />
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">No templates yet</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Create one before filling forms.</p>
+                    <div className="px-4 py-10 text-center">
+                        <FileText className="mx-auto mb-3 h-8 w-8 text-slate-200 dark:text-slate-700" />
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No templates yet</p>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-400 dark:text-slate-400">
+                            Create a form template before recording.
+                        </p>
                     </div>
                 ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                         {templates.map((template) => {
                             const selected = template.id === selectedTemplateId;
                             return (
@@ -154,34 +224,23 @@ function TemplateSelector({
                                     type="button"
                                     disabled={disabled && !selected}
                                     onClick={() => onSelect(template.id)}
-                                    className={`w-full rounded-xl border px-3 py-3 text-left transition-[border-color,background-color,opacity,transform] active:scale-[0.99] ${selected
-                                        ? "border-[#2149A1] bg-[#e8eef9] text-[#2149A1] dark:border-blue-400/60 dark:bg-blue-500/15 dark:text-blue-200"
-                                        : "border-slate-200 bg-white text-slate-700 hover:border-[#2149A1]/30 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-400/30 dark:hover:bg-slate-800"
+                                    className={`group block w-full min-w-0 rounded-lg border px-2 py-2 text-left transition-[border-color,background-color,opacity,transform] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 ${selected
+                                        ? "border-[#2149A1]/30 bg-[#e8eef9] text-[#2149A1] dark:border-blue-400/50 dark:bg-blue-500/15 dark:text-blue-200"
+                                        : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 focus-visible:border-slate-200 focus-visible:bg-slate-50 dark:text-slate-200 dark:hover:border-slate-700 dark:hover:bg-slate-900 dark:focus-visible:border-slate-700 dark:focus-visible:bg-slate-900"
                                         }`}
                                 >
-                                    <div className="flex items-start gap-2">
-                                        <FileText className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                                    <div className="flex min-w-0 items-start gap-2">
+                                        <FileText className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400 group-hover:text-[#2149A1] dark:text-slate-500 dark:group-hover:text-blue-300" />
                                         <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <p className="truncate text-sm font-semibold">{template.name}</p>
-                                                {selected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                                            </div>
-                                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                            <p className="truncate text-sm font-medium" title={template.name}>{template.name}</p>
+                                            <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-400">
                                                 {template.blockCount} block{template.blockCount !== 1 ? "s" : ""} · {template.fieldCount} field{template.fieldCount !== 1 ? "s" : ""}
                                             </p>
-                                            {template.previewTitles.length > 0 && (
-                                                <div className="mt-2 flex flex-wrap gap-1">
-                                                    {template.previewTitles.slice(0, 2).map((title) => (
-                                                        <span
-                                                            key={title}
-                                                            className="truncate rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                                                        >
-                                                            {title}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
+                                            <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500" title={template.previewTitles.join(", ")}>
+                                                {template.previewTitles.length > 0 ? template.previewTitles.slice(0, 2).join(", ") : "No sections"}
+                                            </p>
                                         </div>
+                                        {selected && <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />}
                                     </div>
                                 </button>
                             );
@@ -197,6 +256,7 @@ function TemplateSelector({
 
 export default function TranscriptionClient({ user }: { user: User }) {
     const router = useRouter();
+    const formsDraftStorageKey = getFormsDraftStorageKey(user);
     // Connection
     const wsRef = useRef<WebSocket | null>(null);
     const [wsStatus, setWsStatus] = useState<WSStatus>("disconnected");
@@ -208,7 +268,8 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const [recordStatus, setRecordStatus] = useState<RecordStatus>("idle");
     const [micError, setMicError] = useState<string | null>(null);
     const blocksReadyRef = useRef(false);
-    const [, setBlocksReady] = useState(false);
+    const [isSessionReady, setSessionReady] = useState(false);
+    const [isStartingRecording, setIsStartingRecording] = useState(false);
 
     // Template
     const [templateRaw, setTemplateRaw] = useState("");
@@ -220,8 +281,14 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const [formTitle, setFormTitle] = useState("");
     const [templateDrawerOpen, setTemplateDrawerOpen] = useState(false);
     const [templateDrawerVisible, setTemplateDrawerVisible] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
     const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
+    const [restoredDraft, setRestoredDraft] = useState<FormsDraft | null>(null);
+    const draftHydratedRef = useRef(false);
+    const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const suppressNextEmptyDraftSaveRef = useRef(false);
+    const draftReplaceTemplateIdRef = useRef<string | null>(null);
 
     // Form data
     const [attributes, setAttributes] = useState<Record<string, string>>({});
@@ -270,21 +337,91 @@ export default function TranscriptionClient({ user }: { user: User }) {
     const hasValidTemplate = Boolean(preloadedTemplate);
     const templateReady = hasTemplateId && !templateLoading;
     const templateNotFound = hasTemplateId && !templateLoading && !preloadedTemplate;
+    const hasRestorableDraft =
+        !templateId &&
+        Boolean(restoredDraft) &&
+        (templatesLoading ||
+            (templateSummaries as TemplateSummary[]).some((template) => template.id === restoredDraft?.templateId));
 
     // Derived
     const blocks = parseBlocks(templateRaw);
     const allFields = Object.values(blocks).flat();
-    const isConnected = wsStatus === "connected";
+    const isConnected = wsStatus === "connected" && isSessionReady;
     const isRecording = recordStatus === "recording";
     const isFinalizing = recordStatus === "finalizing";
     const isPaused = recordStatus === "paused";
-    const canRecord = isConnected && !isFinalizing && hasValidTemplate;
+    const canRecord = !isStartingRecording && !isFinalizing && hasValidTemplate;
     const errorMessage = wsError ?? micError;
     const hasFilledContent =
         Object.values(attributes).some((value) => value.trim().length > 0) ||
         lockedFields.size > 0;
-    const templateSwitchDisabled = isRecording || isFinalizing;
+    const templateSwitchDisabled = isStartingRecording || isRecording || isFinalizing;
+    const showConnectionPill = isStartingRecording || isRecording || isFinalizing || (wsStatus === "error" && recordStatus !== "idle");
+    const connectionPillClasses =
+        isStartingRecording || wsStatus === "connecting" || wsStatus === "reconnecting" || (wsStatus === "connected" && !isSessionReady)
+            ? "bg-yellow-50 text-yellow-700 border-yellow-200 dark:border-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-200"
+            : isConnected
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200"
+                : "bg-red-50 text-red-600 border-red-200 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200";
+    const connectionPillLabel =
+        isStartingRecording || wsStatus === "connecting" || (wsStatus === "connected" && !isSessionReady)
+            ? "Connecting…"
+            : wsStatus === "reconnecting"
+                ? "Reconnecting…"
+                : isConnected
+                    ? "Connected"
+                    : "Disconnected";
     const showAdvancedTemplateEditor = false;
+
+    const readFormsDraft = useCallback((): FormsDraft | null => {
+        if (!formsDraftStorageKey || typeof window === "undefined") {
+            return null;
+        }
+
+        return parseFormsDraft(window.localStorage.getItem(formsDraftStorageKey));
+    }, [formsDraftStorageKey]);
+
+    const clearFormsDraft = useCallback(() => {
+        if (draftSaveTimerRef.current) {
+            clearTimeout(draftSaveTimerRef.current);
+            draftSaveTimerRef.current = null;
+        }
+
+        if (formsDraftStorageKey && typeof window !== "undefined") {
+            window.localStorage.removeItem(formsDraftStorageKey);
+        }
+
+        setRestoredDraft(null);
+        suppressNextEmptyDraftSaveRef.current = true;
+    }, [formsDraftStorageKey]);
+
+    useEffect(() => {
+        if (!formsDraftStorageKey) {
+            draftHydratedRef.current = true;
+            return;
+        }
+
+        const draft = readFormsDraft();
+        setRestoredDraft(draft);
+        draftHydratedRef.current = true;
+    }, [formsDraftStorageKey, readFormsDraft]);
+
+    useEffect(() => {
+        if (templateId || templatesLoading) return;
+
+        const latestDraft = readFormsDraft();
+        setRestoredDraft(latestDraft);
+        if (!latestDraft) return;
+
+        const draftTemplateExists = (templateSummaries as TemplateSummary[]).some(
+            (template) => template.id === latestDraft.templateId
+        );
+        if (!draftTemplateExists) return;
+        if (draftReplaceTemplateIdRef.current === latestDraft.templateId) return;
+
+        draftReplaceTemplateIdRef.current = latestDraft.templateId;
+        router.replace(`/forms?templateId=${encodeURIComponent(latestDraft.templateId)}`);
+    }, [readFormsDraft, router, templateId, templateSummaries, templatesLoading]);
 
     useEffect(() => {
         if (!preloadedTemplate) {
@@ -313,24 +450,48 @@ export default function TranscriptionClient({ user }: { user: User }) {
     useEffect(() => {
         const empty: Record<string, string> = {};
         allFields.forEach((f) => { empty[f] = ""; });
-        setAttributes(empty);
-        const emptyLocked = new Set<string>();
-        lockedFieldsRef.current = emptyLocked;
-        setLockedFields(emptyLocked);
+        const draftForTemplate = readFormsDraft();
+        const shouldRestoreDraft = Boolean(draftForTemplate && templateId && draftForTemplate.templateId === templateId);
+        const nextAttributes = { ...empty };
+        const nextLocked = new Set<string>();
+
+        if (shouldRestoreDraft && draftForTemplate) {
+            const allowedFields = new Set(allFields);
+            for (const [field, value] of Object.entries(draftForTemplate.attributes)) {
+                if (allowedFields.has(field)) {
+                    nextAttributes[field] = value;
+                }
+            }
+            for (const field of draftForTemplate.lockedFields) {
+                if (allowedFields.has(field)) {
+                    nextLocked.add(field);
+                }
+            }
+            const restoredStatus =
+                Object.values(nextAttributes).some((value) => value.trim().length > 0) || nextLocked.size > 0
+                    ? draftForTemplate.recordStatus
+                    : "idle";
+            setRecordStatus(restoredStatus);
+            recordStatusRef.current = restoredStatus;
+        } else {
+            setRecordStatus("idle");
+            recordStatusRef.current = "idle";
+        }
+
+        setAttributes(nextAttributes);
+        lockedFieldsRef.current = nextLocked;
+        setLockedFields(nextLocked);
         blocksReadyRef.current = false;
-        setBlocksReady(false);
+        setSessionReady(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [templateRaw]);
+    }, [templateRaw, readFormsDraft, templateId]);
 
     // ── WebSocket ─────────────────────────────────────────────────────────────
 
-    // Auto-reconnect state — mirrors NotesClient pattern
-    const reconnectAttemptsRef = useRef(0);
-    const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // WebSocket state — sockets are opened only for an active recording session.
     const recordStatusRef = useRef<RecordStatus>("idle");
     const wsSessionReadyRef = useRef(false);
     const intentionalCloseRef = useRef(false);
-    const reconnectAfterIntentionalCloseRef = useRef(false);
     const sessionGenerationRef = useRef(0);
     const activeSessionGenerationRef = useRef<number | null>(null);
     const startInFlightRef = useRef(false);
@@ -338,12 +499,11 @@ export default function TranscriptionClient({ user }: { user: User }) {
     // Short-lived WS session token minted by the server just before recording starts.
     // Stored in a ref so sendBlocks can include it without a stale closure.
     const wsTokenRef = useRef<string | null>(null);
-    const MAX_RECONNECT_ATTEMPTS = 4;
 
     const markSessionInactive = useCallback(() => {
         wsSessionReadyRef.current = false;
         blocksReadyRef.current = false;
-        setBlocksReady(false);
+        setSessionReady(false);
         activeSessionGenerationRef.current = null;
         wsTokenRef.current = null;
     }, []);
@@ -389,195 +549,186 @@ export default function TranscriptionClient({ user }: { user: User }) {
         })
     ), []);
 
-    const connectWS = useCallback((isReconnect = false) => {
-        if (
-            wsRef.current?.readyState === WebSocket.OPEN ||
-            wsRef.current?.readyState === WebSocket.CONNECTING
-        ) return;
-
-        if (isReconnect) {
-            setWsStatus("reconnecting");
-        } else {
-            setWsStatus("connecting");
-            setWsError(null);
-            reconnectAttemptsRef.current = 0;
-            intentionalCloseRef.current = false;
-            reconnectAfterIntentionalCloseRef.current = false;
+    const connectWS = useCallback((): Promise<WebSocket> => {
+        const existing = wsRef.current;
+        if (existing?.readyState === WebSocket.OPEN) {
+            return Promise.resolve(existing);
         }
 
-        const ws = new WebSocket(getWSUrl());
-        ws.binaryType = "arraybuffer";
-        wsRef.current = ws;
-
-        // 8s connection timeout — gives enough time for slow cold-starts
-        const connectionTimeout = setTimeout(() => {
-            if (ws.readyState !== WebSocket.OPEN) {
-                ws.close();
-                // onclose will handle reconnect logic
-            }
-        }, 8000);
-
-        ws.onopen = () => {
-            clearTimeout(connectionTimeout);
-            setWsStatus("connected");
-            setWsError(null);
-            reconnectAttemptsRef.current = 0;
-            if (reconnectTimerRef.current) {
-                clearTimeout(reconnectTimerRef.current);
-                reconnectTimerRef.current = null;
-            }
-        };
-
-        ws.onclose = () => {
-            clearTimeout(connectionTimeout);
-            markSessionInactive();
-            startInFlightRef.current = false;
-            stopInFlightRef.current = false;
-            if (wsRef.current === ws) wsRef.current = null;
-
-            const wasIntentional = intentionalCloseRef.current;
-            const shouldReconnect = reconnectAfterIntentionalCloseRef.current;
+        return new Promise<WebSocket>((resolve, reject) => {
             intentionalCloseRef.current = false;
-            reconnectAfterIntentionalCloseRef.current = false;
+            wsSessionReadyRef.current = false;
+            setSessionReady(false);
+            setWsStatus("connecting");
+            setWsError(null);
 
-            if (wasIntentional) {
-                setWsStatus("disconnected");
-                if (shouldReconnect) connectWS();
-                return;
-            }
+            let settled = false;
+            const ws = new WebSocket(getWSUrl());
+            ws.binaryType = "arraybuffer";
+            wsRef.current = ws;
 
-            const currentStatus = recordStatusRef.current;
-
-            // Disconnect during active recording is a real failure
-            if (currentStatus === "recording" || currentStatus === "finalizing") {
-                stopLocalRecorder();
-                setRecordStatus("paused");
-                recordStatusRef.current = "paused";
-                setWsStatus("error");
-                setWsError("Connection lost during recording. Your form so far is preserved. Start a new recording segment to continue.");
-                return;
-            }
-
-            // Otherwise attempt quiet auto-reconnect
-            const attempt = ++reconnectAttemptsRef.current;
-            if (attempt <= MAX_RECONNECT_ATTEMPTS) {
-                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 16000);
-                reconnectTimerRef.current = setTimeout(() => connectWS(true), delay);
-            } else {
-                setWsStatus("error");
-                setWsError("Could not reconnect. Click Retry to try again.");
-            }
-        };
-
-        ws.onerror = () => {
-            // onerror always fires before onclose — let onclose handle transitions
-        };
-
-        ws.onmessage = (ev: MessageEvent) => {
-            if (wsRef.current !== ws) return;
-
-            try {
-                const msg = JSON.parse(ev.data as string) as ServerMessage;
-                const serverError =
-                    msg.error ?? (msg.type === "error" ? msg.code ?? msg.message ?? "server-error" : null);
-
-                if (serverError) {
-                    console.warn("[Formify] Server error:", serverError);
-                    // If token was rejected, surface it clearly
-                    if (serverError === "invalid-token" || serverError === "missing-token") {
-                        setMicError("Session expired. Please try starting again.");
-                    } else {
-                        setMicError(msg.message ?? "The transcription session ended unexpectedly. Please try again.");
-                    }
-
-                    if (
-                        activeSessionGenerationRef.current !== null ||
-                        recordStatusRef.current === "recording" ||
-                        recordStatusRef.current === "finalizing"
-                    ) {
-                        stopLocalRecorder();
-                        setRecordStatus("paused");
-                        recordStatusRef.current = "paused";
-                    }
-
-                    markSessionInactive();
-                    startInFlightRef.current = false;
-                    stopInFlightRef.current = false;
-                    setWsStatus("error");
+            // 8s connection timeout — gives enough time for slow cold-starts
+            const connectionTimeout = setTimeout(() => {
+                if (ws.readyState !== WebSocket.OPEN) {
                     intentionalCloseRef.current = true;
-                    reconnectAfterIntentionalCloseRef.current = false;
-                    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                        ws.close(1000, "server-error");
-                    }
+                    ws.close();
+                }
+            }, 8000);
+
+            ws.onopen = () => {
+                clearTimeout(connectionTimeout);
+                setWsStatus("connected");
+                setWsError(null);
+                settled = true;
+                resolve(ws);
+            };
+
+            ws.onclose = () => {
+                clearTimeout(connectionTimeout);
+                markSessionInactive();
+                startInFlightRef.current = false;
+                stopInFlightRef.current = false;
+                setIsStartingRecording(false);
+                if (wsRef.current === ws) wsRef.current = null;
+
+                const wasIntentional = intentionalCloseRef.current;
+                intentionalCloseRef.current = false;
+
+                if (!settled) {
+                    settled = true;
+                    setWsStatus("disconnected");
+                    reject(new Error("connection-failed"));
                     return;
                 }
 
-                // Session confirmed by server
-                if (msg.type === "started") {
-                    if (activeSessionGenerationRef.current !== null) {
-                        wsSessionReadyRef.current = true;
-                        blocksReadyRef.current = true;
-                        setBlocksReady(true);
-                    }
+                if (wasIntentional) {
+                    setWsStatus("disconnected");
                     return;
                 }
 
-                // Incremental attribute update
-                if (msg.type === "attributes_update" && msg.attributes !== undefined) {
-                    if (activeSessionGenerationRef.current === null) return;
+                const currentStatus = recordStatusRef.current;
+                if (currentStatus === "recording" || currentStatus === "finalizing") {
+                    stopLocalRecorder();
+                    setRecordStatus("paused");
+                    recordStatusRef.current = "paused";
+                    setWsStatus("error");
+                    setWsError("Connection lost during recording. Your form so far is preserved. Start a new recording segment to continue.");
+                    return;
+                }
 
-                    setAttributes((prev) => {
-                        const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
-                        const locked = lockedFieldsRef.current;
-                        const normalized: Record<string, string> = {};
-                        for (const [rawKey, val] of Object.entries(msg.attributes!)) {
-                            const key = normalizeKey(rawKey);
-                            // Skip locked fields — user correction takes precedence over AI
-                            if (locked.has(key)) continue;
-                            if (allowedKeys.has(key) && val) {
-                                normalized[key] = val;
+                setWsStatus("disconnected");
+            };
+
+            ws.onerror = () => {
+                // onerror always fires before onclose — let onclose handle transitions
+            };
+
+            ws.onmessage = (ev: MessageEvent) => {
+                if (wsRef.current !== ws) return;
+
+                try {
+                    const msg = JSON.parse(ev.data as string) as ServerMessage;
+                    const serverError =
+                        msg.error ?? (msg.type === "error" ? msg.code ?? msg.message ?? "server-error" : null);
+
+                    if (serverError) {
+                        console.warn("[Formify] Server error:", serverError);
+                        // If token was rejected, surface it clearly
+                        if (serverError === "invalid-token" || serverError === "missing-token") {
+                            setMicError("Session expired. Please try starting again.");
+                        } else {
+                            setMicError(msg.message ?? "The transcription session ended unexpectedly. Please try again.");
+                        }
+
+                        if (
+                            activeSessionGenerationRef.current !== null ||
+                            recordStatusRef.current === "recording" ||
+                            recordStatusRef.current === "finalizing"
+                        ) {
+                            stopLocalRecorder();
+                            setRecordStatus("paused");
+                            recordStatusRef.current = "paused";
+                        }
+
+                        markSessionInactive();
+                        startInFlightRef.current = false;
+                        stopInFlightRef.current = false;
+                        setIsStartingRecording(false);
+                        setWsStatus("error");
+                        intentionalCloseRef.current = true;
+                        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                            ws.close(1000, "server-error");
+                        }
+                        return;
+                    }
+
+                    // Session confirmed by server
+                    if (msg.type === "started") {
+                        if (activeSessionGenerationRef.current !== null) {
+                            wsSessionReadyRef.current = true;
+                            blocksReadyRef.current = true;
+                            setSessionReady(true);
+                        }
+                        return;
+                    }
+
+                    // Incremental attribute update
+                    if (msg.type === "attributes_update" && msg.attributes !== undefined) {
+                        if (activeSessionGenerationRef.current === null) return;
+
+                        setAttributes((prev) => {
+                            const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
+                            const locked = lockedFieldsRef.current;
+                            const normalized: Record<string, string> = {};
+                            for (const [rawKey, val] of Object.entries(msg.attributes!)) {
+                                const key = normalizeKey(rawKey);
+                                // Skip locked fields — user correction takes precedence over AI
+                                if (locked.has(key)) continue;
+                                if (allowedKeys.has(key) && val) {
+                                    normalized[key] = val;
+                                }
                             }
-                        }
-                        return { ...prev, ...normalized };
-                    });
-                    return;
-                }
+                            return { ...prev, ...normalized };
+                        });
+                        return;
+                    }
 
-                // Final attributes — stop finalizing state
-                if (msg.type === "final_attributes" && msg.attributes !== undefined) {
-                    if (activeSessionGenerationRef.current === null) return;
+                    // Final attributes — stop finalizing state
+                    if (msg.type === "final_attributes" && msg.attributes !== undefined) {
+                        if (activeSessionGenerationRef.current === null) return;
 
-                    setAttributes((prev) => {
-                        const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
-                        const locked = lockedFieldsRef.current;
-                        const normalized: Record<string, string> = {};
-                        for (const [rawKey, val] of Object.entries(msg.attributes!)) {
-                            const key = normalizeKey(rawKey);
-                            // Skip locked fields — user correction takes precedence over AI
-                            if (locked.has(key)) continue;
-                            if (allowedKeys.has(key) && val) normalized[key] = val;
-                        }
-                        return { ...prev, ...normalized };
-                    });
-                    setRecordStatus((s) => {
-                        const next = s === "finalizing" ? "paused" : s;
-                        recordStatusRef.current = next;
-                        return next;
-                    });
-                    markSessionInactive();
-                    stopInFlightRef.current = false;
-                    return;
+                        setAttributes((prev) => {
+                            const allowedKeys = new Set(Object.values(parseBlocks(templateRawRef.current)).flat());
+                            const locked = lockedFieldsRef.current;
+                            const normalized: Record<string, string> = {};
+                            for (const [rawKey, val] of Object.entries(msg.attributes!)) {
+                                const key = normalizeKey(rawKey);
+                                // Skip locked fields — user correction takes precedence over AI
+                                if (locked.has(key)) continue;
+                                if (allowedKeys.has(key) && val) normalized[key] = val;
+                            }
+                            return { ...prev, ...normalized };
+                        });
+                        setRecordStatus((s) => {
+                            const next = s === "finalizing" ? "paused" : s;
+                            recordStatusRef.current = next;
+                            return next;
+                        });
+                        markSessionInactive();
+                        stopInFlightRef.current = false;
+                        intentionalCloseRef.current = true;
+                        ws.close(1000, "forms-final");
+                        return;
+                    }
+                } catch {
+                    console.warn("[Formify] Non-JSON WS message");
                 }
-            } catch {
-                console.warn("[Formify] Non-JSON WS message");
-            }
-        };
+            };
+        });
     }, [markSessionInactive, stopLocalRecorder]);
 
     useEffect(() => {
-        connectWS();
         return () => {
-            if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
             stopLocalRecorder();
             const ws = wsRef.current;
             if (activeSessionGenerationRef.current !== null && ws?.readyState === WebSocket.OPEN) {
@@ -587,10 +738,9 @@ export default function TranscriptionClient({ user }: { user: User }) {
             startInFlightRef.current = false;
             stopInFlightRef.current = false;
             intentionalCloseRef.current = true;
-            reconnectAfterIntentionalCloseRef.current = false;
             ws?.close(1000, "client-unmount");
         };
-    }, [connectWS, markSessionInactive, stopLocalRecorder]);
+    }, [markSessionInactive, stopLocalRecorder]);
 
     // ── Auto-send blocks once connected AND template is ready ────────────────
 
@@ -637,13 +787,6 @@ export default function TranscriptionClient({ user }: { user: User }) {
             return;
         }
 
-        const initialWs = wsRef.current;
-        if (initialWs?.readyState !== WebSocket.OPEN) {
-            setMicError("Could not connect to the transcription service. Please try again.");
-            startInFlightRef.current = false;
-            return;
-        }
-
         // ── Pre-mint check: bail early if every field is already locked ────
         // Avoids opening the mic or minting a token when there are no unlocked
         // fields for the server to fill.
@@ -657,6 +800,11 @@ export default function TranscriptionClient({ user }: { user: User }) {
             startInFlightRef.current = false;
             return;
         }
+
+        setIsStartingRecording(true);
+        setWsError(null);
+        setWsStatus("disconnected");
+        markSessionInactive();
 
         let stream: MediaStream | null = null;
         let recorder: MediaRecorder | null = null;
@@ -675,6 +823,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     : `Could not start recording: ${msg}`
             );
             startInFlightRef.current = false;
+            setIsStartingRecording(false);
             return;
         }
 
@@ -691,15 +840,20 @@ export default function TranscriptionClient({ user }: { user: User }) {
             stopLocalRecorder();
             setMicError(msg);
             startInFlightRef.current = false;
+            setIsStartingRecording(false);
             return;
         }
 
-        const ws = wsRef.current;
-        if (ws?.readyState !== WebSocket.OPEN) {
+        let ws: WebSocket;
+        try {
+            ws = await connectWS();
+        } catch {
             stopLocalRecorder();
             wsTokenRef.current = null;
-            setMicError("The transcription connection changed while starting. Please try again.");
+            setWsError("Could not connect to the transcription service. Please try again.");
+            setWsStatus("error");
             startInFlightRef.current = false;
+            setIsStartingRecording(false);
             return;
         }
 
@@ -708,14 +862,17 @@ export default function TranscriptionClient({ user }: { user: User }) {
         activeSessionGenerationRef.current = sessionGeneration;
         wsSessionReadyRef.current = false;
         blocksReadyRef.current = false;
-        setBlocksReady(false);
+        setSessionReady(false);
 
         // ── Send start payload with token ──────────────────────────────────
         if (!sendBlocks(token, ws)) {
             markSessionInactive();
             stopLocalRecorder();
             setMicError("All fields are locked. Unlock a field to continue AI filling.");
+            intentionalCloseRef.current = true;
+            ws.close(1000, "start-aborted");
             startInFlightRef.current = false;
+            setIsStartingRecording(false);
             return;
         }
 
@@ -723,7 +880,10 @@ export default function TranscriptionClient({ user }: { user: User }) {
             markSessionInactive();
             stopLocalRecorder();
             setMicError("Could not start recording. Please try again.");
+            intentionalCloseRef.current = true;
+            ws.close(1000, "start-aborted");
             startInFlightRef.current = false;
+            setIsStartingRecording(false);
             return;
         }
 
@@ -763,10 +923,15 @@ export default function TranscriptionClient({ user }: { user: User }) {
             activeRecorder.start(1000); // 1s chunks — aligns with notes mode, reduces WS message overhead.
             setRecordStatus("recording");
             recordStatusRef.current = "recording";
+            setIsStartingRecording(false);
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             if (activeSessionGenerationRef.current === sessionGeneration && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ action: "stop" }));
+            }
+            intentionalCloseRef.current = true;
+            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                ws.close(1000, "start-aborted");
             }
             markSessionInactive();
             stopLocalRecorder();
@@ -775,10 +940,11 @@ export default function TranscriptionClient({ user }: { user: User }) {
                     ? "The transcription session did not start in time. Please try again."
                     : `Could not start recording: ${msg}`
             );
+            setIsStartingRecording(false);
         } finally {
             startInFlightRef.current = false;
         }
-    }, [getSessionToken, hasValidTemplate, markSessionInactive, sendBlocks, stopLocalRecorder, templateRaw, utils, waitForSessionStarted]);
+    }, [connectWS, getSessionToken, hasValidTemplate, markSessionInactive, sendBlocks, stopLocalRecorder, templateRaw, utils, waitForSessionStarted]);
 
     // ── Pause ─────────────────────────────────────────────────────────────────
 
@@ -788,9 +954,10 @@ export default function TranscriptionClient({ user }: { user: User }) {
         stopInFlightRef.current = true;
         wsSessionReadyRef.current = false;
         blocksReadyRef.current = false;
-        setBlocksReady(false);
+        setSessionReady(false);
         setRecordStatus("finalizing");
         recordStatusRef.current = "finalizing";
+        setIsStartingRecording(false);
         stopLocalRecorder();
         const ws = wsRef.current;
         if (ws?.readyState === WebSocket.OPEN && activeSessionGenerationRef.current !== null) {
@@ -839,27 +1006,22 @@ export default function TranscriptionClient({ user }: { user: User }) {
         const ws = wsRef.current;
         const hadActiveSession = activeSessionGenerationRef.current !== null;
 
+        clearFormsDraft();
         sessionGenerationRef.current += 1;
         startInFlightRef.current = false;
         stopInFlightRef.current = false;
+        setIsStartingRecording(false);
         stopLocalRecorder();
 
-        if (reconnectTimerRef.current) {
-            clearTimeout(reconnectTimerRef.current);
-            reconnectTimerRef.current = null;
-        }
-        reconnectAttemptsRef.current = 0;
         if (hadActiveSession && ws?.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ action: "stop" }));
         }
         markSessionInactive();
         if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
             intentionalCloseRef.current = true;
-            reconnectAfterIntentionalCloseRef.current = true;
             ws.close(1000, "form-reset");
-        } else {
-            connectWS();
         }
+        setWsStatus("disconnected");
         setRecordStatus("idle");
         recordStatusRef.current = "idle";
         setMicError(null);
@@ -870,10 +1032,8 @@ export default function TranscriptionClient({ user }: { user: User }) {
         const emptyLocked = new Set<string>();
         lockedFieldsRef.current = emptyLocked;
         setLockedFields(emptyLocked);
-        // Setting blocksReadyRef to false is enough — the useEffect watching
-        // wsStatus + blocksReady will fire and call sendBlocks() once.
         blocksReadyRef.current = false;
-        setBlocksReady(false);
+        setSessionReady(false);
     };
 
     const openTemplateDrawer = () => {
@@ -897,6 +1057,65 @@ export default function TranscriptionClient({ user }: { user: User }) {
         };
     }, [templateDrawerVisible]);
 
+    useEffect(() => {
+        return () => {
+            if (draftSaveTimerRef.current) {
+                clearTimeout(draftSaveTimerRef.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!draftHydratedRef.current || !formsDraftStorageKey || !templateId || !hasValidTemplate) return;
+
+        if (draftSaveTimerRef.current) {
+            clearTimeout(draftSaveTimerRef.current);
+            draftSaveTimerRef.current = null;
+        }
+
+        if (!hasFilledContent) {
+            if (suppressNextEmptyDraftSaveRef.current) {
+                suppressNextEmptyDraftSaveRef.current = false;
+            }
+            return;
+        }
+
+        suppressNextEmptyDraftSaveRef.current = false;
+        draftSaveTimerRef.current = setTimeout(() => {
+            const draft: FormsDraft = {
+                version: 1,
+                templateId,
+                templateTitle: formTitle,
+                attributes,
+                lockedFields: Array.from(lockedFields),
+                recordStatus: recordStatus === "idle" ? "idle" : "paused",
+                updatedAt: new Date().toISOString(),
+            };
+
+            try {
+                window.localStorage.setItem(formsDraftStorageKey, JSON.stringify(draft));
+            } catch (error) {
+                console.warn("[Forms] Could not save local form draft:", error);
+            }
+        }, FORMS_DRAFT_SAVE_DEBOUNCE_MS);
+
+        return () => {
+            if (draftSaveTimerRef.current) {
+                clearTimeout(draftSaveTimerRef.current);
+                draftSaveTimerRef.current = null;
+            }
+        };
+    }, [
+        attributes,
+        formTitle,
+        formsDraftStorageKey,
+        hasFilledContent,
+        hasValidTemplate,
+        lockedFields,
+        recordStatus,
+        templateId,
+    ]);
+
     const switchToTemplate = (nextTemplateId: string) => {
         handleReset();
         setShowSwitchConfirm(false);
@@ -904,6 +1123,11 @@ export default function TranscriptionClient({ user }: { user: User }) {
         closeTemplateDrawer();
         router.push(`/forms?templateId=${nextTemplateId}`);
     };
+
+    const cancelTemplateSwitch = useCallback(() => {
+        setShowSwitchConfirm(false);
+        setPendingTemplateId(null);
+    }, []);
 
     const requestTemplateSwitch = (nextTemplateId: string) => {
         if (nextTemplateId === templateId) {
@@ -918,6 +1142,19 @@ export default function TranscriptionClient({ user }: { user: User }) {
         }
         switchToTemplate(nextTemplateId);
     };
+
+    useEffect(() => {
+        if (!showSwitchConfirm) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                cancelTemplateSwitch();
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [cancelTemplateSwitch, showSwitchConfirm]);
 
 
     // ── PDF Export ────────────────────────────────────────────────────────────
@@ -1007,14 +1244,31 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
     return (
         <div className="flex min-h-0 flex-1 bg-[#FBFBFB] dark:bg-slate-950 dark:text-slate-100">
-            <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 md:flex">
-                <TemplateSelector
-                    templates={templateSummaries as TemplateSummary[]}
-                    selectedTemplateId={templateId}
-                    loading={templatesLoading}
-                    disabled={templateSwitchDisabled}
-                    onSelect={requestTemplateSwitch}
-                />
+            <aside className={`hidden flex-none overflow-hidden border-r border-slate-200 bg-white transition-[width] duration-200 ease-out dark:border-slate-800 dark:bg-slate-950 md:flex ${isSidebarCollapsed ? "w-12" : "w-72"}`}>
+                {isSidebarCollapsed ? (
+                    <div className="flex h-full w-full flex-col items-center py-3">
+                        <button
+                            type="button"
+                            onClick={() => setIsSidebarCollapsed(false)}
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-[#2149A1] dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
+                            aria-label="Show form templates sidebar"
+                            title="Show templates"
+                        >
+                            <PanelLeftOpen className="h-4 w-4" />
+                        </button>
+                        <div className="mt-3 h-px w-6 bg-slate-200 dark:bg-slate-800" />
+                        <FileText className="mt-4 h-4 w-4 text-[#2149A1] dark:text-blue-300" />
+                    </div>
+                ) : (
+                    <TemplateSelector
+                        templates={templateSummaries as TemplateSummary[]}
+                        selectedTemplateId={templateId}
+                        loading={templatesLoading}
+                        disabled={templateSwitchDisabled}
+                        onSelect={requestTemplateSwitch}
+                        onToggleSidebar={() => setIsSidebarCollapsed(true)}
+                    />
+                )}
             </aside>
 
             {templateDrawerVisible && (
@@ -1051,7 +1305,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
             )}
 
             <section className="min-w-0 flex-1 overflow-y-auto">
-                <div className="mx-auto max-w-3xl px-4 py-6 md:py-8">
+                <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-8 xl:px-8">
                     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                         <button
                             type="button"
@@ -1074,29 +1328,24 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                     Finalizing…
                                 </span>
                             )}
-                            {hasValidTemplate && (
-                                <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${isConnected
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                    : (wsStatus === "connecting" || wsStatus === "reconnecting")
-                                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                        : "bg-red-50 text-red-600 border-red-200"
-                                    }`}>
-                                    {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-                                    {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
+                            {showConnectionPill && (
+                                <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${connectionPillClasses}`}>
+                                    {isConnected && !isStartingRecording ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                                    {connectionPillLabel}
                                 </div>
                             )}
                         </div>
                     </div>
 
-                {/* Template loading state — only shown when waiting for a preloaded template */}
-                {templateId && !templateReady && (
+                {/* Template loading state — only shown when waiting for a preloaded/restored template */}
+                {((Boolean(templateId) && !templateReady) || hasRestorableDraft) && (
                     <div className="mb-6 flex items-center gap-2.5 bg-[#e8eef9] border border-[#2149A1]/20 text-[#2149A1] text-sm rounded-lg px-4 py-3 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200">
                         <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
-                        Loading template…
+                        {hasRestorableDraft ? "Restoring form draft…" : "Loading template…"}
                     </div>
                 )}
 
-                {!templateLoading && !hasValidTemplate ? (
+                {!templateLoading && !hasValidTemplate && !hasRestorableDraft ? (
                     <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
                         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8eef9] dark:bg-blue-500/15">
                             <FileText className="h-7 w-7 text-[#2149A1] dark:text-blue-300" />
@@ -1144,7 +1393,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                         <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <p className="flex-1">{errorMessage}</p>
                         <button
-                            onClick={() => { setWsError(null); setMicError(null); connectWS(); }}
+                            onClick={() => { setWsError(null); setMicError(null); }}
                             className="flex items-center gap-1 font-medium text-xs text-red-600 hover:text-red-800 whitespace-nowrap transition-opacity active:opacity-80 dark:text-red-300 dark:hover:text-red-200"
                         >
                             <RotateCcw className="w-3 h-3" /> Retry
@@ -1188,7 +1437,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                             disabled={!canRecord || getSessionToken.isPending}
                             className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-[background-color,color,transform,opacity] duration-150 hover:scale-[1.02] active:scale-[0.98] active:opacity-90"
                         >
-                            {getSessionToken.isPending
+                            {isStartingRecording || getSessionToken.isPending
                                 ? <><Loader2 className="w-4 h-4 animate-spin" />Starting…</>
                                 : <><Mic className="w-4 h-4" />{isPaused ? "Resume Recording" : "Start Recording"}</>
                             }
@@ -1259,7 +1508,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                             </div>
 
                             {/* Fields grid */}
-                            <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                            <div className="grid grid-cols-1 gap-x-6 gap-y-4 px-6 py-5 sm:grid-cols-2 xl:grid-cols-3">
                                 {fields.map((field) => {
                                     const isLocked = lockedFields.has(field);
                                     const value = attributes[field] ?? "";
@@ -1273,11 +1522,16 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                                 </label>
                                                 {isLocked && (
                                                     <button
+                                                        type="button"
                                                         onClick={() => unlockField(field)}
-                                                        title="Locked — click to allow AI to fill again"
-                                                        className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 transition-opacity active:opacity-80 dark:text-amber-300 dark:hover:text-amber-200"
+                                                        title="Unlock field"
+                                                        aria-label={`Unlock ${formatFieldLabel(field)}`}
+                                                        className="group/unlock inline-flex h-6 items-center overflow-hidden rounded-full border border-amber-200 bg-amber-50 px-2 text-xs font-medium text-amber-700 transition-[background-color,border-color,color,transform,opacity] active:scale-95 active:opacity-80 hover:border-amber-300 hover:bg-amber-100 hover:text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:border-amber-400/60 dark:hover:bg-amber-500/20"
                                                     >
-                                                        <Lock className="w-3 h-3" />
+                                                        <Lock className="h-3 w-3 flex-shrink-0 transition-transform duration-150 md:group-hover/unlock:-translate-x-0.5 md:group-focus-visible/unlock:-translate-x-0.5" />
+                                                        <span className="ml-1 max-w-16 whitespace-nowrap opacity-100 transition-[max-width,opacity] duration-150 md:max-w-0 md:opacity-0 md:group-hover/unlock:max-w-16 md:group-hover/unlock:opacity-100 md:group-focus-visible/unlock:max-w-16 md:group-focus-visible/unlock:opacity-100">
+                                                            Unlock
+                                                        </span>
                                                     </button>
                                                 )}
                                             </div>
@@ -1335,7 +1589,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                                     Changes reset the form fields.
                                 </p>
                                 <button
-                                    onClick={() => { setTemplateOpen(false); blocksReadyRef.current = false; setBlocksReady(false); }}
+                                    onClick={() => { setTemplateOpen(false); blocksReadyRef.current = false; setSessionReady(false); }}
                                     disabled={!isConnected || isRecording}
                                     className="text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed transition-opacity active:opacity-80"
                                 >
@@ -1349,7 +1603,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
 
                 {/* ── Footer ── */}
                 <p className="text-xs text-slate-400 text-center mt-8 pb-4 dark:text-slate-400">
-                    Not saved — refreshing this page will clear the form.
+                    Saved locally in this browser until you reset or switch forms.
                 </p>
                     </>
                 ) : null}
@@ -1357,9 +1611,23 @@ export default function TranscriptionClient({ user }: { user: User }) {
             </section>
 
             {showSwitchConfirm && pendingTemplateId && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:shadow-slate-950/60">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Switch templates?</h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <button
+                        type="button"
+                        aria-label="Cancel template switch"
+                        className="absolute inset-0 bg-black/50"
+                        onClick={cancelTemplateSwitch}
+                    />
+                    <div className="relative w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:shadow-slate-950/60">
+                        <button
+                            type="button"
+                            onClick={cancelTemplateSwitch}
+                            className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                            aria-label="Cancel template switch"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                        <h3 className="pr-8 text-lg font-semibold text-slate-900 dark:text-slate-100">Switch templates?</h3>
                         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                             Your current filled values will be cleared.
                         </p>
@@ -1373,10 +1641,7 @@ export default function TranscriptionClient({ user }: { user: User }) {
                             </button>
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setShowSwitchConfirm(false);
-                                    setPendingTemplateId(null);
-                                }}
+                                onClick={cancelTemplateSwitch}
                                 className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 Cancel
