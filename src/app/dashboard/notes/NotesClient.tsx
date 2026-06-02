@@ -303,7 +303,7 @@ export default function NotesClient({ user }: { user: User }) {
     const [sidebarDrawerVisible, setSidebarDrawerVisible] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [pendingNotesConfigChange, setPendingNotesConfigChange] = useState<PendingNotesConfigChange | null>(null);
-    const [restoredDraftUpdatedAt, setRestoredDraftUpdatedAt] = useState<string | null>(null);
+    const [isStartingRecording, setIsStartingRecording] = useState(false);
     const downloadMenuRef = useRef<HTMLDivElement>(null);
     const sidebarCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -319,11 +319,11 @@ export default function NotesClient({ user }: { user: User }) {
     const isPaused = recordStatus === "paused";
     // Sockets open on demand at record time (T-018), so starting does not
     // require an existing connection; only block while finalising or connecting.
-    const canRecord = !isFinalizing && wsStatus !== "connecting";
+    const canRecord = !isStartingRecording && !isFinalizing && wsStatus !== "connecting";
     // The connection pill is only meaningful while a session is being
     // established or is active; hide it when idle/paused with no socket.
-    const showConnectionPill = isRecording || isFinalizing || wsStatus === "connecting" || wsStatus === "error";
-    const canSelectTemplate = !isRecording && !isFinalizing;
+    const showConnectionPill = isStartingRecording || isRecording || isFinalizing || wsStatus === "connecting" || wsStatus === "error";
+    const canSelectTemplate = !isStartingRecording && !isRecording && !isFinalizing;
     const errorMessage = wsError ?? micError;
     const sessionLimitRemainingMinutes =
         sessionLimitRemainingMs === null ? null : Math.max(0, Math.ceil(sessionLimitRemainingMs / 60_000));
@@ -366,6 +366,30 @@ export default function NotesClient({ user }: { user: User }) {
     const hasNotes = notesMarkdown.trim().length > 0;
     const hasVisibleNotes = visibleNotesMarkdown.trim().length > 0;
     const hasNotesContent = hasNotes || isFinal || hasManualEdits || isEditingNotes;
+    const showFullSetupPanel = recordStatus === "idle" && !hasNotesContent && !isStartingRecording;
+    const displayTitle = sessionTitle.trim() || `${NOTE_STYLE_LABELS[noteStyle]} Notes`;
+    const statusText = isStartingRecording
+        ? "Connecting — preparing notes session."
+        : isRecording
+            ? "Recording — notes are updating live."
+            : isFinalizing
+                ? "Finalising — generating final notes."
+                : isFinal
+                    ? "Complete — final notes ready."
+                    : "Paused — resume when ready.";
+    const isConnectingStatus = isStartingRecording || wsStatus === "connecting" || wsStatus === "reconnecting";
+    const connectionPillClasses = isConnectingStatus
+        ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+        : isConnected
+            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+            : "border-red-200 bg-red-50 text-red-600";
+    const connectionPillLabel = isStartingRecording || wsStatus === "connecting"
+        ? "Connecting…"
+        : wsStatus === "reconnecting"
+            ? "Reconnecting…"
+            : isConnected
+                ? "Connected"
+                : "Disconnected";
     const canEditNotes = hasNotes && isFinal && !isRecording && !isFinalizing;
 
     useEffect(() => {
@@ -532,7 +556,7 @@ export default function NotesClient({ user }: { user: User }) {
     }, []);
 
     const requestNotesConfigChange = (change: PendingNotesConfigChange): boolean => {
-        if (isRecording || isFinalizing) return false;
+        if (isStartingRecording || isRecording || isFinalizing) return false;
 
         if (hasNotesContent) {
             setPendingNotesConfigChange(change);
@@ -643,6 +667,7 @@ export default function NotesClient({ user }: { user: User }) {
                     console.warn("[Notes] Server error:", serverError);
                     markSessionInactive();
                     stopLocalRecorder();
+                    setIsStartingRecording(false);
                     if (recordStatusRef.current !== "idle") {
                         setRecordStatus("paused");
                         recordStatusRef.current = "paused";
@@ -743,6 +768,7 @@ export default function NotesClient({ user }: { user: User }) {
                 markSessionInactive();
                 startInFlightRef.current = false;
                 stopInFlightRef.current = false;
+                setIsStartingRecording(false);
 
                 const wasIntentional = intentionalCloseRef.current;
                 intentionalCloseRef.current = false;
@@ -825,15 +851,13 @@ export default function NotesClient({ user }: { user: User }) {
         hasManualEditsRef.current = draft.hasManualEdits || draft.wasEditingNotes;
         setRecordStatus(restoredStatus);
         recordStatusRef.current = restoredStatus;
+        setIsStartingRecording(false);
         setWsStatus("disconnected");
         setWsError(null);
         setMicError(null);
         setSessionLimitWarningLevel("none");
         setSessionLimitRemainingMs(null);
         userEditedSections.current = draft.sectionsRaw.trim().length > 0;
-        if (restoredHasContent) {
-            setRestoredDraftUpdatedAt(draft.updatedAt);
-        }
         draftHydratedRef.current = true;
     }, [notesDraftStorageKey]);
 
@@ -944,6 +968,7 @@ export default function NotesClient({ user }: { user: User }) {
         }
 
         startInFlightRef.current = true;
+        setIsStartingRecording(true);
         setMicError(null);
         manualStopRequestedRef.current = false;
         recordingSessionStartedAtRef.current = null;
@@ -967,6 +992,7 @@ export default function NotesClient({ user }: { user: User }) {
                     : `Could not start recording: ${msg}`
             );
             startInFlightRef.current = false;
+            setIsStartingRecording(false);
             return;
         }
 
@@ -982,6 +1008,7 @@ export default function NotesClient({ user }: { user: User }) {
             stopLocalRecorder();
             setMicError(msg);
             startInFlightRef.current = false;
+            setIsStartingRecording(false);
             return;
         }
 
@@ -994,6 +1021,7 @@ export default function NotesClient({ user }: { user: User }) {
             setWsError("Could not connect to the transcription service. Please try again.");
             setWsStatus("error");
             startInFlightRef.current = false;
+            setIsStartingRecording(false);
             return;
         }
 
@@ -1041,6 +1069,7 @@ export default function NotesClient({ user }: { user: User }) {
             stopLocalRecorder();
             setMicError("Could not start recording. Please try again.");
             startInFlightRef.current = false;
+            setIsStartingRecording(false);
             return;
         }
 
@@ -1075,6 +1104,7 @@ export default function NotesClient({ user }: { user: User }) {
             setIsFinal(false);
             setRecordStatus("recording");
             recordStatusRef.current = "recording";
+            setIsStartingRecording(false);
         } catch (err) {
             const msg = err instanceof Error ? err.message : "Microphone access denied";
             if (activeSessionGenerationRef.current === sessionGeneration && ws.readyState === WebSocket.OPEN) {
@@ -1091,6 +1121,7 @@ export default function NotesClient({ user }: { user: User }) {
                     ? "The notes session did not start in time. Please try again."
                     : `Could not start recording: ${msg}`
             );
+            setIsStartingRecording(false);
         } finally {
             startInFlightRef.current = false;
         }
@@ -1105,6 +1136,7 @@ export default function NotesClient({ user }: { user: User }) {
         setSessionReady(false);
         setRecordStatus("finalizing");
         recordStatusRef.current = "finalizing";
+        setIsStartingRecording(false);
         setIsFinal(false);
         stopLocalRecorder();
 
@@ -1131,6 +1163,7 @@ export default function NotesClient({ user }: { user: User }) {
         closeWsIntentionally();
         setRecordStatus("idle");
         recordStatusRef.current = "idle";
+        setIsStartingRecording(false);
         setNotesMarkdown("");
         setPreFinalNotesMarkdown(null);
         setIsFinal(false);
@@ -1141,7 +1174,6 @@ export default function NotesClient({ user }: { user: User }) {
         setWsStatus("disconnected");
         manualStopRequestedRef.current = false;
         recordingSessionStartedAtRef.current = null;
-        setRestoredDraftUpdatedAt(null);
         setSessionLimitWarningLevel("none");
         setSessionLimitRemainingMs(null);
     };
@@ -1284,14 +1316,9 @@ export default function NotesClient({ user }: { user: User }) {
 
                             {/* WS status pill — only shown while connecting/active/error */}
                             {showConnectionPill && (
-                                <div className={`flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${isConnected
-                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                    : (wsStatus === "connecting" || wsStatus === "reconnecting")
-                                        ? "border-yellow-200 bg-yellow-50 text-yellow-700"
-                                        : "border-red-200 bg-red-50 text-red-600"
-                                    }`}>
-                                    {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                                    {wsStatus === "connecting" ? "Connecting…" : wsStatus === "reconnecting" ? "Reconnecting…" : isConnected ? "Connected" : "Disconnected"}
+                                <div className={`flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${connectionPillClasses}`}>
+                                    {isConnected && !isStartingRecording ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                                    {connectionPillLabel}
                                 </div>
                             )}
                         </div>
@@ -1326,29 +1353,8 @@ export default function NotesClient({ user }: { user: User }) {
                     </div>
                 )}
 
-                {restoredDraftUpdatedAt && (
-                    <div className="flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
-                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                        <p className="flex-1">
-                            Recovered notes from this browser
-                            {" "}
-                            <span className="text-emerald-700/80 dark:text-emerald-200/80">
-                                ({new Date(restoredDraftUpdatedAt).toLocaleString()})
-                            </span>
-                            .
-                        </p>
-                        <button
-                            type="button"
-                            onClick={() => setRestoredDraftUpdatedAt(null)}
-                            className="text-xs font-medium text-emerald-700 transition-opacity hover:text-emerald-900 active:opacity-80 dark:text-emerald-200 dark:hover:text-emerald-100"
-                        >
-                            Dismiss
-                        </button>
-                    </div>
-                )}
-
-                {/* ── Config card (only when not actively recording/finalising) ── */}
-                {!isRecording && !isFinalizing && (
+                {/* ── Config card (only for a clean new session) ── */}
+                {showFullSetupPanel && (
                     <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900/80">
                         {/* Session title */}
                         <div>
@@ -1400,19 +1406,11 @@ export default function NotesClient({ user }: { user: User }) {
                     </div>
                 )}
 
-                {/* Session title display when active */}
-                {(isRecording || isFinalizing) && sessionTitle && (
+                {/* Session title display once the user leaves the clean setup state */}
+                {!showFullSetupPanel && (
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{sessionTitle}</h1>
-                        <p className="text-sm text-[#868C94] mt-1 dark:text-slate-400">
-                            {isRecording
-                                ? "Recording — notes are updating live."
-                                : isFinalizing
-                                    ? "Generating final notes…"
-                                    : isFinal
-                                        ? "Session complete — your notes are ready."
-                                        : "Paused."}
-                        </p>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{displayTitle}</h1>
+                        <p className="mt-1 text-sm text-[#868C94] dark:text-slate-400">{statusText}</p>
                     </div>
                 )}
 
@@ -1424,7 +1422,7 @@ export default function NotesClient({ user }: { user: User }) {
                             disabled={!canRecord || getSessionToken.isPending}
                             className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-[background-color,color,transform,opacity] duration-150 hover:scale-[1.02] active:scale-[0.98] active:opacity-90"
                         >
-                            {getSessionToken.isPending
+                            {isStartingRecording || getSessionToken.isPending
                                 ? <><Loader2 className="w-4 h-4 animate-spin" />Starting…</>
                                 : <><Mic className="w-4 h-4" />{isPaused ? "Resume" : "Start Recording"}</>
                             }
@@ -1629,7 +1627,7 @@ export default function NotesClient({ user }: { user: User }) {
                 )}
 
                 {/* Empty state (idle, no notes yet) */}
-                {!hasNotes && !isRecording && recordStatus === "idle" && (
+                {showFullSetupPanel && (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <div className="w-16 h-16 bg-[#e8eef9] rounded-2xl flex items-center justify-center mb-4 dark:bg-blue-500/15">
                             <NotebookPen className="w-8 h-8 text-[#2149A1] dark:text-blue-300" />
