@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
 import { api, HydrateClient } from "@/trpc/server";
-import TranscriptionClient from "@/app/transcription/TranscriptionClient";
+import FormsClient from "./FormsClient";
 
 export const metadata = { title: "Forms — Formify" };
 
@@ -25,7 +25,7 @@ export default async function FormsPage({
     return (
         <HydrateClient>
             <Suspense fallback={<div className="flex-1 bg-[#FBFBFB] dark:bg-slate-950" />}>
-                <TranscriptionClient user={session.user} />
+                <FormsClient user={session.user} />
             </Suspense>
         </HydrateClient>
     );

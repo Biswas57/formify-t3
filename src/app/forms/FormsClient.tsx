@@ -254,7 +254,7 @@ function TemplateSelector({
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function TranscriptionClient({ user }: { user: User }) {
+export default function FormsClient({ user }: { user: User }) {
     const router = useRouter();
     const formsDraftStorageKey = getFormsDraftStorageKey(user);
     // Connection
