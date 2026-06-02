@@ -304,7 +304,6 @@ export default function NotesClient({ user }: { user: User }) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [pendingNotesConfigChange, setPendingNotesConfigChange] = useState<PendingNotesConfigChange | null>(null);
     const [restoredDraftUpdatedAt, setRestoredDraftUpdatedAt] = useState<string | null>(null);
-    const notesEndRef = useRef<HTMLDivElement>(null);
     const downloadMenuRef = useRef<HTMLDivElement>(null);
     const sidebarCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -390,13 +389,6 @@ export default function NotesClient({ user }: { user: User }) {
         const interval = setInterval(tick, 1000);
         return () => clearInterval(interval);
     }, [recordStatus]);
-
-    // Auto-scroll notes panel as content grows
-    useEffect(() => {
-        if (isRecording && notesEndRef.current) {
-            notesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-        }
-    }, [notesMarkdown, isRecording]);
 
     useEffect(() => {
         if (!downloadOpen) return;
@@ -1620,7 +1612,6 @@ export default function NotesClient({ user }: { user: User }) {
                             ) : hasNotes ? (
                                 <div className="min-h-[200px]">
                                     {renderMarkdown(visibleNotesMarkdown)}
-                                    <div ref={notesEndRef} />
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center min-h-[200px] text-center">
