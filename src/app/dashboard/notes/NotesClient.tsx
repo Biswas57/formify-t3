@@ -34,7 +34,7 @@ interface ServerMessage {
 type WSStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "error";
 type RecordStatus = "idle" | "recording" | "finalizing" | "paused";
 type NoteStyle = "general" | "clinical" | "meeting" | "study";
-type SessionLimitWarningLevel = "none" | "warning" | "final-warning" | "reached";
+type SessionLimitWarningLevel = "none" | "warning" | "final-warning" | "strong-warning" | "reached";
 type RestoredRecordStatus = "idle" | "paused";
 
 type NotesDraft = {
@@ -58,9 +58,10 @@ type PendingNotesConfigChange =
     | { type: "style"; noteStyle: NoteStyle }
     | { type: "sections"; sectionsRaw: string };
 
-const MAX_NOTES_SESSION_MS = 120 * 60_000;
-const NOTES_SESSION_WARNING_MS = 10 * 60_000;
-const NOTES_SESSION_FINAL_WARNING_MS = 2 * 60_000;
+const MAX_NOTES_SESSION_MS = 60 * 60_000;
+const NOTES_SESSION_WARNING_MS = 15 * 60_000;
+const NOTES_SESSION_FINAL_WARNING_MS = 5 * 60_000;
+const NOTES_SESSION_STRONG_WARNING_MS = 2 * 60_000;
 const NOTES_DRAFT_STORAGE_PREFIX = "formify:notes:draft:v1";
 const NOTES_DRAFT_SAVE_DEBOUNCE_MS = 300;
 
@@ -163,6 +164,7 @@ function buildMarkdownFilename(title: string): string {
 
 function getSessionWarningLevel(remainingMs: number): SessionLimitWarningLevel {
     if (remainingMs <= 0) return "reached";
+    if (remainingMs <= NOTES_SESSION_STRONG_WARNING_MS) return "strong-warning";
     if (remainingMs <= NOTES_SESSION_FINAL_WARNING_MS) return "final-warning";
     if (remainingMs <= NOTES_SESSION_WARNING_MS) return "warning";
     return "none";
@@ -330,14 +332,18 @@ export default function NotesClient({ user }: { user: User }) {
     const sessionLimitWarningCopy = (() => {
         if (sessionLimitWarningLevel === "warning") {
             const minutesLabel = sessionLimitRemainingMinutes === 1 ? "1 minute" : `${sessionLimitRemainingMinutes ?? 0} minutes`;
-            return `For reliability, this Notes session has a maximum session length of 120 minutes. About ${minutesLabel} remaining in this recording window.`;
+            return `For reliability, this recording will finalise at 60 minutes. You can resume afterwards. About ${minutesLabel} remaining.`;
         }
         if (sessionLimitWarningLevel === "final-warning") {
             const minutesLabel = sessionLimitRemainingMinutes === 1 ? "1 minute" : `${sessionLimitRemainingMinutes ?? 0} minutes`;
-            return `Approaching maximum session length for reliability — about ${minutesLabel} remaining.`;
+            return `This recording will finalise soon for reliability. Your notes are preserved, and you can resume afterwards. About ${minutesLabel} remaining.`;
+        }
+        if (sessionLimitWarningLevel === "strong-warning") {
+            const minutesLabel = sessionLimitRemainingMinutes === 1 ? "1 minute" : `${sessionLimitRemainingMinutes ?? 0} minutes`;
+            return `This recording is almost at the 60-minute reliability window and will finalise shortly. Your notes are preserved, and you can resume afterwards. About ${minutesLabel} remaining.`;
         }
         if (sessionLimitWarningLevel === "reached") {
-            return "This Notes session reached the maximum session length for reliability and was finalised. Start a new session to continue. Your notes so far are preserved.";
+            return "This recording is finalising for reliability at the 60-minute mark. Your notes are preserved, and you can resume afterwards.";
         }
         return "";
     })();
@@ -349,6 +355,9 @@ export default function NotesClient({ user }: { user: User }) {
         "final-warning":
             "border-orange-300 bg-orange-50 text-orange-800 " +
             "dark:border-orange-500/40 dark:bg-orange-500/10 dark:text-orange-200",
+        "strong-warning":
+            "border-orange-400 bg-orange-100 text-orange-900 " +
+            "dark:border-orange-500/60 dark:bg-orange-500/20 dark:text-orange-100",
         reached:
             "border-red-300 bg-red-50 text-red-800 " +
             "dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200",
