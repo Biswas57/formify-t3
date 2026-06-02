@@ -14,6 +14,7 @@ import NoteTemplateSidebar from "./NoteTemplateSidebar";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface User {
+    id?: string | null;
     name?: string | null;
     email?: string | null;
     image?: string | null;
@@ -34,10 +35,34 @@ type WSStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "
 type RecordStatus = "idle" | "recording" | "finalizing" | "paused";
 type NoteStyle = "general" | "clinical" | "meeting" | "study";
 type SessionLimitWarningLevel = "none" | "warning" | "final-warning" | "reached";
+type RestoredRecordStatus = "idle" | "paused";
+
+type NotesDraft = {
+    version: 1;
+    notesMarkdown: string;
+    preFinalNotesMarkdown?: string;
+    noteStyle: NoteStyle;
+    sectionsRaw: string;
+    sessionTitle: string;
+    selectedNoteTemplateId?: string | null;
+    selectedNoteTemplateTitle?: string | null;
+    recordStatus: RestoredRecordStatus;
+    isFinal: boolean;
+    hasManualEdits: boolean;
+    wasEditingNotes: boolean;
+    updatedAt: string;
+};
+
+type PendingNotesConfigChange =
+    | { type: "template"; id: string; title: string; noteStyle: NoteStyle; sectionsRaw: string }
+    | { type: "style"; noteStyle: NoteStyle }
+    | { type: "sections"; sectionsRaw: string };
 
 const MAX_NOTES_SESSION_MS = 120 * 60_000;
 const NOTES_SESSION_WARNING_MS = 10 * 60_000;
 const NOTES_SESSION_FINAL_WARNING_MS = 2 * 60_000;
+const NOTES_DRAFT_STORAGE_PREFIX = "formify:notes:draft:v1";
+const NOTES_DRAFT_SAVE_DEBOUNCE_MS = 300;
 
 type NotesStartPayload = {
     action: "start";
@@ -70,6 +95,8 @@ const DEFAULT_SECTIONS: Record<NoteStyle, string> = {
     study: "Summary, Key Concepts, Questions",
 };
 
+const NOTE_STYLE_VALUES = ["general", "clinical", "meeting", "study"] as const;
+
 const SUPPORTED_MIME =
     typeof MediaRecorder !== "undefined" &&
         MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
@@ -78,6 +105,47 @@ const SUPPORTED_MIME =
 
 function getWSUrl(): string {
     return env.NEXT_PUBLIC_WS_URL;
+}
+
+function isNoteStyle(value: unknown): value is NoteStyle {
+    return typeof value === "string" && NOTE_STYLE_VALUES.includes(value as NoteStyle);
+}
+
+function getNotesDraftStorageKey(user: User): string | null {
+    const stableIdentifier = user.id ?? user.email;
+    return stableIdentifier ? `${NOTES_DRAFT_STORAGE_PREFIX}:${stableIdentifier}` : null;
+}
+
+function parseNotesDraft(raw: string | null): NotesDraft | null {
+    if (!raw) return null;
+
+    try {
+        const value = JSON.parse(raw) as Partial<NotesDraft>;
+        if (value.version !== 1) return null;
+        if (typeof value.notesMarkdown !== "string") return null;
+        if (!isNoteStyle(value.noteStyle)) return null;
+
+        return {
+            version: 1,
+            notesMarkdown: value.notesMarkdown,
+            preFinalNotesMarkdown:
+                typeof value.preFinalNotesMarkdown === "string" ? value.preFinalNotesMarkdown : undefined,
+            noteStyle: value.noteStyle,
+            sectionsRaw: typeof value.sectionsRaw === "string" ? value.sectionsRaw : DEFAULT_SECTIONS[value.noteStyle],
+            sessionTitle: typeof value.sessionTitle === "string" ? value.sessionTitle : "",
+            selectedNoteTemplateId:
+                typeof value.selectedNoteTemplateId === "string" ? value.selectedNoteTemplateId : null,
+            selectedNoteTemplateTitle:
+                typeof value.selectedNoteTemplateTitle === "string" ? value.selectedNoteTemplateTitle : null,
+            recordStatus: value.recordStatus === "paused" ? "paused" : "idle",
+            isFinal: value.isFinal === true,
+            hasManualEdits: value.hasManualEdits === true,
+            wasEditingNotes: value.wasEditingNotes === true,
+            updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : new Date().toISOString(),
+        };
+    } catch {
+        return null;
+    }
 }
 
 function buildMarkdownFilename(title: string): string {
@@ -184,7 +252,9 @@ function renderInline(text: string): React.ReactNode {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function NotesClient({ user: _user }: { user: User }) {
+export default function NotesClient({ user }: { user: User }) {
+    const notesDraftStorageKey = getNotesDraftStorageKey(user);
+
     // Connection
     const wsRef = useRef<WebSocket | null>(null);
     const [wsStatus, setWsStatus] = useState<WSStatus>("disconnected");
@@ -211,9 +281,12 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const [noteStyle, setNoteStyle] = useState<NoteStyle>("general");
     const [sectionsRaw, setSectionsRaw] = useState(DEFAULT_SECTIONS.general);
     const [sessionTitle, setSessionTitle] = useState("");
+    const [selectedNoteTemplateId, setSelectedNoteTemplateId] = useState<string | null>(null);
+    const [selectedNoteTemplateTitle, setSelectedNoteTemplateTitle] = useState<string | null>(null);
 
     // Notes output
     const [notesMarkdown, setNotesMarkdown] = useState("");
+    const [preFinalNotesMarkdown, setPreFinalNotesMarkdown] = useState<string | null>(null);
     const [isFinal, setIsFinal] = useState(false);
     const [isEditingNotes, setIsEditingNotes] = useState(false);
     const [draftNotesMarkdown, setDraftNotesMarkdown] = useState("");
@@ -227,11 +300,17 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarDrawerVisible, setSidebarDrawerVisible] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [pendingNotesConfigChange, setPendingNotesConfigChange] = useState<PendingNotesConfigChange | null>(null);
+    const [restoredDraftUpdatedAt, setRestoredDraftUpdatedAt] = useState<string | null>(null);
     const notesEndRef = useRef<HTMLDivElement>(null);
     const downloadMenuRef = useRef<HTMLDivElement>(null);
     const sidebarCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const draftHydratedRef = useRef(false);
+    const suppressNextEmptyDraftSaveRef = useRef(false);
     const isEditingNotesRef = useRef(false);
     const hasManualEditsRef = useRef(false);
+    const visibleNotesMarkdownRef = useRef("");
 
     const isConnected = wsStatus === "connected";
     const isRecording = recordStatus === "recording";
@@ -243,7 +322,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
     // The connection pill is only meaningful while a session is being
     // established or is active; hide it when idle/paused with no socket.
     const showConnectionPill = isRecording || isFinalizing || wsStatus === "connecting" || wsStatus === "error";
-    const canSelectTemplate = recordStatus === "idle";
+    const canSelectTemplate = !isRecording && !isFinalizing;
     const errorMessage = wsError ?? micError;
     const sessionLimitRemainingMinutes =
         sessionLimitRemainingMs === null ? null : Math.max(0, Math.ceil(sessionLimitRemainingMs / 60_000));
@@ -278,7 +357,12 @@ export default function NotesClient({ user: _user }: { user: User }) {
     const visibleNotesMarkdown = isEditingNotes ? draftNotesMarkdown : notesMarkdown;
     const hasNotes = notesMarkdown.trim().length > 0;
     const hasVisibleNotes = visibleNotesMarkdown.trim().length > 0;
+    const hasNotesContent = hasNotes || isFinal || hasManualEdits || isEditingNotes;
     const canEditNotes = hasNotes && isFinal && !isRecording && !isFinalizing;
+
+    useEffect(() => {
+        visibleNotesMarkdownRef.current = visibleNotesMarkdown;
+    }, [visibleNotesMarkdown]);
 
     useEffect(() => {
         if (recordStatus !== "recording" && recordStatus !== "finalizing") return;
@@ -340,6 +424,9 @@ export default function NotesClient({ user: _user }: { user: User }) {
             if (sidebarCloseTimerRef.current) {
                 clearTimeout(sidebarCloseTimerRef.current);
             }
+            if (draftSaveTimerRef.current) {
+                clearTimeout(draftSaveTimerRef.current);
+            }
         };
     }, []);
 
@@ -366,6 +453,19 @@ export default function NotesClient({ user: _user }: { user: User }) {
             sidebarCloseTimerRef.current = null;
         }, 200);
     };
+
+    const clearNotesDraft = useCallback(() => {
+        if (draftSaveTimerRef.current) {
+            clearTimeout(draftSaveTimerRef.current);
+            draftSaveTimerRef.current = null;
+        }
+
+        if (notesDraftStorageKey && typeof window !== "undefined") {
+            window.localStorage.removeItem(notesDraftStorageKey);
+        }
+
+        suppressNextEmptyDraftSaveRef.current = true;
+    }, [notesDraftStorageKey]);
 
     const setNotesEditing = (editing: boolean) => {
         isEditingNotesRef.current = editing;
@@ -403,18 +503,51 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
     // Sync default sections when style changes (only if user hasn't typed custom sections)
     const userEditedSections = useRef(false);
-    const handleStyleChange = (style: NoteStyle) => {
-        setNoteStyle(style);
-        if (!userEditedSections.current) {
-            setSectionsRaw(DEFAULT_SECTIONS[style]);
+    const applyNotesConfigChange = useCallback((change: PendingNotesConfigChange) => {
+        if (change.type === "template") {
+            setSessionTitle(change.title);
+            setSelectedNoteTemplateId(change.id);
+            setSelectedNoteTemplateTitle(change.title);
+            setNoteStyle(change.noteStyle);
+            setSectionsRaw(change.sectionsRaw);
+            userEditedSections.current = change.sectionsRaw.trim().length > 0;
+            return;
         }
+
+        if (change.type === "style") {
+            setSelectedNoteTemplateId(null);
+            setSelectedNoteTemplateTitle(null);
+            setNoteStyle(change.noteStyle);
+            if (!userEditedSections.current) {
+                setSectionsRaw(DEFAULT_SECTIONS[change.noteStyle]);
+            }
+            return;
+        }
+
+        setSelectedNoteTemplateId(null);
+        setSelectedNoteTemplateTitle(null);
+        setSectionsRaw(change.sectionsRaw);
+        userEditedSections.current = true;
+    }, []);
+
+    const requestNotesConfigChange = (change: PendingNotesConfigChange): boolean => {
+        if (isRecording || isFinalizing) return false;
+
+        if (hasNotesContent) {
+            setPendingNotesConfigChange(change);
+            return false;
+        }
+
+        applyNotesConfigChange(change);
+        return true;
     };
 
-    const handleTemplateSelect = (title: string, style: NoteStyle, sections: string) => {
-        setSessionTitle(title);
-        setNoteStyle(style);
-        setSectionsRaw(sections);
-        userEditedSections.current = sections.trim().length > 0;
+    const handleStyleChange = (style: NoteStyle) => {
+        requestNotesConfigChange({ type: "style", noteStyle: style });
+    };
+
+    const handleTemplateSelect = (id: string, title: string, style: NoteStyle, sections: string) => {
+        return requestNotesConfigChange({ type: "template", id, title, noteStyle: style, sectionsRaw: sections });
     };
 
     // ── WebSocket ─────────────────────────────────────────────────────────────
@@ -555,6 +688,10 @@ export default function NotesClient({ user: _user }: { user: User }) {
 
                     const md = msg.notesMarkdown ?? "";
                     if (md) {
+                        const previousVisibleNotes = visibleNotesMarkdownRef.current;
+                        if (previousVisibleNotes.trim().length > 0) {
+                            setPreFinalNotesMarkdown(previousVisibleNotes);
+                        }
                         if (isEditingNotesRef.current || hasManualEditsRef.current) {
                             setNotesEditMessage("A late final update arrived, but your edits were kept.");
                         } else {
@@ -654,6 +791,114 @@ export default function NotesClient({ user: _user }: { user: User }) {
             ws.close(1000, "client-intentional");
         }
     }, [markSessionInactive]);
+
+    useEffect(() => {
+        if (!notesDraftStorageKey) {
+            draftHydratedRef.current = true;
+            return;
+        }
+
+        const draft = parseNotesDraft(window.localStorage.getItem(notesDraftStorageKey));
+        if (!draft) {
+            draftHydratedRef.current = true;
+            return;
+        }
+
+        const restoredHasContent =
+            draft.notesMarkdown.trim().length > 0 || draft.isFinal || draft.hasManualEdits || draft.wasEditingNotes;
+        const restoredStatus: RestoredRecordStatus = restoredHasContent ? "paused" : "idle";
+
+        setNotesMarkdown(draft.notesMarkdown);
+        setPreFinalNotesMarkdown(draft.preFinalNotesMarkdown ?? null);
+        setNoteStyle(draft.noteStyle);
+        setSectionsRaw(draft.sectionsRaw);
+        setSessionTitle(draft.sessionTitle);
+        setSelectedNoteTemplateId(draft.selectedNoteTemplateId ?? null);
+        setSelectedNoteTemplateTitle(draft.selectedNoteTemplateTitle ?? null);
+        setIsFinal(draft.isFinal);
+        setIsEditingNotes(false);
+        isEditingNotesRef.current = false;
+        setDraftNotesMarkdown("");
+        setNotesEditMessage(null);
+        setHasManualEdits(draft.hasManualEdits || draft.wasEditingNotes);
+        hasManualEditsRef.current = draft.hasManualEdits || draft.wasEditingNotes;
+        setRecordStatus(restoredStatus);
+        recordStatusRef.current = restoredStatus;
+        setWsStatus("disconnected");
+        setWsError(null);
+        setMicError(null);
+        setSessionLimitWarningLevel("none");
+        setSessionLimitRemainingMs(null);
+        userEditedSections.current = draft.sectionsRaw.trim().length > 0;
+        if (restoredHasContent) {
+            setRestoredDraftUpdatedAt(draft.updatedAt);
+        }
+        draftHydratedRef.current = true;
+    }, [notesDraftStorageKey]);
+
+    useEffect(() => {
+        if (!draftHydratedRef.current || !notesDraftStorageKey) return;
+
+        if (draftSaveTimerRef.current) {
+            clearTimeout(draftSaveTimerRef.current);
+            draftSaveTimerRef.current = null;
+        }
+
+        const shouldSaveDraft =
+            visibleNotesMarkdown.trim().length > 0 || isFinal || hasManualEdits || isEditingNotes;
+
+        if (!shouldSaveDraft) {
+            if (suppressNextEmptyDraftSaveRef.current) {
+                suppressNextEmptyDraftSaveRef.current = false;
+            }
+            return;
+        }
+
+        suppressNextEmptyDraftSaveRef.current = false;
+        draftSaveTimerRef.current = setTimeout(() => {
+            const draft: NotesDraft = {
+                version: 1,
+                notesMarkdown: visibleNotesMarkdown,
+                preFinalNotesMarkdown: preFinalNotesMarkdown ?? undefined,
+                noteStyle,
+                sectionsRaw,
+                sessionTitle,
+                selectedNoteTemplateId,
+                selectedNoteTemplateTitle,
+                recordStatus: recordStatus === "idle" ? "idle" : "paused",
+                isFinal,
+                hasManualEdits,
+                wasEditingNotes: isEditingNotes,
+                updatedAt: new Date().toISOString(),
+            };
+
+            try {
+                window.localStorage.setItem(notesDraftStorageKey, JSON.stringify(draft));
+            } catch (error) {
+                console.warn("[Notes] Could not save local notes draft:", error);
+            }
+        }, NOTES_DRAFT_SAVE_DEBOUNCE_MS);
+
+        return () => {
+            if (draftSaveTimerRef.current) {
+                clearTimeout(draftSaveTimerRef.current);
+                draftSaveTimerRef.current = null;
+            }
+        };
+    }, [
+        notesDraftStorageKey,
+        visibleNotesMarkdown,
+        preFinalNotesMarkdown,
+        noteStyle,
+        sectionsRaw,
+        sessionTitle,
+        selectedNoteTemplateId,
+        selectedNoteTemplateTitle,
+        recordStatus,
+        isFinal,
+        hasManualEdits,
+        isEditingNotes,
+    ]);
 
     // No socket on mount — it is opened on demand when recording starts.
     // On unmount, close any active socket intentionally.
@@ -875,6 +1120,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
     };
 
     const handleReset = () => {
+        clearNotesDraft();
         sessionGenerationRef.current += 1;
         startInFlightRef.current = false;
         stopInFlightRef.current = false;
@@ -885,6 +1131,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
         setRecordStatus("idle");
         recordStatusRef.current = "idle";
         setNotesMarkdown("");
+        setPreFinalNotesMarkdown(null);
         setIsFinal(false);
         clearNotesEditState();
         setNotesManualEdits(false);
@@ -893,8 +1140,23 @@ export default function NotesClient({ user: _user }: { user: User }) {
         setWsStatus("disconnected");
         manualStopRequestedRef.current = false;
         recordingSessionStartedAtRef.current = null;
+        setRestoredDraftUpdatedAt(null);
         setSessionLimitWarningLevel("none");
         setSessionLimitRemainingMs(null);
+    };
+
+    const confirmNotesConfigChange = () => {
+        if (!pendingNotesConfigChange) return;
+
+        const change = pendingNotesConfigChange;
+        handleReset();
+        applyNotesConfigChange(change);
+        setPendingNotesConfigChange(null);
+        closeMobileSidebar();
+    };
+
+    const cancelNotesConfigChange = () => {
+        setPendingNotesConfigChange(null);
     };
 
     // ── PDF Export ────────────────────────────────────────────────────────────
@@ -1063,8 +1325,29 @@ export default function NotesClient({ user: _user }: { user: User }) {
                     </div>
                 )}
 
-                {/* ── Config card (only when idle) ── */}
-                {recordStatus === "idle" && (
+                {restoredDraftUpdatedAt && (
+                    <div className="flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                        <p className="flex-1">
+                            Recovered notes from this browser
+                            {" "}
+                            <span className="text-emerald-700/80 dark:text-emerald-200/80">
+                                ({new Date(restoredDraftUpdatedAt).toLocaleString()})
+                            </span>
+                            .
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setRestoredDraftUpdatedAt(null)}
+                            className="text-xs font-medium text-emerald-700 transition-opacity hover:text-emerald-900 active:opacity-80 dark:text-emerald-200 dark:hover:text-emerald-100"
+                        >
+                            Dismiss
+                        </button>
+                    </div>
+                )}
+
+                {/* ── Config card (only when not actively recording/finalising) ── */}
+                {!isRecording && !isFinalizing && (
                     <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 dark:border-slate-800 dark:bg-slate-900/80">
                         {/* Session title */}
                         <div>
@@ -1107,8 +1390,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                                 type="text"
                                 value={sectionsRaw}
                                 onChange={(e) => {
-                                    userEditedSections.current = true;
-                                    setSectionsRaw(e.target.value);
+                                    requestNotesConfigChange({ type: "sections", sectionsRaw: e.target.value });
                                 }}
                                 placeholder="e.g. Summary, Key Points, Action Items"
                                 className="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 outline-none focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1] placeholder-slate-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
@@ -1118,7 +1400,7 @@ export default function NotesClient({ user: _user }: { user: User }) {
                 )}
 
                 {/* Session title display when active */}
-                {recordStatus !== "idle" && sessionTitle && (
+                {(isRecording || isFinalizing) && sessionTitle && (
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{sessionTitle}</h1>
                         <p className="text-sm text-[#868C94] mt-1 dark:text-slate-400">
@@ -1361,6 +1643,33 @@ export default function NotesClient({ user: _user }: { user: User }) {
                     </div>
                 </main>
             </div>
+
+            {pendingNotesConfigChange && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:shadow-slate-950/60">
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Change notes template?</h3>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                            Changing templates will clear your current notes for this session. This cannot be undone unless you have copied or downloaded them.
+                        </p>
+                        <div className="mt-6 flex gap-3">
+                            <button
+                                type="button"
+                                onClick={confirmNotesConfigChange}
+                                className="flex-1 rounded-lg bg-[#2149A1] px-4 py-2 text-sm font-medium text-white transition-[background-color,transform,opacity] hover:bg-[#1a3a87] active:scale-[0.98] active:opacity-90"
+                            >
+                                Change Template
+                            </button>
+                            <button
+                                type="button"
+                                onClick={cancelNotesConfigChange}
+                                className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

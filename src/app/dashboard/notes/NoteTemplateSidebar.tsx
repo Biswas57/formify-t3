@@ -20,7 +20,7 @@ interface NoteTemplateSidebarProps {
     currentNoteStyle: NoteStyle;
     currentSectionsRaw: string;
     canSelect: boolean;
-    onSelect: (title: string, noteStyle: NoteStyle, sections: string) => void;
+    onSelect: (id: string, title: string, noteStyle: NoteStyle, sections: string) => boolean | void;
     onToggleSidebar?: () => void;
     onClose?: () => void;
 }
@@ -311,8 +311,8 @@ export default function NoteTemplateSidebar({
                                                 type="button"
                                                 onClick={() => {
                                                     if (!canSelect) return;
-                                                    onSelect(template.title, style, template.sections);
-                                                    onClose?.();
+                                                    const shouldClose = onSelect(template.id, template.title, style, template.sections);
+                                                    if (shouldClose !== false) onClose?.();
                                                 }}
                                                 disabled={!canSelect}
                                                 className={`block w-full min-w-0 text-left transition-[padding] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 ${isConfirmingDelete
