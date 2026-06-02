@@ -1305,7 +1305,7 @@ export default function FormsClient({ user }: { user: User }) {
             )}
 
             <section className="min-w-0 flex-1 overflow-y-auto">
-                <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-8 xl:px-8">
+                <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8 lg:px-10">
                     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                         <button
                             type="button"
@@ -1508,7 +1508,10 @@ export default function FormsClient({ user }: { user: User }) {
                             </div>
 
                             {/* Fields grid */}
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-4 px-6 py-5 sm:grid-cols-2 xl:grid-cols-3">
+                            <div
+                                className="grid gap-x-6 gap-y-4 px-6 py-5"
+                                style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 16rem), 1fr))" }}
+                            >
                                 {fields.map((field) => {
                                     const isLocked = lockedFields.has(field);
                                     const value = attributes[field] ?? "";
@@ -1516,24 +1519,28 @@ export default function FormsClient({ user }: { user: User }) {
 
                                     return (
                                         <div key={field}>
-                                            <div className="flex items-center justify-between mb-1.5">
-                                                <label className="text-xs font-medium text-[#868C94] dark:text-slate-400">
+                                            <div className="mb-1.5 flex min-h-7 items-center justify-between gap-2">
+                                                <label className="min-w-0 truncate text-xs font-medium text-[#868C94] dark:text-slate-400">
                                                     {formatFieldLabel(field)}
                                                 </label>
-                                                {isLocked && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => unlockField(field)}
-                                                        title="Unlock field"
-                                                        aria-label={`Unlock ${formatFieldLabel(field)}`}
-                                                        className="group/unlock inline-flex h-6 items-center overflow-hidden rounded-full border border-amber-200 bg-amber-50 px-2 text-xs font-medium text-amber-700 transition-[background-color,border-color,color,transform,opacity] active:scale-95 active:opacity-80 hover:border-amber-300 hover:bg-amber-100 hover:text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:border-amber-400/60 dark:hover:bg-amber-500/20"
-                                                    >
-                                                        <Lock className="h-3 w-3 flex-shrink-0 transition-transform duration-150 md:group-hover/unlock:-translate-x-0.5 md:group-focus-visible/unlock:-translate-x-0.5" />
-                                                        <span className="ml-1 max-w-16 whitespace-nowrap opacity-100 transition-[max-width,opacity] duration-150 md:max-w-0 md:opacity-0 md:group-hover/unlock:max-w-16 md:group-hover/unlock:opacity-100 md:group-focus-visible/unlock:max-w-16 md:group-focus-visible/unlock:opacity-100">
-                                                            Unlock
-                                                        </span>
-                                                    </button>
-                                                )}
+                                                <div className="flex h-7 w-20 flex-shrink-0 items-center justify-end">
+                                                    {isLocked ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => unlockField(field)}
+                                                            title="Unlock field"
+                                                            aria-label={`Unlock ${formatFieldLabel(field)}`}
+                                                            className="group/unlock inline-flex h-7 w-20 items-center justify-end overflow-hidden rounded-md text-xs font-medium text-slate-500 transition-[color,opacity,transform] duration-150 active:scale-[0.98] active:opacity-75 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/70 dark:text-slate-400 dark:hover:text-slate-200 dark:focus-visible:ring-slate-600"
+                                                        >
+                                                            <Lock className="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-150 md:group-hover/unlock:-translate-x-0.5 md:group-focus-visible/unlock:-translate-x-0.5" />
+                                                            <span className="ml-1 max-w-[3.5rem] whitespace-nowrap opacity-100 transition-[max-width,opacity,transform] duration-150 md:max-w-0 md:translate-x-1 md:opacity-0 md:group-hover/unlock:max-w-[3.5rem] md:group-hover/unlock:translate-x-0 md:group-hover/unlock:opacity-100 md:group-focus-visible/unlock:max-w-[3.5rem] md:group-focus-visible/unlock:translate-x-0 md:group-focus-visible/unlock:opacity-100">
+                                                                Unlock
+                                                            </span>
+                                                        </button>
+                                                    ) : (
+                                                        <span aria-hidden="true" className="h-7 w-20" />
+                                                    )}
+                                                </div>
                                             </div>
                                             <input
                                                 type="text"
@@ -1546,7 +1553,7 @@ export default function FormsClient({ user }: { user: User }) {
                                                 placeholder={isRecording ? "" : "—"}
                                                 className={`w-full text-sm px-3 py-2.5 rounded-lg border outline-none transition-all duration-200
                                                     ${isLocked
-                                                        ? "border-amber-300 bg-amber-50/50 text-slate-900 focus:ring-2 focus:ring-amber-200 dark:border-amber-500/50 dark:bg-amber-950/30 dark:text-amber-100 dark:focus:ring-amber-400/20"
+                                                        ? "border-slate-300 bg-slate-50 text-slate-900 focus:border-slate-400 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-slate-500 dark:focus:ring-slate-500/20"
                                                         : isFilled
                                                             ? "border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                                                             : "border-slate-200 bg-slate-50 text-slate-400 focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
