@@ -42,7 +42,7 @@ Forms audio chunks must only be sent when the socket is open, the server has sen
 
 ### D-006 Formify is a genuinely free app
 
-Core features (forms recording, notes recording, form templates, note templates, custom blocks, PDF/email export) are available to all signed-in users. Access is **auth-based**, not plan-based. Normal UI must not show Free/Pro tiers, pricing tables, upgrade modals, plan badges, billing cards, or paid-feature copy. Backend gates were removed before paywall UI cleanup so users do not hit `FORBIDDEN` behind a “free” surface.
+Core features (forms recording, notes recording, form templates, note templates, custom blocks, and local PDF/Markdown export) are available to all signed-in users. Access is **auth-based**, not plan-based. Normal UI must not show Free/Pro tiers, pricing tables, upgrade modals, plan badges, billing cards, or paid-feature copy. Backend gates were removed before paywall UI cleanup so users do not hit `FORBIDDEN` behind a “free” surface.
 
 ### D-007 Billing schema removed; migrations retained
 
@@ -105,9 +105,9 @@ The template builder and block library use `blockRouter` and `BlockDefinition` (
 
 Server and client operational logs must never include transcripts, notes markdown, form values, email HTML/body, reset tokens/URLs, passwords, session/auth tokens, or recipient addresses. Log safe metadata only (counts, lengths, statuses, timings, generic reason codes, `error.name` where `error.message` may echo PII). Auth flows must not enumerate accounts (e.g. forgot-password always returns success).
 
-### D-014 Email HTML is server-rendered from structured data
+### D-014 Product email export removed; auth email remains
 
-`/api/email` accepts `{ to, formTitle, blocks }` validated with zod and size caps. The server renders the email and HTML-escapes every dynamic value. Do not accept client-rendered `formHTML` or embed untrusted HTML.
+The product-level form/notes email export surface has been removed. Current export UX should focus on Copy, PDF, and Markdown download where applicable. Do not reintroduce product email send/export UI without an explicit product decision. Password reset/auth/system email may still use Resend when configured; preserve those flows and avoid logging reset tokens, recipient addresses, rendered email bodies, or other PII.
 
 ## UI infrastructure
 

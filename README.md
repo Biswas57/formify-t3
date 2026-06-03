@@ -1,6 +1,6 @@
 # Formify Web App
 
-Formify is a free Next.js/T3-style web application for turning live conversations into structured forms and notes. The web app owns authentication, dashboards, templates, note templates, UI, PDF/email export, and WebSocket token minting. Real-time audio transcription and AI extraction are handled by the separate Formify `ws-transcription` service.
+Formify is a free Next.js/T3-style web application for turning live conversations into structured forms and notes. The web app owns authentication, dashboards, templates, note templates, UI, PDF/Markdown export, and WebSocket token minting. Real-time audio transcription and AI extraction are handled by the separate Formify `ws-transcription` service.
 
 ## What It Does
 
@@ -9,7 +9,7 @@ Formify is a free Next.js/T3-style web application for turning live conversation
 - Fill form fields in real time from WebSocket `attributes_update` and `final_attributes` messages.
 - Capture voice notes in Notes mode, with live markdown updates and final polished notes.
 - Save note templates for title, note style, and sections.
-- Export completed forms and notes locally as PDF; forms can also be emailed.
+- Export completed forms locally as PDF and notes as PDF or Markdown.
 
 Recording, notes, form templates, note templates, and custom blocks are available to signed-in users without paid tiers.
 
@@ -65,8 +65,8 @@ Optional or feature-specific:
 
 - `AUTH_DISCORD_ID`
 - `AUTH_DISCORD_SECRET`
-- `RESEND_API_KEY`
-- `RESEND_FROM_EMAIL`
+- `RESEND_API_KEY` for password reset email delivery
+- `EMAIL_FROM` for the password reset sender address
 - `SKIP_ENV_VALIDATION=1` for build environments that intentionally skip env checks
 
 `WS_TOKEN_SECRET` must match the secret configured on the separate transcription WebSocket server.

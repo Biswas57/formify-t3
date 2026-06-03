@@ -2,7 +2,7 @@
 
 ## Repo Purpose
 
-This repo is the Formify web app. It handles auth, dashboards, templates, note templates, form-filling UI, notes UI, usage analytics, PDF/email export, and WebSocket token minting. Speech transcription and AI extraction run in a separate Formify `ws-transcription` server.
+This repo is the Formify web app. It handles auth, dashboards, templates, note templates, form-filling UI, notes UI, usage analytics, PDF/Markdown export, and WebSocket token minting. Speech transcription and AI extraction run in a separate Formify `ws-transcription` server.
 
 Formify is now free-app-first. Do not add Free/Pro distinctions, paywall gates, upgrade prompts, plan badges, pricing UI, or paid-feature copy unless the user explicitly asks.
 
@@ -23,14 +23,14 @@ Formify is now free-app-first. Do not add Free/Pro distinctions, paywall gates, 
 - `src/server/api/routers/noteTemplate.ts`: note template CRUD.
 - `src/server/api/routers/block.ts`: active block library and custom block API.
 - `src/server/api/routers/usage.ts`: non-blocking usage state via `getToday`.
-- `src/app/forms/page.tsx`: canonical Forms route, reusing the forms-mode recording client.
-- `src/app/transcription/TranscriptionClient.tsx`: forms-mode recording and WebSocket UI. Keep for now; future cleanup may rename it to Forms terminology.
+- `src/app/forms/page.tsx`: canonical Forms route.
+- `src/app/forms/FormsClient.tsx`: forms-mode recording, WebSocket UI, template sidebar, local draft restore, field locking, and form PDF export.
 - `src/app/dashboard/notes/NotesClient.tsx`: notes-mode recording and WebSocket UI.
 - `src/app/dashboard/notes/NoteTemplateSidebar.tsx`: saved note template UI.
 - `src/app/templates/TemplateBuilder.tsx`: form template builder. New templates save in place, create only once before switching to update semantics, and expose `Use in Forms` only after a persisted template id exists.
 - `src/app/templates/TemplateList.tsx`: My Templates list.
 - `src/lib/pdf`: shared client-side PDF export utilities for Forms and Notes.
-- `src/app/api/email/route.ts`: email export endpoint.
+- `src/app/api/auth/forgot-password/route.ts`: password reset email flow; may use Resend if configured.
 - `prisma/schema.prisma`: database schema.
 
 Legacy notes:
@@ -74,8 +74,8 @@ Optional or feature-specific:
 
 - `AUTH_DISCORD_ID`
 - `AUTH_DISCORD_SECRET`
-- `RESEND_API_KEY`
-- `RESEND_FROM_EMAIL`
+- `RESEND_API_KEY` for password reset email delivery
+- `EMAIL_FROM` for the password reset sender address
 - `SKIP_ENV_VALIDATION=1`
 
 ## Free-App Model
@@ -87,7 +87,7 @@ Core features are available to signed-in users:
 - form templates
 - note templates
 - custom blocks
-- PDF and email export
+- PDF/Markdown export
 
 Do not block these features based on plan, usage, subscription, Stripe config, or old entitlement flags. Usage tracking is analytics-only and must not block recording.
 
