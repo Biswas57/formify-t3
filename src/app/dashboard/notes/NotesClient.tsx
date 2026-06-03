@@ -1259,7 +1259,7 @@ export default function NotesClient({ user }: { user: User }) {
                         className={`absolute inset-0 bg-black/30 transition-opacity duration-200 dark:bg-black/50 ${sidebarDrawerVisible ? "opacity-100" : "opacity-0"}`}
                         onClick={closeMobileSidebar}
                     />
-                    <div className={`relative h-full w-72 shadow-xl transition-transform duration-200 ease-out dark:shadow-slate-950/50 ${sidebarDrawerVisible ? "translate-x-0" : "-translate-x-full"}`}>
+                    <div className={`absolute inset-y-0 left-0 flex w-80 max-w-[86vw] transform flex-col bg-white shadow-2xl transition-transform duration-200 ease-out dark:bg-slate-950 dark:shadow-slate-950/50 ${sidebarDrawerVisible ? "translate-x-0" : "-translate-x-full"}`}>
                         <NoteTemplateSidebar
                             currentTitle={sessionTitle}
                             currentNoteStyle={noteStyle}
@@ -1276,16 +1276,18 @@ export default function NotesClient({ user }: { user: User }) {
             <div className="flex min-h-0 flex-1">
                 <aside className={`hidden flex-none overflow-hidden border-r border-slate-200 bg-white transition-[width] duration-200 ease-out md:flex dark:border-slate-800 dark:bg-slate-950 ${isSidebarCollapsed ? "w-12" : "w-72"}`}>
                     {isSidebarCollapsed ? (
-                        <div className="flex h-full w-12 justify-center pt-3">
+                        <div className="flex h-full w-full flex-col items-center py-3">
                             <button
                                 type="button"
                                 onClick={() => setIsSidebarCollapsed(false)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-[#2149A1] dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
+                                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-[#2149A1] dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
                                 aria-label="Show templates sidebar"
                                 title="Show templates sidebar"
                             >
                                 <PanelLeftOpen className="h-4 w-4" />
                             </button>
+                            <div className="mt-3 h-px w-6 bg-slate-200 dark:bg-slate-800" />
+                            <BookMarked className="mt-4 h-4 w-4 text-[#2149A1] dark:text-blue-300" />
                         </div>
                     ) : (
                         <NoteTemplateSidebar
@@ -1416,7 +1418,24 @@ export default function NotesClient({ user }: { user: User }) {
 
                 {/* ── Controls ── */}
                 <div className="flex flex-wrap items-center gap-3">
-                    {!isRecording ? (
+                    {isRecording ? (
+                        <button
+                            onClick={stopRecording}
+                            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors duration-150 active:scale-[0.98] active:opacity-90"
+                        >
+                            <Square className="w-4 h-4 fill-white" />
+                            Stop
+                        </button>
+                    ) : isFinalizing ? (
+                        <button
+                            type="button"
+                            disabled
+                            className="flex items-center gap-2 rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-80 dark:border-slate-700 dark:text-slate-400"
+                        >
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Finalising…
+                        </button>
+                    ) : (
                         <button
                             onClick={startRecording}
                             disabled={!canRecord || getSessionToken.isPending}
@@ -1427,14 +1446,6 @@ export default function NotesClient({ user }: { user: User }) {
                                 : <><Mic className="w-4 h-4" />{isPaused ? "Resume" : "Start Recording"}</>
                             }
                         </button>
-                    ) : (
-                        <button
-                            onClick={stopRecording}
-                            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors duration-150 active:scale-[0.98] active:opacity-90"
-                        >
-                            <Square className="w-4 h-4 fill-white" />
-                            Stop
-                        </button>
                     )}
 
                     {(isPaused || hasNotes) && !isRecording && !isFinalizing && (
@@ -1443,7 +1454,7 @@ export default function NotesClient({ user }: { user: User }) {
                             className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 px-3 py-2.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98] active:opacity-80 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
                         >
                             <RotateCcw className="w-3.5 h-3.5" />
-                            New session
+                            Reset Notes
                         </button>
                     )}
 

@@ -38,6 +38,10 @@ function toNoteStyle(value: string): NoteStyle {
     return NOTE_STYLE_VALUES.includes(value as NoteStyle) ? (value as NoteStyle) : "general";
 }
 
+function normalizeTemplateText(value: string): string {
+    return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 export default function NoteTemplateSidebar({
     currentTitle,
     currentNoteStyle,
@@ -60,6 +64,8 @@ export default function NoteTemplateSidebar({
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const skipNextRenameBlurRef = useRef(false);
     const renameCommitInFlightRef = useRef(false);
+    const currentTitleKey = normalizeTemplateText(currentTitle);
+    const currentSectionsKey = normalizeTemplateText(currentSectionsRaw);
 
     const { data: templates = [], isLoading } = api.noteTemplate.list.useQuery(undefined, {
         staleTime: 30 * 1000,
@@ -180,10 +186,11 @@ export default function NoteTemplateSidebar({
                             type="button"
                             onClick={openSaveForm}
                             disabled={!canSelect}
-                            className="mr-2 flex items-center gap-1 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors active:scale-[0.98] active:opacity-90 hover:bg-[#1a3a87] disabled:cursor-not-allowed disabled:opacity-40"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#2149A1] transition-colors active:scale-95 active:opacity-80 hover:bg-[#e8eef9] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent dark:text-blue-300 dark:hover:bg-blue-500/15 dark:disabled:text-slate-700"
+                            title={canSelect ? "Save note template" : "Stop recording before saving a template"}
+                            aria-label="Save note template"
                         >
-                            <Plus className="h-3.5 w-3.5" />
-                            Save
+                            <Plus className="h-4 w-4" />
                         </button>
                         {onToggleSidebar && (
                             <button
@@ -270,11 +277,19 @@ export default function NoteTemplateSidebar({
                             const isEditing = editingId === template.id;
                             const isConfirmingDelete = confirmDeleteId === template.id;
                             const isDeleting = deletingId === template.id;
+                            const isActive =
+                                currentTitleKey.length > 0 &&
+                                normalizeTemplateText(template.title) === currentTitleKey &&
+                                style === currentNoteStyle &&
+                                normalizeTemplateText(template.sections) === currentSectionsKey;
 
                             return (
                                 <div
                                     key={template.id}
-                                    className="group relative min-w-0 rounded-lg border border-transparent px-2 py-2 transition-colors hover:border-slate-200 hover:bg-slate-50 focus-within:border-slate-200 focus-within:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-900 dark:focus-within:border-slate-700 dark:focus-within:bg-slate-900"
+                                    className={`group relative min-w-0 rounded-lg border px-2 py-2 transition-[border-color,background-color,opacity,transform] ${isActive
+                                        ? "border-[#2149A1]/30 bg-[#e8eef9] text-[#2149A1] dark:border-blue-400/50 dark:bg-blue-500/15 dark:text-blue-200"
+                                        : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 focus-within:border-slate-200 focus-within:bg-slate-50 dark:text-slate-200 dark:hover:border-slate-700 dark:hover:bg-slate-900 dark:focus-within:border-slate-700 dark:focus-within:bg-slate-900"
+                                        }`}
                                 >
                                     {isEditing ? (
                                         <div className="space-y-1">
@@ -320,8 +335,8 @@ export default function NoteTemplateSidebar({
                                                     : "pr-16 md:pr-1 md:group-hover:pr-16 md:group-focus-within:pr-16"
                                                     }`}
                                             >
-                                                <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200" title={template.title}>{template.title}</p>
-                                                <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-400" title={template.sections || NOTE_STYLE_LABELS[style]}>
+                                                <p className={`truncate text-sm font-medium ${isActive ? "text-[#2149A1] dark:text-blue-200" : "text-slate-800 dark:text-slate-200"}`} title={template.title}>{template.title}</p>
+                                                <p className={`mt-0.5 truncate text-xs ${isActive ? "text-[#2149A1]/70 dark:text-blue-200/75" : "text-slate-400 dark:text-slate-400"}`} title={template.sections || NOTE_STYLE_LABELS[style]}>
                                                     {template.sections || NOTE_STYLE_LABELS[style]}
                                                 </p>
                                             </button>
