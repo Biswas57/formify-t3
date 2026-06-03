@@ -161,10 +161,12 @@ function TemplateSelector({
             <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
                 <div className="flex min-w-0 items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                        <div className="flex min-w-0 items-center gap-2">
-                            <FileText className="h-4 w-4 flex-shrink-0 text-[#2149A1] dark:text-blue-300" />
-                            <span className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">Form Templates</span>
-                        </div>
+                        <h2 className="truncate text-xs font-semibold uppercase tracking-widest text-[#868C94] dark:text-slate-400">
+                            Form Templates
+                        </h2>
+                        <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">
+                            Select one before recording.
+                        </p>
                     </div>
                     <div className="flex flex-shrink-0 items-center gap-1">
                         {disabled ? (
