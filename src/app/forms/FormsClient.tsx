@@ -7,7 +7,7 @@ import Link from "next/link";
 import {
     Mic, Square, Wifi, WifiOff, RotateCcw, ChevronDown,
     Lock, AlertCircle, RefreshCw, Loader2,
-    Download, Mail, X, FileText, Plus, Check, PanelLeftClose, PanelLeftOpen
+    Download, X, FileText, Plus, Check, PanelLeftClose, PanelLeftOpen
 } from "lucide-react";
 import { formatFieldLabel } from "@/lib/format-field-label";
 import { exportFormPdf } from "@/lib/pdf";
@@ -297,14 +297,6 @@ export default function FormsClient({ user }: { user: User }) {
     const [lockedFields, setLockedFields] = useState<Set<string>>(new Set());
     const lockedFieldsRef = useRef<Set<string>>(new Set());
     useEffect(() => { lockedFieldsRef.current = lockedFields; }, [lockedFields]);
-
-    // Export features
-    const formContainerRef = useRef<HTMLDivElement>(null);
-    const [showEmailModal, setShowEmailModal] = useState(false);
-    const [emailOption, setEmailOption] = useState<"self" | "custom">("self");
-    const [customEmail, setCustomEmail] = useState("");
-    const [isSendingEmail, setIsSendingEmail] = useState(false);
-    const [emailStatus, setEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
     const getSessionToken = api.transcription.getSessionToken.useMutation();
     const utils = api.useUtils();
@@ -946,7 +938,7 @@ export default function FormsClient({ user }: { user: User }) {
         }
     }, [connectWS, getSessionToken, hasValidTemplate, markSessionInactive, sendBlocks, stopLocalRecorder, templateRaw, utils, waitForSessionStarted]);
 
-    // ── Pause ─────────────────────────────────────────────────────────────────
+    // ── Stop ──────────────────────────────────────────────────────────────────
 
     const pauseRecording = useCallback(() => {
         if (stopInFlightRef.current || recordStatusRef.current !== "recording") return;
@@ -1178,66 +1170,6 @@ export default function FormsClient({ user }: { user: User }) {
         }
     };
 
-    // ── Email Export ──────────────────────────────────────────────────────────
-
-    const handleSendEmail = async () => {
-        setIsSendingEmail(true);
-        setEmailStatus(null);
-
-        const recipientEmail = emailOption === "self" ? user.email : customEmail;
-
-        if (!recipientEmail) {
-            setEmailStatus({ type: "error", message: "No email address available" });
-            setIsSendingEmail(false);
-            return;
-        }
-
-        try {
-            // Send structured data only. The server renders the email HTML and
-            // escapes every value, so no client-rendered/raw HTML is sent or trusted.
-            const emailBlocks = Object.entries(blocks).map(([blockName, fields]) => ({
-                name: blockName,
-                fields: fields.map((field) => ({
-                    label: formatFieldLabel(field),
-                    value: attributes[field] ?? "",
-                })),
-            }));
-
-            const response = await fetch('/api/email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    to: recipientEmail,
-                    formTitle,
-                    blocks: emailBlocks,
-                }),
-            });
-
-            const result = (await response.json()) as { error?: unknown };
-
-            if (!response.ok) {
-                const errorMsg = typeof result.error === 'string' ? result.error : 'Failed to send email';
-                throw new Error(errorMsg);
-            }
-
-            setEmailStatus({ type: "success", message: `Email sent successfully to ${recipientEmail}` });
-            setTimeout(() => {
-                setShowEmailModal(false);
-                setEmailStatus(null);
-                setCustomEmail("");
-            }, 2000);
-        } catch (error) {
-            console.error('Email send error:', error);
-            const errorMessage = error instanceof Error ? error.message ?? 'Failed to send email' : 'Failed to send email';
-            setEmailStatus({
-                type: "error",
-                message: errorMessage
-            });
-        } finally {
-            setIsSendingEmail(false);
-        }
-    };
-
     // ─────────────────────────────────────────────────────────────────────────
     // RENDER
     // ─────────────────────────────────────────────────────────────────────────
@@ -1316,18 +1248,6 @@ export default function FormsClient({ user }: { user: User }) {
                             Choose Template
                         </button>
                         <div className="ml-auto flex items-center gap-3">
-                            {isRecording && (
-                                <span className="flex items-center gap-1.5 text-xs font-medium text-red-500">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                                    Recording
-                                </span>
-                            )}
-                            {isFinalizing && (
-                                <span className="flex items-center gap-1.5 text-xs text-[#868C94] dark:text-slate-400">
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                    Finalizing…
-                                </span>
-                            )}
                             {showConnectionPill && (
                                 <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${connectionPillClasses}`}>
                                     {isConnected && !isStartingRecording ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
@@ -1431,7 +1351,24 @@ export default function FormsClient({ user }: { user: User }) {
 
                 {/* ── Controls ── */}
                 <div className="flex flex-wrap items-center gap-3 mb-8">
-                    {!isRecording ? (
+                    {isRecording ? (
+                        <button
+                            onClick={pauseRecording}
+                            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors duration-150 active:scale-[0.98] active:opacity-90"
+                        >
+                            <Square className="w-4 h-4 fill-white" />
+                            Stop
+                        </button>
+                    ) : isFinalizing ? (
+                        <button
+                            type="button"
+                            disabled
+                            className="flex items-center gap-2 rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-80 dark:border-slate-700 dark:text-slate-400"
+                        >
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Finalizing…
+                        </button>
+                    ) : (
                         <button
                             onClick={startRecording}
                             disabled={!canRecord || getSessionToken.isPending}
@@ -1442,14 +1379,13 @@ export default function FormsClient({ user }: { user: User }) {
                                 : <><Mic className="w-4 h-4" />{isPaused ? "Resume Recording" : "Start Recording"}</>
                             }
                         </button>
-                    ) : (
-                        <button
-                            onClick={pauseRecording}
-                            className="flex items-center gap-2 border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-medium px-5 py-2.5 rounded-lg transition-[background-color,border-color,color,transform,opacity] duration-150 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-900"
-                        >
-                            <Square className="w-3.5 h-3.5 fill-current" />
-                            Pause
-                        </button>
+                    )}
+
+                    {isRecording && (
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-red-500 ml-1">
+                            <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                            Recording
+                        </span>
                     )}
 
                     {/* PDF Export — only show when paused */}
@@ -1463,31 +1399,20 @@ export default function FormsClient({ user }: { user: User }) {
                         </button>
                     )}
 
-                    {/* Email Export — only show when paused */}
-                    {isPaused && (
-                        <button
-                            onClick={() => setShowEmailModal(true)}
-                            className="flex items-center gap-2 border border-slate-300 hover:border-[#2149A1] hover:text-[#2149A1] text-slate-600 text-sm font-medium px-4 py-2.5 rounded-lg transition-[border-color,color,transform,opacity] duration-150 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300"
-                        >
-                            <Mail className="w-3.5 h-3.5" />
-                            Email Form
-                        </button>
-                    )}
-
                     {/* Reset — only show once something has happened */}
-                    {(isPaused || isRecording) && (
+                    {(isPaused || hasFilledContent) && !isRecording && !isFinalizing && (
                         <button
                             onClick={handleReset}
-                            className="flex items-center gap-1.5 text-sm text-[#868C94] hover:text-slate-700 transition-opacity active:opacity-80 ml-auto dark:text-slate-400 dark:hover:text-slate-200"
+                            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 px-3 py-2.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98] active:opacity-80 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
                         >
                             <RefreshCw className="w-3.5 h-3.5" />
-                            Reset form
+                            Reset Form
                         </button>
                     )}
                 </div>
 
                 {/* ── Form blocks ── */}
-                <div ref={formContainerRef} className="space-y-5">
+                <div className="space-y-5">
                     {/* Form Title for PDF */}
                     <div className="mb-4">
                         <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formTitle}</h2>
@@ -1652,113 +1577,6 @@ export default function FormsClient({ user }: { user: User }) {
                                 className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ── Email Modal ── */}
-            {showEmailModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 dark:bg-slate-900 dark:shadow-slate-950/60">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Email Form</h3>
-                            <button
-                                onClick={() => {
-                                    setShowEmailModal(false);
-                                    setEmailStatus(null);
-                                    setCustomEmail("");
-                                }}
-                                className="text-slate-400 hover:text-slate-600 transition-opacity active:opacity-80 dark:text-slate-400 dark:hover:text-slate-200"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        {emailStatus && (
-                            <div className={`mb-4 p-3 rounded-lg text-sm ${emailStatus.type === "success"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300"
-                                : "bg-red-50 text-red-700 border border-red-200 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
-                                }`}>
-                                {emailStatus.message}
-                            </div>
-                        )}
-
-                        {/* Testing Notice */}
-                        <div className="mb-4 p-3 rounded-lg text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200">
-                            <p className="font-medium mb-1">📧 Testing Mode</p>
-                            <p>Without domain verification, use <code className="bg-blue-100 px-1 py-0.5 rounded font-mono dark:bg-blue-500/20">biswas.simk@gmail.com</code> to test emails.</p>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="emailOption"
-                                        checked={emailOption === "self"}
-                                        onChange={() => setEmailOption("self")}
-                                        className="w-4 h-4 text-[#2149A1]"
-                                    />
-                                    <span className="text-sm text-slate-700 dark:text-slate-200">
-                                        Send to my email ({user.email ?? "No email"})
-                                    </span>
-                                </label>
-                            </div>
-
-                            <div>
-                                <label className="flex items-center gap-2 cursor-pointer mb-2">
-                                    <input
-                                        type="radio"
-                                        name="emailOption"
-                                        checked={emailOption === "custom"}
-                                        onChange={() => setEmailOption("custom")}
-                                        className="w-4 h-4 text-[#2149A1]"
-                                    />
-                                    <span className="text-sm text-slate-700 dark:text-slate-200">
-                                        Send to custom email
-                                    </span>
-                                </label>
-                                {emailOption === "custom" && (
-                                    <input
-                                        type="email"
-                                        value={customEmail}
-                                        onChange={(e) => setCustomEmail(e.target.value)}
-                                        placeholder="recipient@example.com"
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2149A1]/20 focus:border-[#2149A1] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
-                                    />
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3 mt-6">
-                            <button
-                                onClick={() => {
-                                    setShowEmailModal(false);
-                                    setEmailStatus(null);
-                                    setCustomEmail("");
-                                }}
-                                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors active:scale-[0.98] active:opacity-80 text-sm font-medium dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSendEmail}
-                                disabled={isSendingEmail || (emailOption === "custom" && !customEmail)}
-                                className="flex-1 px-4 py-2 bg-[#2149A1] text-white rounded-lg hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed transition-colors active:scale-[0.98] active:opacity-90 text-sm font-medium flex items-center justify-center gap-2"
-                            >
-                                {isSendingEmail ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        Sending...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Mail className="w-4 h-4" />
-                                        Send Email
-                                    </>
-                                )}
                             </button>
                         </div>
                     </div>
