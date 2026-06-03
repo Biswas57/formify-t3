@@ -284,9 +284,6 @@ function TemplateRow({
     // blockCount, fieldCount, previewTitles are pre-computed by listSummary on the server
     const { blockCount, fieldCount, previewTitles } = template;
 
-    const formatDate = (d: Date) =>
-        new Date(d).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
-
     return (
         <div className="group bg-white border border-slate-200 rounded-xl px-5 py-4 hover:border-[#2149A1]/30 hover:shadow-sm transition-all relative dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-400/30">
             <div className="flex items-center gap-4">
@@ -310,8 +307,8 @@ function TemplateRow({
                             )}
                         </div>
                     )}
-                    <p className="text-xs text-[#868C94] mt-0.5 dark:text-slate-400">
-                        {blockCount} block{blockCount !== 1 ? "s" : ""} · {fieldCount} field{fieldCount !== 1 ? "s" : ""} · Updated {formatDate(template.updatedAt)}
+                    <p className="text-xs text-[#868C94] mt-1 dark:text-slate-400">
+                        {blockCount} block{blockCount !== 1 ? "s" : ""} · {fieldCount} field{fieldCount !== 1 ? "s" : ""}
                     </p>
                 </div>
 

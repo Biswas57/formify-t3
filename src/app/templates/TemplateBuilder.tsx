@@ -384,7 +384,7 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                     className="flex-1 min-w-0 text-base font-semibold text-slate-900 bg-transparent border-none outline-none placeholder-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
                 />
 
-                <div className="flex flex-shrink-0 items-center gap-2">
+                <div className="hidden flex-shrink-0 items-center gap-2 md:flex">
                     <button
                         onClick={handleSave}
                         disabled={isSaving || blocks.length === 0 || !templateName.trim()}
