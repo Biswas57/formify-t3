@@ -148,6 +148,7 @@ function TemplateSelector({
     disabled,
     onSelect,
     onToggleSidebar,
+    onClose,
 }: {
     templates: TemplateSummary[];
     selectedTemplateId: string | null;
@@ -155,6 +156,7 @@ function TemplateSelector({
     disabled: boolean;
     onSelect: (id: string) => void;
     onToggleSidebar?: () => void;
+    onClose?: () => void;
 }) {
     return (
         <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-white dark:bg-slate-950">
@@ -197,6 +199,16 @@ function TemplateSelector({
                                 title="Hide templates sidebar"
                             >
                                 <PanelLeftClose className="h-4 w-4" />
+                            </button>
+                        )}
+                        {onClose && (
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="rounded-lg p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-slate-600 md:hidden dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
+                                aria-label="Close form templates"
+                            >
+                                <X className="h-4 w-4" />
                             </button>
                         )}
                     </div>
@@ -1186,7 +1198,7 @@ export default function FormsClient({ user }: { user: User }) {
                             onClick={() => setIsSidebarCollapsed(false)}
                             className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-[#2149A1] dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
                             aria-label="Show form templates sidebar"
-                            title="Show templates"
+                            title="Show form templates sidebar"
                         >
                             <PanelLeftOpen className="h-4 w-4" />
                         </button>
@@ -1216,23 +1228,13 @@ export default function FormsClient({ user }: { user: User }) {
                     <div
                         className={`absolute inset-y-0 left-0 flex w-80 max-w-[86vw] transform flex-col bg-white shadow-2xl transition-transform duration-200 ease-out dark:bg-slate-950 ${templateDrawerOpen ? "translate-x-0" : "-translate-x-full"}`}
                     >
-                        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Choose Template</p>
-                            <button
-                                type="button"
-                                onClick={closeTemplateDrawer}
-                                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 active:scale-95 active:opacity-80 dark:text-slate-400 dark:hover:bg-slate-900"
-                                aria-label="Close template drawer"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        </div>
                         <TemplateSelector
                             templates={templateSummaries as TemplateSummary[]}
                             selectedTemplateId={templateId}
                             loading={templatesLoading}
                             disabled={templateSwitchDisabled}
                             onSelect={requestTemplateSwitch}
+                            onClose={closeTemplateDrawer}
                         />
                     </div>
                 </div>
@@ -1247,7 +1249,7 @@ export default function FormsClient({ user }: { user: User }) {
                             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-[border-color,color,transform,opacity] active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 md:hidden"
                         >
                             <FileText className="h-4 w-4" />
-                            Choose Template
+                            Form Templates
                         </button>
                         <div className="ml-auto flex items-center gap-3">
                             {showConnectionPill && (
@@ -1292,7 +1294,7 @@ export default function FormsClient({ user }: { user: User }) {
                                 className="inline-flex items-center gap-2 rounded-lg bg-[#2149A1] px-4 py-2.5 text-sm font-medium text-white transition-[background-color,transform,opacity] hover:bg-[#1a3a87] active:scale-[0.98] active:opacity-90 md:hidden"
                             >
                                 <FileText className="h-4 w-4" />
-                                Choose Template
+                                Form Templates
                             </button>
                             <Link
                                 href="/templates/new?returnTo=/forms"

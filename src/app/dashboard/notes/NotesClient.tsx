@@ -1704,7 +1704,7 @@ export default function NotesClient({ user }: { user: User }) {
                 <div className="fixed inset-0 z-50 md:hidden">
                     <button
                         type="button"
-                        aria-label="Close templates"
+                        aria-label="Close notes templates"
                         className={`absolute inset-0 bg-black/30 transition-opacity duration-200 dark:bg-black/50 ${sidebarDrawerVisible ? "opacity-100" : "opacity-0"}`}
                         onClick={closeMobileSidebar}
                     />
@@ -1730,8 +1730,8 @@ export default function NotesClient({ user }: { user: User }) {
                                 type="button"
                                 onClick={() => setIsSidebarCollapsed(false)}
                                 className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-[#2149A1] dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-blue-300"
-                                aria-label="Show templates sidebar"
-                                title="Show templates sidebar"
+                                aria-label="Show notes templates sidebar"
+                                title="Show notes templates sidebar"
                             >
                                 <PanelLeftOpen className="h-4 w-4" />
                             </button>
@@ -1761,7 +1761,7 @@ export default function NotesClient({ user }: { user: User }) {
                                     className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-50 md:hidden dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
                                 >
                                     <BookMarked className="h-3.5 w-3.5" />
-                                    Templates
+                                    Notes Templates
                                 </button>
                             </div>
 

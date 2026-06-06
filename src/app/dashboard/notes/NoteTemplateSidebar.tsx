@@ -210,7 +210,7 @@ export default function NoteTemplateSidebar({
                                 type="button"
                                 onClick={onClose}
                                 className="rounded-lg p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-slate-600 md:hidden dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
-                                aria-label="Close templates"
+                                aria-label="Close notes templates"
                             >
                                 <X className="h-4 w-4" />
                             </button>
