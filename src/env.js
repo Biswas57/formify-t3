@@ -19,6 +19,8 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    NOTES_TRANSFORM_SECRET: z.string().optional(),
+    NOTES_TRANSFORM_URL: z.string().url().optional(),
     WS_TOKEN_SECRET: z.string(),
   },
 
@@ -44,6 +46,8 @@ export const env = createEnv({
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
+    NOTES_TRANSFORM_SECRET: process.env.NOTES_TRANSFORM_SECRET,
+    NOTES_TRANSFORM_URL: process.env.NOTES_TRANSFORM_URL,
     WS_TOKEN_SECRET: process.env.WS_TOKEN_SECRET,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,

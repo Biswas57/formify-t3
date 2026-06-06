@@ -12,6 +12,7 @@ Formify is now free-app-first. Do not add Free/Pro distinctions, paywall gates, 
 - The web server mints short-lived WS JWTs in `src/server/ws-token.ts`.
 - Tokens are signed with `WS_TOKEN_SECRET`, which must match the transcription server.
 - Token minting happens through `transcription.getSessionToken` and remains auth-based.
+- Notes Summarise/Reorganise calls protected `transcription.summariseNotes` / `transcription.reorganiseNotes` tRPC mutations; the web server then calls `ws-transcription` HTTP endpoints with `NOTES_TRANSFORM_SECRET`.
 - Do not touch the sibling `ws-transcription` repo unless explicitly asked.
 
 ## Main Files
@@ -67,6 +68,7 @@ Required for normal app usage:
 - `DATABASE_URL`
 - `NODE_ENV`
 - `WS_TOKEN_SECRET`
+- `NOTES_TRANSFORM_SECRET`
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_WS_URL`
 
@@ -74,6 +76,7 @@ Optional or feature-specific:
 
 - `AUTH_DISCORD_ID`
 - `AUTH_DISCORD_SECRET`
+- `NOTES_TRANSFORM_URL` when the notes transform HTTP origin cannot be derived from `NEXT_PUBLIC_WS_URL`
 - `RESEND_API_KEY` for password reset email delivery
 - `EMAIL_FROM` for the password reset sender address
 - `SKIP_ENV_VALIDATION=1`

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Mic, Square, Wifi, WifiOff, RotateCcw, Loader2,
     NotebookPen, Copy, Check, Download, AlertCircle,
-    BookMarked, PanelLeftOpen, ChevronDown,
+    BookMarked, PanelLeftOpen, ChevronDown, X,
 } from "lucide-react";
 import { env } from "@/env";
 import { api } from "@/trpc/react";
@@ -58,6 +58,17 @@ type PendingNotesConfigChange =
     | { type: "style"; noteStyle: NoteStyle }
     | { type: "sections"; sectionsRaw: string };
 
+type NotesTransformType = "summary" | "reorganise";
+
+type NotesTransformPreview = {
+    type: NotesTransformType;
+    markdown: string;
+};
+
+type NotesUndoSnapshot = {
+    markdown: string;
+};
+
 const MAX_NOTES_SESSION_MS = 60 * 60_000;
 const NOTES_SESSION_WARNING_MS = 15 * 60_000;
 const NOTES_SESSION_FINAL_WARNING_MS = 5 * 60_000;
@@ -69,6 +80,9 @@ const NOTES_RECONNECT_TOTAL_WINDOW_MS = 20_000;
 const NOTES_RECONNECT_OVERLOADED_GRACE_MS = 3000;
 const NOTES_RECONNECT_MAX_BUFFERED_CHUNKS = 10;
 const NOTES_RECONNECT_MAX_BUFFERED_BYTES = 4 * 1024 * 1024;
+const NOTES_TRANSFORM_MIN_CHARS = 500;
+const NOTES_TRANSFORM_MIN_WORDS = 80;
+const NOTES_TRANSFORM_MAX_SECTIONS = 12;
 
 const NON_RETRYABLE_NOTES_ERROR_CODES = new Set([
     "invalid-token",
@@ -188,6 +202,109 @@ function isRetryableNotesServerError(code: string): boolean {
     return !NON_RETRYABLE_NOTES_ERROR_CODES.has(code);
 }
 
+function countMarkdownWords(markdown: string): number {
+    return markdown.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function hasEnoughNotesForTransform(markdown: string): boolean {
+    const trimmed = markdown.trim();
+    return trimmed.length >= NOTES_TRANSFORM_MIN_CHARS && countMarkdownWords(trimmed) >= NOTES_TRANSFORM_MIN_WORDS;
+}
+
+function parseTargetSections(value: string): string[] {
+    const seen = new Set<string>();
+    const sections: string[] = [];
+
+    for (const section of value.split(",")) {
+        const trimmed = section.trim();
+        if (!trimmed) continue;
+        const key = trimmed.toLocaleLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        sections.push(trimmed);
+    }
+
+    return sections;
+}
+
+function isPlaceholderMarkdownLine(value: string): boolean {
+    return /^(no relevant notes captured\.?|none|n\/a)$/i.test(value.trim().replace(/^[-*]\s+/, ""));
+}
+
+function extractHeadingsAtLevel(markdown: string, level: number): string[] {
+    const lines = markdown.split(/\r?\n/);
+    const headings: string[] = [];
+    const seen = new Set<string>();
+    const headingPattern = /^(#{1,6})\s+(.+?)\s*#*\s*$/;
+
+    for (let index = 0; index < lines.length; index += 1) {
+        const match = headingPattern.exec(lines[index] ?? "");
+        const hashes = match?.[1];
+        const rawTitle = match?.[2];
+        if (!hashes || !rawTitle || hashes.length !== level) continue;
+
+        const title = rawTitle.trim();
+        if (!title || isPlaceholderMarkdownLine(title)) continue;
+
+        let hasMeaningfulBody = false;
+        for (let bodyIndex = index + 1; bodyIndex < lines.length; bodyIndex += 1) {
+            const bodyLine = lines[bodyIndex] ?? "";
+            const bodyHeading = headingPattern.exec(bodyLine);
+            const bodyHeadingHashes = bodyHeading?.[1];
+            if (bodyHeadingHashes && bodyHeadingHashes.length <= level) break;
+            if (bodyLine.trim() && !isPlaceholderMarkdownLine(bodyLine)) {
+                hasMeaningfulBody = true;
+                break;
+            }
+        }
+
+        if (!hasMeaningfulBody) continue;
+
+        const key = title.toLocaleLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        headings.push(title);
+    }
+
+    return headings.slice(0, NOTES_TRANSFORM_MAX_SECTIONS);
+}
+
+function getReorganiseSectionPrefill(markdown: string): string {
+    for (const level of [2, 1, 3]) {
+        const headings = extractHeadingsAtLevel(markdown, level);
+        if (headings.length > 0) return headings.join(", ");
+    }
+
+    return "";
+}
+
+function getSafeTransformErrorMessage(error: unknown, type: NotesTransformType): string {
+    const fallback = "The transform failed. Your notes were not changed.";
+    const message = error instanceof Error ? error.message : "";
+    const safeMessages = new Set([
+        "These notes are too short to summarise yet.",
+        "These notes are too short to reorganise yet.",
+        "Use up to 12 sections.",
+        "The notes transform service is unavailable. Your notes were not changed.",
+        "The transform failed. Your notes were not changed.",
+        "The transform result looked incomplete. Your notes were not changed.",
+        "Finish editing before using Actions.",
+    ]);
+
+    if (safeMessages.has(message)) return message;
+    if (message.toLocaleLowerCase().includes("too short")) {
+        return type === "summary"
+            ? "These notes are too short to summarise yet."
+            : "These notes are too short to reorganise yet.";
+    }
+    if (message.toLocaleLowerCase().includes("12 sections")) return "Use up to 12 sections.";
+    if (message.toLocaleLowerCase().includes("unavailable")) {
+        return "The notes transform service is unavailable. Your notes were not changed.";
+    }
+
+    return fallback;
+}
+
 // ─── Simple markdown renderer ────────────────────────────────────────────────
 // No external dependency — renders headings, bullets, bold, paragraphs.
 
@@ -295,6 +412,8 @@ export default function NotesClient({ user }: { user: User }) {
 
     // Token
     const getSessionToken = api.transcription.getSessionToken.useMutation();
+    const summariseNotes = api.transcription.summariseNotes.useMutation();
+    const reorganiseNotes = api.transcription.reorganiseNotes.useMutation();
     const wsTokenRef = useRef<string | null>(null);
     const utils = api.useUtils();
 
@@ -318,12 +437,20 @@ export default function NotesClient({ user }: { user: User }) {
     const [copied, setCopied] = useState(false);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [downloadOpen, setDownloadOpen] = useState(false);
+    const [actionsOpen, setActionsOpen] = useState(false);
+    const [transformError, setTransformError] = useState<string | null>(null);
+    const [transformPreview, setTransformPreview] = useState<NotesTransformPreview | null>(null);
+    const [reorganiseDialogOpen, setReorganiseDialogOpen] = useState(false);
+    const [reorganiseSectionsRaw, setReorganiseSectionsRaw] = useState("");
+    const [reorganiseAutoSections, setReorganiseAutoSections] = useState(false);
+    const [undoSnapshot, setUndoSnapshot] = useState<NotesUndoSnapshot | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarDrawerVisible, setSidebarDrawerVisible] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [pendingNotesConfigChange, setPendingNotesConfigChange] = useState<PendingNotesConfigChange | null>(null);
     const [isStartingRecording, setIsStartingRecording] = useState(false);
     const downloadMenuRef = useRef<HTMLDivElement>(null);
+    const actionsMenuRef = useRef<HTMLDivElement>(null);
     const sidebarCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const draftHydratedRef = useRef(false);
@@ -427,6 +554,31 @@ export default function NotesClient({ user }: { user: User }) {
                 ? "Connected"
                 : "Disconnected";
     const canEditNotes = hasNotes && isFinal && !isRecording && !isFinalizing;
+    const isTransforming = summariseNotes.isPending || reorganiseNotes.isPending;
+    const notesAreLongEnoughForTransform = hasEnoughNotesForTransform(visibleNotesMarkdown);
+    const transformsBlockedByLifecycle =
+        isStartingRecording ||
+        isRecording ||
+        isFinalizing ||
+        wsStatus === "connecting" ||
+        wsStatus === "reconnecting" ||
+        getSessionToken.isPending;
+    const transformDisabledReason = (() => {
+        if (isEditingNotes) return "Finish editing before using Actions.";
+        if (transformsBlockedByLifecycle) return "Actions are unavailable while recording is active.";
+        if (isTransforming) return "A notes action is already running.";
+        if (!hasVisibleNotes) return "Add notes before using Actions.";
+        if (!notesAreLongEnoughForTransform) {
+            return "These notes are too short to summarise yet. These notes are too short to reorganise yet.";
+        }
+        return null;
+    })();
+    const canRunTransform = transformDisabledReason === null;
+    const canUndoTransform =
+        undoSnapshot !== null &&
+        !isEditingNotes &&
+        !transformsBlockedByLifecycle &&
+        !isTransforming;
 
     useEffect(() => {
         visibleNotesMarkdownRef.current = visibleNotesMarkdown;
@@ -475,8 +627,33 @@ export default function NotesClient({ user }: { user: User }) {
     }, [downloadOpen]);
 
     useEffect(() => {
+        if (!actionsOpen) return;
+
+        const handleClick = (event: MouseEvent) => {
+            if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+                setActionsOpen(false);
+            }
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setActionsOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClick);
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClick);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [actionsOpen]);
+
+    useEffect(() => {
         if (!hasVisibleNotes) {
             setDownloadOpen(false);
+            setActionsOpen(false);
         }
     }, [hasVisibleNotes]);
 
@@ -1441,6 +1618,8 @@ export default function NotesClient({ user }: { user: User }) {
         startInFlightRef.current = true;
         resetReconnectState();
         clearLogicalRecordingSession();
+        cancelTransformFlow();
+        setUndoSnapshot(null);
         setIsStartingRecording(true);
         setMicError(null);
         manualStopRequestedRef.current = false;
@@ -1605,6 +1784,8 @@ export default function NotesClient({ user }: { user: User }) {
         sessionGenerationRef.current += 1;
         startInFlightRef.current = false;
         stopInFlightRef.current = false;
+        cancelTransformFlow();
+        setUndoSnapshot(null);
         stopLocalRecorder();
         clearLogicalRecordingSession();
         // Close any active socket intentionally and do not reconnect — a new
@@ -1639,6 +1820,137 @@ export default function NotesClient({ user }: { user: User }) {
 
     const cancelNotesConfigChange = () => {
         setPendingNotesConfigChange(null);
+    };
+
+    // ── Notes transforms ─────────────────────────────────────────────────────
+
+    const getTransformPreflightError = (type: NotesTransformType): string | null => {
+        if (isEditingNotesRef.current) return "Finish editing before using Actions.";
+        if (transformsBlockedByLifecycle || isTransforming) return "The transform failed. Your notes were not changed.";
+        if (!visibleNotesMarkdownRef.current.trim()) {
+            return type === "summary"
+                ? "These notes are too short to summarise yet."
+                : "These notes are too short to reorganise yet.";
+        }
+        if (!hasEnoughNotesForTransform(visibleNotesMarkdownRef.current)) {
+            return type === "summary"
+                ? "These notes are too short to summarise yet."
+                : "These notes are too short to reorganise yet.";
+        }
+
+        return null;
+    };
+
+    const replaceCanonicalNotes = (markdown: string) => {
+        setNotesMarkdown(markdown);
+        visibleNotesMarkdownRef.current = markdown;
+        setPreFinalNotesMarkdown(null);
+        clearNotesEditState();
+    };
+
+    const openReorganiseDialog = () => {
+        setActionsOpen(false);
+        setTransformError(null);
+        const preflightError = getTransformPreflightError("reorganise");
+        if (preflightError) {
+            setTransformError(preflightError);
+            return;
+        }
+
+        setReorganiseSectionsRaw(getReorganiseSectionPrefill(visibleNotesMarkdownRef.current));
+        setReorganiseAutoSections(false);
+        setReorganiseDialogOpen(true);
+    };
+
+    const handleSummariseNotes = async () => {
+        setActionsOpen(false);
+        setTransformError(null);
+
+        const preflightError = getTransformPreflightError("summary");
+        if (preflightError) {
+            setTransformError(preflightError);
+            return;
+        }
+
+        try {
+            const result = await summariseNotes.mutateAsync({
+                notesMarkdown: visibleNotesMarkdownRef.current,
+                noteStyle,
+            });
+            if (!result.summaryMarkdown.trim()) {
+                setTransformError("The transform result looked incomplete. Your notes were not changed.");
+                return;
+            }
+            setTransformPreview({ type: "summary", markdown: result.summaryMarkdown });
+        } catch (error) {
+            setTransformError(getSafeTransformErrorMessage(error, "summary"));
+        }
+    };
+
+    const handleGenerateReorganisePreview = async () => {
+        setTransformError(null);
+
+        const preflightError = getTransformPreflightError("reorganise");
+        if (preflightError) {
+            setTransformError(preflightError);
+            return;
+        }
+
+        const targetSections = reorganiseAutoSections ? [] : parseTargetSections(reorganiseSectionsRaw);
+        if (!reorganiseAutoSections && targetSections.length > NOTES_TRANSFORM_MAX_SECTIONS) {
+            setTransformError("Use up to 12 sections.");
+            return;
+        }
+
+        try {
+            const result = await reorganiseNotes.mutateAsync({
+                notesMarkdown: visibleNotesMarkdownRef.current,
+                noteStyle,
+                targetSections,
+            });
+            if (!result.reorganisedMarkdown.trim()) {
+                setTransformError("The transform result looked incomplete. Your notes were not changed.");
+                return;
+            }
+            setTransformPreview({ type: "reorganise", markdown: result.reorganisedMarkdown });
+            setReorganiseDialogOpen(false);
+        } catch (error) {
+            setTransformError(getSafeTransformErrorMessage(error, "reorganise"));
+        }
+    };
+
+    const cancelTransformFlow = () => {
+        setTransformPreview(null);
+        setReorganiseDialogOpen(false);
+        setTransformError(null);
+    };
+
+    const backToReorganiseSections = () => {
+        setTransformPreview(null);
+        setReorganiseDialogOpen(true);
+        setTransformError(null);
+    };
+
+    const applyTransformPreview = () => {
+        if (!transformPreview) return;
+
+        const previousMarkdown = visibleNotesMarkdownRef.current;
+        setUndoSnapshot({ markdown: previousMarkdown });
+        replaceCanonicalNotes(transformPreview.markdown);
+        setTransformPreview(null);
+        setReorganiseDialogOpen(false);
+        setTransformError(null);
+    };
+
+    const handleUndoLastChange = () => {
+        if (!undoSnapshot || !canUndoTransform) return;
+
+        setActionsOpen(false);
+        replaceCanonicalNotes(undoSnapshot.markdown);
+        setUndoSnapshot(null);
+        setTransformPreview(null);
+        setReorganiseDialogOpen(false);
+        setTransformError(null);
     };
 
     // ── PDF Export ────────────────────────────────────────────────────────────
@@ -1954,6 +2266,62 @@ export default function NotesClient({ user }: { user: User }) {
 
                             {hasNotes && (
                                 <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+                                    <div className="relative" ref={actionsMenuRef}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setActionsOpen((value) => !value)}
+                                            disabled={!hasVisibleNotes}
+                                            aria-haspopup="menu"
+                                            aria-expanded={actionsOpen}
+                                            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                        >
+                                            Actions
+                                            <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${actionsOpen ? "rotate-180" : ""}`} />
+                                        </button>
+
+                                        {actionsOpen && (
+                                            <div
+                                                role="menu"
+                                                className="absolute right-0 top-full z-20 mt-1.5 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    role="menuitem"
+                                                    onClick={() => void handleSummariseNotes()}
+                                                    disabled={!canRunTransform}
+                                                    className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                >
+                                                    <span>Summarise</span>
+                                                    {summariseNotes.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    role="menuitem"
+                                                    onClick={openReorganiseDialog}
+                                                    disabled={!canRunTransform}
+                                                    className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                >
+                                                    <span>Reorganise</span>
+                                                    {reorganiseNotes.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />}
+                                                </button>
+                                                <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                                                <button
+                                                    type="button"
+                                                    role="menuitem"
+                                                    onClick={handleUndoLastChange}
+                                                    disabled={!canUndoTransform}
+                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                >
+                                                    Undo last change
+                                                </button>
+                                                {transformDisabledReason && (
+                                                    <div className="border-t border-slate-100 px-3 py-2 text-[11px] leading-snug text-slate-400 dark:border-slate-800 dark:text-slate-500">
+                                                        {transformDisabledReason}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                     {canEditNotes && (
                                         isEditingNotes ? (
                                             <>
@@ -2057,6 +2425,20 @@ export default function NotesClient({ user }: { user: User }) {
                             </div>
                         )}
 
+                        {transformError && (
+                            <div className="flex items-center justify-between gap-3 border-b border-red-100 bg-red-50 px-5 py-2 text-xs font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+                                <span>{transformError}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setTransformError(null)}
+                                    className="rounded-md px-1.5 py-1 text-red-500 transition-colors active:scale-95 active:opacity-80 hover:bg-red-100 hover:text-red-700 dark:text-red-300 dark:hover:bg-red-900/40 dark:hover:text-red-100"
+                                    aria-label="Dismiss notes action error"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                        )}
+
                         {/* Notes content */}
                         <div className="px-6 py-5">
                             {isEditingNotes ? (
@@ -2101,6 +2483,137 @@ export default function NotesClient({ user }: { user: User }) {
                     </div>
                 </main>
             </div>
+
+            {reorganiseDialogOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <button
+                        type="button"
+                        aria-label="Cancel reorganise notes"
+                        className="absolute inset-0 bg-black/50"
+                        onClick={cancelTransformFlow}
+                    />
+                    <div className="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:shadow-slate-950/60">
+                        <button
+                            type="button"
+                            onClick={cancelTransformFlow}
+                            className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                            aria-label="Cancel reorganise notes"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                        <h3 className="pr-8 text-lg font-semibold text-slate-900 dark:text-slate-100">Reorganise notes</h3>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                            Choose target sections for a preview, or let Formify organise the notes automatically.
+                        </p>
+
+                        <label className="mt-5 block text-xs font-medium text-[#868C94] dark:text-slate-400">
+                            Sections <span className="font-normal">(comma-separated)</span>
+                        </label>
+                        <textarea
+                            value={reorganiseSectionsRaw}
+                            onChange={(event) => setReorganiseSectionsRaw(event.target.value)}
+                            disabled={reorganiseAutoSections}
+                            rows={4}
+                            placeholder="Summary, Key Points, Actions"
+                            className="mt-1.5 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-900 dark:disabled:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+                        />
+
+                        <label className="mt-3 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                            <input
+                                type="checkbox"
+                                checked={reorganiseAutoSections}
+                                onChange={(event) => setReorganiseAutoSections(event.target.checked)}
+                                className="h-4 w-4 rounded border-slate-300 text-[#2149A1] focus:ring-[#2149A1]/30 dark:border-slate-700 dark:bg-slate-950"
+                            />
+                            Auto sections
+                        </label>
+
+                        {transformError && (
+                            <p className="mt-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+                                {transformError}
+                            </p>
+                        )}
+
+                        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                            <button
+                                type="button"
+                                onClick={() => void handleGenerateReorganisePreview()}
+                                disabled={reorganiseNotes.isPending}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#2149A1] px-4 py-2 text-sm font-medium text-white transition-[background-color,transform,opacity] hover:bg-[#1a3a87] active:scale-[0.98] active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {reorganiseNotes.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                                Preview Reorganised Notes
+                            </button>
+                            <button
+                                type="button"
+                                onClick={cancelTransformFlow}
+                                className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {transformPreview && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <button
+                        type="button"
+                        aria-label="Cancel notes action preview"
+                        className="absolute inset-0 bg-black/50"
+                        onClick={cancelTransformFlow}
+                    />
+                    <div className="relative flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-xl dark:bg-slate-900 dark:shadow-slate-950/60">
+                        <div className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+                            <button
+                                type="button"
+                                onClick={cancelTransformFlow}
+                                className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                aria-label="Cancel notes action preview"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                            <h3 className="pr-8 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                                {transformPreview.type === "summary" ? "Summary Preview" : "Reorganised Notes Preview"}
+                            </h3>
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                Your current notes will not change until you apply this preview.
+                            </p>
+                        </div>
+
+                        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+                            {renderMarkdown(transformPreview.markdown)}
+                        </div>
+
+                        <div className="flex flex-col gap-3 border-t border-slate-100 px-6 py-4 sm:flex-row dark:border-slate-800">
+                            <button
+                                type="button"
+                                onClick={applyTransformPreview}
+                                className="flex-1 rounded-lg bg-[#2149A1] px-4 py-2 text-sm font-medium text-white transition-[background-color,transform,opacity] hover:bg-[#1a3a87] active:scale-[0.98] active:opacity-90"
+                            >
+                                {transformPreview.type === "summary" ? "Apply Summary" : "Apply Reorganised Notes"}
+                            </button>
+                            {transformPreview.type === "reorganise" && (
+                                <button
+                                    type="button"
+                                    onClick={backToReorganiseSections}
+                                    className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                >
+                                    Back to sections
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={cancelTransformFlow}
+                                className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {pendingNotesConfigChange && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

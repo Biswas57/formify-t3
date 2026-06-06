@@ -20,7 +20,7 @@ Recording, notes, form templates, note templates, and custom blocks are availabl
 - **Auth**: NextAuth configuration lives in `src/server/auth`.
 - **Database**: Prisma models and migrations live in `prisma`; generated client output is in `generated/prisma`.
 - **Free-app access model**: core feature access is auth-based, not plan-based.
-- **Transcription server bridge**: the web app mints short-lived WS JWTs in `src/server/ws-token.ts` and sends them to `NEXT_PUBLIC_WS_URL`.
+- **Transcription server bridge**: the web app mints short-lived WS JWTs in `src/server/ws-token.ts` and sends them to `NEXT_PUBLIC_WS_URL`; protected tRPC mutations call `ws-transcription` HTTP notes transform endpoints server-to-server.
 
 ## Recording Flow
 
@@ -58,6 +58,7 @@ Required at a high level:
 - `AUTH_GOOGLE_ID`
 - `AUTH_GOOGLE_SECRET`
 - `WS_TOKEN_SECRET`
+- `NOTES_TRANSFORM_SECRET` for Summarise/Reorganise server-to-server calls
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_WS_URL`
 
@@ -65,11 +66,12 @@ Optional or feature-specific:
 
 - `AUTH_DISCORD_ID`
 - `AUTH_DISCORD_SECRET`
+- `NOTES_TRANSFORM_URL` when Notes transform HTTP endpoints are not on the same origin as `NEXT_PUBLIC_WS_URL` after `ws/wss` to `http/https` conversion
 - `RESEND_API_KEY` for password reset email delivery
 - `EMAIL_FROM` for the password reset sender address
 - `SKIP_ENV_VALIDATION=1` for build environments that intentionally skip env checks
 
-`WS_TOKEN_SECRET` must match the secret configured on the separate transcription WebSocket server.
+`WS_TOKEN_SECRET` must match the secret configured on the separate transcription WebSocket server. `NOTES_TRANSFORM_SECRET` must match the Bearer secret configured for the transcription server's notes transform HTTP endpoints.
 
 ## Local Development
 
@@ -111,4 +113,4 @@ npm run lint
 npm run build
 ```
 
-The web app expects the transcription WebSocket server to be running at `NEXT_PUBLIC_WS_URL`.
+The web app expects the transcription WebSocket server to be running at `NEXT_PUBLIC_WS_URL`. Notes Summarise/Reorganise uses protected web tRPC mutations; the web server calls the transcription server's HTTP transform endpoints with `NOTES_TRANSFORM_SECRET`, deriving the HTTP origin from `NEXT_PUBLIC_WS_URL` unless `NOTES_TRANSFORM_URL` is set.
