@@ -64,6 +64,20 @@ const NOTES_SESSION_FINAL_WARNING_MS = 5 * 60_000;
 const NOTES_SESSION_STRONG_WARNING_MS = 2 * 60_000;
 const NOTES_DRAFT_STORAGE_PREFIX = "formify:notes:draft:v1";
 const NOTES_DRAFT_SAVE_DEBOUNCE_MS = 300;
+const NOTES_RECONNECT_DELAYS_MS = [500, 1000, 2000, 4000, 8000] as const;
+const NOTES_RECONNECT_TOTAL_WINDOW_MS = 20_000;
+const NOTES_RECONNECT_OVERLOADED_GRACE_MS = 3000;
+const NOTES_RECONNECT_MAX_BUFFERED_CHUNKS = 10;
+const NOTES_RECONNECT_MAX_BUFFERED_BYTES = 4 * 1024 * 1024;
+
+const NON_RETRYABLE_NOTES_ERROR_CODES = new Set([
+    "invalid-token",
+    "missing-token",
+    "mode-mismatch",
+    "bad-start-payload",
+    "unknown-mode",
+    "bad-json",
+]);
 
 type NotesStartPayload = {
     action: "start";
@@ -168,6 +182,10 @@ function getSessionWarningLevel(remainingMs: number): SessionLimitWarningLevel {
     if (remainingMs <= NOTES_SESSION_FINAL_WARNING_MS) return "final-warning";
     if (remainingMs <= NOTES_SESSION_WARNING_MS) return "warning";
     return "none";
+}
+
+function isRetryableNotesServerError(code: string): boolean {
+    return !NON_RETRYABLE_NOTES_ERROR_CODES.has(code);
 }
 
 // ─── Simple markdown renderer ────────────────────────────────────────────────
@@ -312,6 +330,15 @@ export default function NotesClient({ user }: { user: User }) {
     const isEditingNotesRef = useRef(false);
     const hasManualEditsRef = useRef(false);
     const visibleNotesMarkdownRef = useRef("");
+    const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const reconnectGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const reconnectAttemptRef = useRef(0);
+    const reconnectDeadlineRef = useRef<number | null>(null);
+    const reconnectingRef = useRef(false);
+    const reconnectAttemptInFlightRef = useRef(false);
+    const reconnectTokenRef = useRef<string | null>(null);
+    const reconnectAudioBufferRef = useRef<Blob[]>([]);
+    const reconnectAudioBufferBytesRef = useRef(0);
 
     const isConnected = wsStatus === "connected";
     const isRecording = recordStatus === "recording";
@@ -319,10 +346,16 @@ export default function NotesClient({ user }: { user: User }) {
     const isPaused = recordStatus === "paused";
     // Sockets open on demand at record time (T-018), so starting does not
     // require an existing connection; only block while finalising or connecting.
-    const canRecord = !isStartingRecording && !isFinalizing && wsStatus !== "connecting";
+    const canRecord = !isStartingRecording && !isFinalizing && wsStatus !== "connecting" && wsStatus !== "reconnecting";
     // The connection pill is only meaningful while a session is being
     // established or is active; hide it when idle/paused with no socket.
-    const showConnectionPill = isStartingRecording || isRecording || isFinalizing || wsStatus === "connecting" || wsStatus === "error";
+    const showConnectionPill =
+        isStartingRecording ||
+        isRecording ||
+        isFinalizing ||
+        wsStatus === "connecting" ||
+        wsStatus === "reconnecting" ||
+        wsStatus === "error";
     const canSelectTemplate = !isStartingRecording && !isRecording && !isFinalizing;
     const errorMessage = wsError ?? micError;
     const sessionLimitRemainingMinutes =
@@ -370,7 +403,9 @@ export default function NotesClient({ user }: { user: User }) {
     const displayTitle = sessionTitle.trim() || `${NOTE_STYLE_LABELS[noteStyle]} Notes`;
     const statusText = isStartingRecording
         ? "Connecting — preparing notes session."
-        : isRecording
+        : wsStatus === "reconnecting"
+            ? "Reconnecting — preserving your recording."
+            : isRecording
             ? "Recording — notes are updating live."
             : isFinalizing
                 ? "Finalising — generating final notes."
@@ -582,6 +617,7 @@ export default function NotesClient({ user }: { user: User }) {
     // as interruptions nor trigger any reconnect.
     const recordStatusRef = useRef<RecordStatus>("idle");
     const intentionalCloseRef = useRef(false);
+    const intentionalCloseSocketRef = useRef<WebSocket | null>(null);
     const sessionGenerationRef = useRef(0);
     const activeSessionGenerationRef = useRef<number | null>(null);
     const startInFlightRef = useRef(false);
@@ -593,6 +629,182 @@ export default function NotesClient({ user }: { user: User }) {
         activeSessionGenerationRef.current = null;
         wsTokenRef.current = null;
     }, []);
+
+    function markSocketCloseIntentional(socket: WebSocket | null = wsRef.current) {
+        intentionalCloseRef.current = true;
+        intentionalCloseSocketRef.current = socket;
+    }
+
+    function consumeIntentionalClose(socket: WebSocket): boolean {
+        const wasIntentional =
+            intentionalCloseRef.current &&
+            (intentionalCloseSocketRef.current === null || intentionalCloseSocketRef.current === socket);
+
+        if (intentionalCloseSocketRef.current === null || intentionalCloseSocketRef.current === socket) {
+            intentionalCloseRef.current = false;
+            intentionalCloseSocketRef.current = null;
+        }
+
+        return wasIntentional;
+    }
+
+    function clearReconnectTimers() {
+        if (reconnectTimerRef.current) {
+            clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+        }
+        if (reconnectGraceTimerRef.current) {
+            clearTimeout(reconnectGraceTimerRef.current);
+            reconnectGraceTimerRef.current = null;
+        }
+    }
+
+    function clearReconnectAudioBuffer() {
+        reconnectAudioBufferRef.current = [];
+        reconnectAudioBufferBytesRef.current = 0;
+    }
+
+    function resetReconnectState({ clearAudio = true }: { clearAudio?: boolean } = {}) {
+        clearReconnectTimers();
+        reconnectAttemptRef.current = 0;
+        reconnectDeadlineRef.current = null;
+        reconnectingRef.current = false;
+        reconnectAttemptInFlightRef.current = false;
+        reconnectTokenRef.current = null;
+        if (clearAudio) clearReconnectAudioBuffer();
+    }
+
+    function buildNotesStartPayload(token: string, forceContinuation: boolean): NotesStartPayload {
+        const sections = sectionsRaw
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+        const continuationNotesMarkdown = visibleNotesMarkdownRef.current;
+        const shouldContinueNotesSession =
+            forceContinuation ||
+            (recordStatusRef.current !== "idle" && continuationNotesMarkdown.trim().length > 0);
+
+        const startPayload: NotesStartPayload = {
+            action: "start",
+            mode: "notes",
+            noteStyle,
+            sections,
+            token,
+        };
+
+        if (shouldContinueNotesSession) {
+            startPayload.continuation = true;
+            startPayload.currentNotesMarkdown = continuationNotesMarkdown;
+        }
+
+        return startPayload;
+    }
+
+    function moveToPausedAfterReconnectFailure(message: string) {
+        resetReconnectState();
+        const ws = wsRef.current;
+        if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
+            markSocketCloseIntentional(ws);
+            ws.close(1000, "reconnect-failed");
+        }
+        if (wsRef.current === ws) {
+            wsRef.current = null;
+        }
+        markSessionInactive();
+        stopLocalRecorder();
+        setIsStartingRecording(false);
+        startInFlightRef.current = false;
+        stopInFlightRef.current = false;
+        if (recordStatusRef.current !== "idle") {
+            setRecordStatus("paused");
+            recordStatusRef.current = "paused";
+        }
+        setWsError(message);
+        setWsStatus("error");
+    }
+
+    function bufferAudioChunk(chunk: Blob) {
+        if (chunk.size <= 0 || recordStatusRef.current !== "recording") return;
+
+        const nextChunkCount = reconnectAudioBufferRef.current.length + 1;
+        const nextBytes = reconnectAudioBufferBytesRef.current + chunk.size;
+
+        if (
+            nextChunkCount > NOTES_RECONNECT_MAX_BUFFERED_CHUNKS ||
+            nextBytes > NOTES_RECONNECT_MAX_BUFFERED_BYTES
+        ) {
+            moveToPausedAfterReconnectFailure(
+                "The recording connection could not be recovered quickly enough. Your notes so far are preserved. Resume to continue."
+            );
+            return;
+        }
+
+        reconnectAudioBufferRef.current.push(chunk);
+        reconnectAudioBufferBytesRef.current = nextBytes;
+    }
+
+    function flushBufferedAudio(sessionGeneration: number) {
+        const ws = wsRef.current;
+        if (
+            ws?.readyState !== WebSocket.OPEN ||
+            !wsSessionReadyRef.current ||
+            activeSessionGenerationRef.current !== sessionGeneration ||
+            recordStatusRef.current !== "recording"
+        ) {
+            return;
+        }
+
+        const buffered = reconnectAudioBufferRef.current;
+        reconnectAudioBufferRef.current = [];
+        reconnectAudioBufferBytesRef.current = 0;
+
+        for (const chunk of buffered) {
+            if (
+                ws.readyState !== WebSocket.OPEN ||
+                !wsSessionReadyRef.current ||
+                activeSessionGenerationRef.current !== sessionGeneration ||
+                recordStatusRef.current !== "recording"
+            ) {
+                bufferAudioChunk(chunk);
+                return;
+            }
+
+            ws.send(chunk);
+        }
+    }
+
+    function sendOrBufferAudioChunk(chunk: Blob) {
+        if (chunk.size <= 0 || recordStatusRef.current !== "recording") return;
+
+        const ws = wsRef.current;
+        const canSend =
+            !reconnectingRef.current &&
+            ws?.readyState === WebSocket.OPEN &&
+            wsSessionReadyRef.current &&
+            activeSessionGenerationRef.current !== null;
+
+        if (!canSend) {
+            bufferAudioChunk(chunk);
+            return;
+        }
+
+        try {
+            ws.send(chunk);
+        } catch {
+            bufferAudioChunk(chunk);
+            beginReconnect("audio-send-failed");
+        }
+    }
+
+    async function getReconnectToken(): Promise<string> {
+        if (reconnectTokenRef.current) return reconnectTokenRef.current;
+
+        const result = await getSessionToken.mutateAsync({ mode: "notes" });
+        reconnectTokenRef.current = result.token;
+        void utils.usage.getToday.invalidate();
+        return result.token;
+    }
 
     const waitForSessionStarted = useCallback((sessionGeneration: number) => (
         new Promise<void>((resolve, reject) => {
@@ -618,37 +830,223 @@ export default function NotesClient({ user }: { user: User }) {
         })
     ), []);
 
+    function beginReconnect(reason: string, { graceMs = 0 }: { graceMs?: number } = {}): boolean {
+        if (recordStatusRef.current !== "recording" || stopInFlightRef.current || startInFlightRef.current) {
+            return false;
+        }
+
+        if (!reconnectingRef.current) {
+            reconnectingRef.current = true;
+            reconnectAttemptRef.current = 0;
+            reconnectDeadlineRef.current = Date.now() + NOTES_RECONNECT_TOTAL_WINDOW_MS;
+            reconnectTokenRef.current = null;
+            clearReconnectAudioBuffer();
+        }
+
+        wsSessionReadyRef.current = false;
+        setSessionReady(false);
+        setIsStartingRecording(false);
+        setWsError(null);
+        setMicError(null);
+        setWsStatus("reconnecting");
+        console.warn(`[Notes] Recovering recording connection after ${reason}`);
+
+        if (graceMs > 0) {
+            if (!reconnectGraceTimerRef.current && !reconnectTimerRef.current && !reconnectAttemptInFlightRef.current) {
+                reconnectGraceTimerRef.current = setTimeout(() => {
+                    reconnectGraceTimerRef.current = null;
+                    scheduleReconnectAttempt();
+                }, graceMs);
+            }
+            return true;
+        }
+
+        if (reconnectGraceTimerRef.current) {
+            clearTimeout(reconnectGraceTimerRef.current);
+            reconnectGraceTimerRef.current = null;
+        }
+
+        if (!reconnectTimerRef.current && !reconnectAttemptInFlightRef.current) {
+            scheduleReconnectAttempt();
+        }
+
+        return true;
+    }
+
+    function scheduleReconnectAttempt() {
+        if (!reconnectingRef.current || recordStatusRef.current !== "recording" || stopInFlightRef.current) {
+            return;
+        }
+
+        if (reconnectGraceTimerRef.current) {
+            clearTimeout(reconnectGraceTimerRef.current);
+            reconnectGraceTimerRef.current = null;
+        }
+
+        if (reconnectTimerRef.current || reconnectAttemptInFlightRef.current) return;
+
+        const now = Date.now();
+        const deadline = reconnectDeadlineRef.current ?? now + NOTES_RECONNECT_TOTAL_WINDOW_MS;
+        reconnectDeadlineRef.current = deadline;
+
+        const attemptIndex = reconnectAttemptRef.current;
+        if (attemptIndex >= NOTES_RECONNECT_DELAYS_MS.length || now >= deadline) {
+            moveToPausedAfterReconnectFailure(
+                "The recording connection could not be recovered. Your notes so far are preserved. Resume to continue."
+            );
+            return;
+        }
+
+        reconnectAttemptRef.current = attemptIndex + 1;
+        const retryDelayMs = NOTES_RECONNECT_DELAYS_MS[attemptIndex] ?? NOTES_RECONNECT_DELAYS_MS.at(-1)!;
+        const delay = Math.min(retryDelayMs, Math.max(0, deadline - now));
+
+        reconnectTimerRef.current = setTimeout(() => {
+            reconnectTimerRef.current = null;
+            void runReconnectAttempt();
+        }, delay);
+    }
+
+    async function runReconnectAttempt() {
+        if (!reconnectingRef.current || recordStatusRef.current !== "recording" || stopInFlightRef.current) {
+            return;
+        }
+
+        reconnectAttemptInFlightRef.current = true;
+
+        try {
+            const deadline = reconnectDeadlineRef.current ?? Date.now() + NOTES_RECONNECT_TOTAL_WINDOW_MS;
+            const remainingMs = deadline - Date.now();
+            if (remainingMs <= 0) {
+                throw new Error("reconnect-window-expired");
+            }
+
+            const token = await getReconnectToken();
+            if (!reconnectingRef.current || recordStatusRef.current !== "recording" || stopInFlightRef.current) {
+                return;
+            }
+
+            const sessionGeneration = sessionGenerationRef.current + 1;
+            sessionGenerationRef.current = sessionGeneration;
+            activeSessionGenerationRef.current = sessionGeneration;
+            wsSessionReadyRef.current = false;
+            setSessionReady(false);
+
+            const previousWs = wsRef.current;
+            if (previousWs && previousWs.readyState !== WebSocket.CLOSED && previousWs.readyState !== WebSocket.CLOSING) {
+                markSocketCloseIntentional(previousWs);
+                previousWs.close(1000, "notes-reconnect");
+            }
+            if (wsRef.current === previousWs) {
+                wsRef.current = null;
+            }
+
+            const ws = await connectWS(
+                "reconnecting",
+                sessionGeneration,
+                Math.max(1000, Math.min(8000, remainingMs))
+            );
+
+            if (!reconnectingRef.current || recordStatusRef.current !== "recording" || stopInFlightRef.current) {
+                markSocketCloseIntentional(ws);
+                ws.close(1000, "reconnect-cancelled");
+                return;
+            }
+
+            ws.send(JSON.stringify(buildNotesStartPayload(token, true)));
+            await waitForSessionStarted(sessionGeneration);
+
+            if (!reconnectingRef.current || recordStatusRef.current !== "recording" || stopInFlightRef.current) {
+                markSocketCloseIntentional(ws);
+                ws.close(1000, "reconnect-cancelled");
+                return;
+            }
+
+            setWsStatus("connected");
+            setWsError(null);
+            setMicError(null);
+            flushBufferedAudio(sessionGeneration);
+            resetReconnectState({ clearAudio: false });
+        } catch (error) {
+            if (!reconnectingRef.current || recordStatusRef.current !== "recording" || stopInFlightRef.current) {
+                return;
+            }
+
+            const failedWs = wsRef.current;
+            if (failedWs && failedWs.readyState !== WebSocket.CLOSED && failedWs.readyState !== WebSocket.CLOSING) {
+                markSocketCloseIntentional(failedWs);
+                failedWs.close(1000, "reconnect-attempt-failed");
+            }
+            if (wsRef.current === failedWs) {
+                wsRef.current = null;
+            }
+            markSessionInactive();
+            reconnectAttemptInFlightRef.current = false;
+            console.warn("[Notes] Reconnect attempt failed:", error);
+            scheduleReconnectAttempt();
+        } finally {
+            reconnectAttemptInFlightRef.current = false;
+        }
+    }
+
+    function handleTerminalServerError(serverError: string, message: string | undefined, ws: WebSocket) {
+        resetReconnectState();
+        markSessionInactive();
+        stopLocalRecorder();
+        setIsStartingRecording(false);
+        if (recordStatusRef.current !== "idle") {
+            setRecordStatus("paused");
+            recordStatusRef.current = "paused";
+        }
+        if (serverError === "invalid-token" || serverError === "missing-token") {
+            setMicError("Session expired. Please try starting again.");
+        } else {
+            setMicError(message ?? "The notes session ended unexpectedly. Please try again.");
+        }
+        setWsStatus("error");
+        startInFlightRef.current = false;
+        stopInFlightRef.current = false;
+        markSocketCloseIntentional(ws);
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+            ws.close(1000, "server-error");
+        }
+        if (wsRef.current === ws) {
+            wsRef.current = null;
+        }
+    }
+
     // Opens a WebSocket on demand and resolves once it is OPEN. There is no
-    // idle/pre-connected socket and no auto-reconnect — the connection only
-    // lives for the duration of a recording/finalising session.
-    const connectWS = useCallback((): Promise<WebSocket> => {
+    // idle/pre-connected socket; reconnects are explicit and bounded.
+    function connectWS(
+        status: "connecting" | "reconnecting",
+        sessionGeneration: number,
+        timeoutMs = 8000
+    ): Promise<WebSocket> {
         const existing = wsRef.current;
-        if (existing?.readyState === WebSocket.OPEN) {
+        if (existing?.readyState === WebSocket.OPEN && activeSessionGenerationRef.current === sessionGeneration) {
             return Promise.resolve(existing);
         }
 
         return new Promise<WebSocket>((resolve, reject) => {
-            intentionalCloseRef.current = false;
             wsSessionReadyRef.current = false;
             setSessionReady(false);
-            setWsStatus("connecting");
+            setWsStatus(status);
             setWsError(null);
 
             let settled = false;
             const ws = new WebSocket(getWSUrl());
             wsRef.current = ws;
 
-            // 8s connection timeout — gives enough time for slow cold-starts
+            // Gives enough time for slow cold-starts while allowing bounded retries.
             const connectionTimeout = setTimeout(() => {
                 if (ws.readyState !== WebSocket.OPEN) {
-                    intentionalCloseRef.current = true;
+                    markSocketCloseIntentional(ws);
                     ws.close();
                 }
-            }, 8000);
+            }, timeoutMs);
 
             ws.onopen = () => {
                 clearTimeout(connectionTimeout);
-                setWsStatus("connected");
                 setWsError(null);
                 settled = true;
                 resolve(ws);
@@ -656,7 +1054,7 @@ export default function NotesClient({ user }: { user: User }) {
             };
 
             ws.onmessage = (event) => {
-            if (wsRef.current !== ws) return;
+            if (wsRef.current !== ws || activeSessionGenerationRef.current !== sessionGeneration) return;
 
             try {
                 const msg = JSON.parse(event.data as string) as ServerMessage;
@@ -665,39 +1063,26 @@ export default function NotesClient({ user }: { user: User }) {
 
                 if (serverError) {
                     console.warn("[Notes] Server error:", serverError);
-                    markSessionInactive();
-                    stopLocalRecorder();
-                    setIsStartingRecording(false);
-                    if (recordStatusRef.current !== "idle") {
-                        setRecordStatus("paused");
-                        recordStatusRef.current = "paused";
-                    }
-                    if (serverError === "invalid-token" || serverError === "missing-token") {
-                        setMicError("Session expired. Please try starting again.");
+                    if (recordStatusRef.current === "recording" && isRetryableNotesServerError(serverError)) {
+                        beginReconnect(serverError, {
+                            graceMs: serverError === "transcription-overloaded" ? NOTES_RECONNECT_OVERLOADED_GRACE_MS : 0,
+                        });
                     } else {
-                        setMicError(msg.message ?? "The notes session ended unexpectedly. Please try again.");
-                    }
-                    setWsStatus("error");
-                    startInFlightRef.current = false;
-                    stopInFlightRef.current = false;
-                    intentionalCloseRef.current = true;
-                    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                        ws.close(1000, "server-error");
+                        handleTerminalServerError(serverError, msg.message, ws);
                     }
                     return;
                 }
 
                 if (msg.type === "started") {
-                    if (activeSessionGenerationRef.current !== null) {
-                        wsSessionReadyRef.current = true;
-                        setSessionReady(true);
-                    }
+                    wsSessionReadyRef.current = true;
+                    setSessionReady(true);
+                    setWsStatus("connected");
+                    setWsError(null);
+                    setMicError(null);
                     return;
                 }
 
                 if (msg.type === "notes_update") {
-                    if (activeSessionGenerationRef.current === null) return;
-
                     const md = msg.notesMarkdown ?? "";
                     if (md) {
                         if (isEditingNotesRef.current || hasManualEditsRef.current) {
@@ -710,8 +1095,7 @@ export default function NotesClient({ user }: { user: User }) {
                 }
 
                 if (msg.type === "notes_final") {
-                    if (activeSessionGenerationRef.current === null) return;
-
+                    resetReconnectState();
                     const md = msg.notesMarkdown ?? "";
                     if (md) {
                         const previousVisibleNotes = visibleNotesMarkdownRef.current;
@@ -748,7 +1132,7 @@ export default function NotesClient({ user }: { user: User }) {
 
                     // Session is finished — close the socket intentionally so no
                     // idle connection lingers or churns after finalisation.
-                    intentionalCloseRef.current = true;
+                    markSocketCloseIntentional(ws);
                     markSessionInactive();
                     ws.close(1000, "notes-final");
                     return;
@@ -765,22 +1149,29 @@ export default function NotesClient({ user }: { user: User }) {
 
             ws.onclose = () => {
                 clearTimeout(connectionTimeout);
-                markSessionInactive();
-                startInFlightRef.current = false;
-                stopInFlightRef.current = false;
-                setIsStartingRecording(false);
-
-                const wasIntentional = intentionalCloseRef.current;
-                intentionalCloseRef.current = false;
-                if (wsRef.current === ws) wsRef.current = null;
+                const wasIntentional = consumeIntentionalClose(ws);
+                const isCurrentSocket =
+                    wsRef.current === ws && activeSessionGenerationRef.current === sessionGeneration;
 
                 // Never opened — reject the pending connect so startRecording can surface it.
                 if (!settled) {
                     settled = true;
-                    setWsStatus("disconnected");
+                    if (isCurrentSocket) {
+                        if (wsRef.current === ws) wsRef.current = null;
+                        markSessionInactive();
+                        setWsStatus(wasIntentional ? "disconnected" : status === "reconnecting" ? "reconnecting" : "disconnected");
+                    }
                     reject(new Error("connection-failed"));
                     return;
                 }
+
+                if (!isCurrentSocket) return;
+
+                markSessionInactive();
+                startInFlightRef.current = false;
+                stopInFlightRef.current = false;
+                setIsStartingRecording(false);
+                if (wsRef.current === ws) wsRef.current = null;
 
                 // Intentional close (notes_final, reset, unmount, connect timeout):
                 // go quiet, no banner, no reconnect.
@@ -789,14 +1180,25 @@ export default function NotesClient({ user }: { user: User }) {
                     return;
                 }
 
-                // A disconnect during recording/finalizing is a real failure — stop
-                // local audio capture and let the user recover without losing notes.
+                // A disconnect during active recording gets a bounded retry window.
+                // Finalising/stop paths do not retry because local recording has ended.
                 const currentStatus = recordStatusRef.current;
-                if (currentStatus === "recording" || currentStatus === "finalizing") {
-                    stopLocalRecorder();
+                if (currentStatus === "recording") {
+                    if (reconnectingRef.current) {
+                        setWsStatus("reconnecting");
+                        if (!reconnectTimerRef.current && !reconnectGraceTimerRef.current && !reconnectAttemptInFlightRef.current) {
+                            scheduleReconnectAttempt();
+                        }
+                    } else {
+                        beginReconnect("socket-close");
+                    }
+                    return;
+                }
+
+                if (currentStatus === "finalizing") {
                     setRecordStatus("paused");
                     recordStatusRef.current = "paused";
-                    setWsError("The recording connection was interrupted. Your notes so far are preserved. Start a new recording segment to continue.");
+                    setWsError("The recording connection was interrupted during finalisation. Your notes so far are preserved. Resume to continue.");
                     setWsStatus("error");
                     return;
                 }
@@ -806,18 +1208,22 @@ export default function NotesClient({ user }: { user: User }) {
                 setWsStatus("disconnected");
             };
         });
-    }, [markSessionInactive]);
+    }
 
     // Close the active socket intentionally (reset / unmount). Sockets are only
     // meant to exist during recording, so this never reconnects.
-    const closeWsIntentionally = useCallback(() => {
-        intentionalCloseRef.current = true;
+    function closeWsIntentionally() {
+        resetReconnectState();
         markSessionInactive();
         const ws = wsRef.current;
+        markSocketCloseIntentional(ws);
         if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
             ws.close(1000, "client-intentional");
         }
-    }, [markSessionInactive]);
+        if (wsRef.current === ws) {
+            wsRef.current = null;
+        }
+    }
 
     useEffect(() => {
         if (!notesDraftStorageKey) {
@@ -929,12 +1335,31 @@ export default function NotesClient({ user }: { user: User }) {
     // On unmount, close any active socket intentionally.
     useEffect(() => {
         return () => {
-            intentionalCloseRef.current = true;
-            markSessionInactive();
+            if (reconnectTimerRef.current) {
+                clearTimeout(reconnectTimerRef.current);
+                reconnectTimerRef.current = null;
+            }
+            if (reconnectGraceTimerRef.current) {
+                clearTimeout(reconnectGraceTimerRef.current);
+                reconnectGraceTimerRef.current = null;
+            }
+            reconnectAttemptRef.current = 0;
+            reconnectDeadlineRef.current = null;
+            reconnectingRef.current = false;
+            reconnectAttemptInFlightRef.current = false;
+            reconnectTokenRef.current = null;
+            reconnectAudioBufferRef.current = [];
+            reconnectAudioBufferBytesRef.current = 0;
+            const ws = wsRef.current;
+            markSocketCloseIntentional(ws);
             startInFlightRef.current = false;
             stopInFlightRef.current = false;
             stopLocalRecorder();
-            wsRef.current?.close(1000, "client-unmount");
+            markSessionInactive();
+            ws?.close(1000, "client-unmount");
+            if (wsRef.current === ws) {
+                wsRef.current = null;
+            }
         };
     }, [markSessionInactive]);
 
@@ -968,6 +1393,7 @@ export default function NotesClient({ user }: { user: User }) {
         }
 
         startInFlightRef.current = true;
+        resetReconnectState();
         setIsStartingRecording(true);
         setMicError(null);
         manualStopRequestedRef.current = false;
@@ -1012,12 +1438,19 @@ export default function NotesClient({ user }: { user: User }) {
             return;
         }
 
+        const sessionGeneration = sessionGenerationRef.current + 1;
+        sessionGenerationRef.current = sessionGeneration;
+        activeSessionGenerationRef.current = sessionGeneration;
+        wsSessionReadyRef.current = false;
+        setSessionReady(false);
+
         // ── Open a fresh WebSocket on demand (sockets only live during recording) ──
         let ws: WebSocket;
         try {
-            ws = await connectWS();
+            ws = await connectWS("connecting", sessionGeneration);
         } catch {
             stopLocalRecorder();
+            markSessionInactive();
             setWsError("Could not connect to the transcription service. Please try again.");
             setWsStatus("error");
             startInFlightRef.current = false;
@@ -1027,33 +1460,7 @@ export default function NotesClient({ user }: { user: User }) {
 
         // ── Send start with locked-in config + token ───────────────────────
         // Config is captured NOW — what the user sees is what gets sent.
-        const sessionGeneration = sessionGenerationRef.current + 1;
-        sessionGenerationRef.current = sessionGeneration;
-        activeSessionGenerationRef.current = sessionGeneration;
-        wsSessionReadyRef.current = false;
-        setSessionReady(false);
-
-        const sections = sectionsRaw
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
-
-        const continuationNotesMarkdown = visibleNotesMarkdown;
-        const shouldContinueNotesSession =
-            recordStatusRef.current !== "idle" && continuationNotesMarkdown.trim().length > 0;
-
-        const startPayload: NotesStartPayload = {
-            action: "start",
-            mode: "notes",
-            noteStyle,
-            sections,
-            token,
-        };
-
-        if (shouldContinueNotesSession) {
-            startPayload.continuation = true;
-            startPayload.currentNotesMarkdown = continuationNotesMarkdown;
-        }
+        const startPayload = buildNotesStartPayload(token, false);
 
         ws.send(JSON.stringify(startPayload));
 
@@ -1061,7 +1468,7 @@ export default function NotesClient({ user }: { user: User }) {
             if (ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ action: "stop" }));
             }
-            intentionalCloseRef.current = true;
+            markSocketCloseIntentional(ws);
             if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
                 ws.close(1000, "start-aborted");
             }
@@ -1080,16 +1487,7 @@ export default function NotesClient({ user }: { user: User }) {
             recorderRef.current = activeRecorder;
 
             activeRecorder.ondataavailable = (e) => {
-                if (
-                    e.data.size > 0 &&
-                    recordStatusRef.current === "recording" &&
-                    activeSessionGenerationRef.current === sessionGeneration &&
-                    wsRef.current === ws &&
-                    ws.readyState === WebSocket.OPEN &&
-                    wsSessionReadyRef.current
-                ) {
-                    ws.send(e.data);
-                }
+                sendOrBufferAudioChunk(e.data);
             };
 
             activeRecorder.onstop = () => activeStream.getTracks().forEach((track) => track.stop());
@@ -1110,7 +1508,7 @@ export default function NotesClient({ user }: { user: User }) {
             if (activeSessionGenerationRef.current === sessionGeneration && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ action: "stop" }));
             }
-            intentionalCloseRef.current = true;
+            markSocketCloseIntentional(ws);
             if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
                 ws.close(1000, "start-aborted");
             }
@@ -1131,6 +1529,7 @@ export default function NotesClient({ user }: { user: User }) {
         if (stopInFlightRef.current || recordStatusRef.current !== "recording") return;
 
         stopInFlightRef.current = true;
+        resetReconnectState();
         manualStopRequestedRef.current = true;
         wsSessionReadyRef.current = false;
         setSessionReady(false);
