@@ -1758,9 +1758,9 @@ export default function NotesClient({ user }: { user: User }) {
                                 <button
                                     type="button"
                                     onClick={openMobileSidebar}
-                                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-50 md:hidden dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-[border-color,color,transform,opacity] active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 md:hidden"
                                 >
-                                    <BookMarked className="h-3.5 w-3.5" />
+                                    <BookMarked className="h-4 w-4" />
                                     Notes Templates
                                 </button>
                             </div>
