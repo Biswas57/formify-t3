@@ -11,6 +11,7 @@
  */
 
 import { z } from "zod";
+import { randomUUID } from "crypto";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { mintWSToken } from "@/server/ws-token";
 
@@ -33,9 +34,13 @@ export const transcriptionRouter = createTRPCRouter({
     getSessionToken: protectedProcedure
         .input(z.object({
             mode: z.enum(["forms", "notes"]),
+            recordingSessionId: z.string().uuid().optional(),
         }))
         .mutation(async ({ ctx, input }) => {
             const userId = ctx.session.user.id;
+            const recordingSessionId = input.mode === "notes"
+                ? input.recordingSessionId ?? randomUUID()
+                : undefined;
 
             try {
                 const today = todayUTC();
@@ -51,7 +56,7 @@ export const transcriptionRouter = createTRPCRouter({
                 });
             }
 
-            const token = mintWSToken(userId, input.mode);
-            return { token };
+            const token = mintWSToken(userId, input.mode, recordingSessionId);
+            return { token, recordingSessionId };
         }),
 });

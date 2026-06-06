@@ -16,11 +16,16 @@ const TTL_SECONDS = 120; // 2 minutes
 export interface WSTokenPayload {
     userId: string;
     mode: "forms" | "notes";
+    recordingSessionId?: string;
 }
 
-export function mintWSToken(userId: string, mode: "forms" | "notes"): string {
+export function mintWSToken(userId: string, mode: "forms" | "notes", recordingSessionId?: string): string {
     if (!SECRET) throw new Error("WS_TOKEN_SECRET is not set in environment");
-    return jwt.sign({ userId, mode } satisfies WSTokenPayload, SECRET, {
+    const payload: WSTokenPayload = recordingSessionId && mode === "notes"
+        ? { userId, mode, recordingSessionId }
+        : { userId, mode };
+
+    return jwt.sign(payload, SECRET, {
         expiresIn: TTL_SECONDS,
     });
 }

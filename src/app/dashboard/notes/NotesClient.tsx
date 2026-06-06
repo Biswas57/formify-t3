@@ -288,6 +288,7 @@ export default function NotesClient({ user }: { user: User }) {
     const wsSessionReadyRef = useRef(false);
     const [, setSessionReady] = useState(false);
     const recordingSessionStartedAtRef = useRef<number | null>(null);
+    const logicalRecordingSessionIdRef = useRef<string | null>(null);
     const manualStopRequestedRef = useRef(false);
     const [sessionLimitWarningLevel, setSessionLimitWarningLevel] = useState<SessionLimitWarningLevel>("none");
     const [sessionLimitRemainingMs, setSessionLimitRemainingMs] = useState<number | null>(null);
@@ -674,6 +675,42 @@ export default function NotesClient({ user }: { user: User }) {
         if (clearAudio) clearReconnectAudioBuffer();
     }
 
+    function clearLogicalRecordingSession() {
+        logicalRecordingSessionIdRef.current = null;
+    }
+
+    function isReconnectStillActive() {
+        return reconnectingRef.current && recordStatusRef.current === "recording" && !stopInFlightRef.current;
+    }
+
+    async function mintNotesToken({
+        reuseLogicalSession,
+        shouldAcceptResult,
+    }: {
+        reuseLogicalSession: boolean;
+        shouldAcceptResult?: () => boolean;
+    }): Promise<string> {
+        const requestedRecordingSessionId = reuseLogicalSession
+            ? logicalRecordingSessionIdRef.current ?? undefined
+            : undefined;
+        const result = await getSessionToken.mutateAsync({
+            mode: "notes",
+            recordingSessionId: requestedRecordingSessionId,
+        });
+
+        if (shouldAcceptResult && !shouldAcceptResult()) {
+            throw new Error("token-mint-cancelled");
+        }
+
+        if (result.recordingSessionId) {
+            logicalRecordingSessionIdRef.current = result.recordingSessionId;
+        }
+
+        wsTokenRef.current = result.token;
+        void utils.usage.getToday.invalidate();
+        return result.token;
+    }
+
     function buildNotesStartPayload(token: string, forceContinuation: boolean): NotesStartPayload {
         const sections = sectionsRaw
             .split(",")
@@ -703,6 +740,7 @@ export default function NotesClient({ user }: { user: User }) {
 
     function moveToPausedAfterReconnectFailure(message: string) {
         resetReconnectState();
+        clearLogicalRecordingSession();
         const ws = wsRef.current;
         if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
             markSocketCloseIntentional(ws);
@@ -800,10 +838,15 @@ export default function NotesClient({ user }: { user: User }) {
     async function getReconnectToken(): Promise<string> {
         if (reconnectTokenRef.current) return reconnectTokenRef.current;
 
-        const result = await getSessionToken.mutateAsync({ mode: "notes" });
-        reconnectTokenRef.current = result.token;
-        void utils.usage.getToday.invalidate();
-        return result.token;
+        const token = await mintNotesToken({
+            reuseLogicalSession: true,
+            shouldAcceptResult: isReconnectStillActive,
+        });
+        if (!isReconnectStillActive()) {
+            throw new Error("reconnect-cancelled");
+        }
+        reconnectTokenRef.current = token;
+        return token;
     }
 
     const waitForSessionStarted = useCallback((sessionGeneration: number) => (
@@ -991,6 +1034,7 @@ export default function NotesClient({ user }: { user: User }) {
 
     function handleTerminalServerError(serverError: string, message: string | undefined, ws: WebSocket) {
         resetReconnectState();
+        clearLogicalRecordingSession();
         markSessionInactive();
         stopLocalRecorder();
         setIsStartingRecording(false);
@@ -1128,6 +1172,7 @@ export default function NotesClient({ user }: { user: User }) {
                     recordStatusRef.current = "paused";
                     manualStopRequestedRef.current = false;
                     recordingSessionStartedAtRef.current = null;
+                    clearLogicalRecordingSession();
                     stopInFlightRef.current = false;
 
                     // Session is finished — close the socket intentionally so no
@@ -1348,6 +1393,7 @@ export default function NotesClient({ user }: { user: User }) {
             reconnectingRef.current = false;
             reconnectAttemptInFlightRef.current = false;
             reconnectTokenRef.current = null;
+            logicalRecordingSessionIdRef.current = null;
             reconnectAudioBufferRef.current = [];
             reconnectAudioBufferBytesRef.current = 0;
             const ws = wsRef.current;
@@ -1394,6 +1440,7 @@ export default function NotesClient({ user }: { user: User }) {
 
         startInFlightRef.current = true;
         resetReconnectState();
+        clearLogicalRecordingSession();
         setIsStartingRecording(true);
         setMicError(null);
         manualStopRequestedRef.current = false;
@@ -1425,12 +1472,10 @@ export default function NotesClient({ user }: { user: User }) {
         // ── Mint session token (auth + usage enforcement happens server-side) ──
         let token: string;
         try {
-            const result = await getSessionToken.mutateAsync({ mode: "notes" });
-            token = result.token;
-            wsTokenRef.current = token;
-            void utils.usage.getToday.invalidate();
+            token = await mintNotesToken({ reuseLogicalSession: false });
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : "Failed to start session";
+            clearLogicalRecordingSession();
             stopLocalRecorder();
             setMicError(msg);
             startInFlightRef.current = false;
@@ -1450,6 +1495,7 @@ export default function NotesClient({ user }: { user: User }) {
             ws = await connectWS("connecting", sessionGeneration);
         } catch {
             stopLocalRecorder();
+            clearLogicalRecordingSession();
             markSessionInactive();
             setWsError("Could not connect to the transcription service. Please try again.");
             setWsStatus("error");
@@ -1474,6 +1520,7 @@ export default function NotesClient({ user }: { user: User }) {
             }
             markSessionInactive();
             stopLocalRecorder();
+            clearLogicalRecordingSession();
             setMicError("Could not start recording. Please try again.");
             startInFlightRef.current = false;
             setIsStartingRecording(false);
@@ -1514,6 +1561,7 @@ export default function NotesClient({ user }: { user: User }) {
             }
             markSessionInactive();
             stopLocalRecorder();
+            clearLogicalRecordingSession();
             setMicError(
                 msg === "session-start-timeout"
                     ? "The notes session did not start in time. Please try again."
@@ -1543,6 +1591,7 @@ export default function NotesClient({ user }: { user: User }) {
             wsRef.current.send(JSON.stringify({ action: "stop" }));
         } else {
             markSessionInactive();
+            clearLogicalRecordingSession();
             stopInFlightRef.current = false;
             setRecordStatus("paused");
             recordStatusRef.current = "paused";
@@ -1557,6 +1606,7 @@ export default function NotesClient({ user }: { user: User }) {
         startInFlightRef.current = false;
         stopInFlightRef.current = false;
         stopLocalRecorder();
+        clearLogicalRecordingSession();
         // Close any active socket intentionally and do not reconnect — a new
         // socket opens only when the user starts recording again.
         closeWsIntentionally();
