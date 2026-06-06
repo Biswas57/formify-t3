@@ -73,6 +73,20 @@ function makeInstanceId() {
     return Math.random().toString(36).slice(2);
 }
 
+function normalizeFieldKey(value: string): string {
+    return value.trim().toLowerCase().replace(/[\s\-]+/g, "_").replace(/[^a-z0-9_]/g, "");
+}
+
+function makeBlankCanvasField(order: number): CanvasField {
+    return {
+        key: `new_field_${order + 1}`,
+        label: "New field",
+        fieldType: "TEXT",
+        required: false,
+        order,
+    };
+}
+
 function dbBlocksToCanvas(template: DBTemplate): CanvasBlock[] {
     return template.blocks.map((b) => ({
         instanceId: makeInstanceId(),
@@ -124,6 +138,7 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
     );
     const [saved, setSaved] = useState(false);
     const [createdTemplateId, setCreatedTemplateId] = useState<string | null>(null);
+    const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
 
     // Drag state
     const dragIndex = useRef<number | null>(null);
@@ -138,6 +153,10 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
     >([{ key: "", label: "", fieldType: "TEXT" }]);
 
     const utils = api.useUtils();
+
+    const markTemplateChanged = useCallback(() => {
+        setSaved(false);
+    }, []);
 
     const createMutation = api.template.create.useMutation({
         onSuccess: (t: { id: string }) => {
@@ -216,10 +235,13 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                 fields: lib.fields.map((f, i) => ({ ...f, order: i })),
             },
         ]);
-    }, []);
+        markTemplateChanged();
+    }, [markTemplateChanged]);
 
     const removeBlock = (instanceId: string) => {
         setBlocks((prev) => prev.filter((b) => b.instanceId !== instanceId));
+        setEditingBlockId((current) => current === instanceId ? null : current);
+        markTemplateChanged();
     };
 
     const toggleCollapse = (instanceId: string) => {
@@ -254,6 +276,7 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
             next.splice(dropIdx, 0, item!);
             return next;
         });
+        markTemplateChanged();
         dragIndex.current = null;
         setDragOverIndex(null);
     };
@@ -271,7 +294,75 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
             [next[idx], next[targetIdx]] = [next[targetIdx]!, next[idx]!];
             return next;
         });
-    }, []);
+        markTemplateChanged();
+    }, [markTemplateChanged]);
+
+    const openBlockEditor = (instanceId: string) => {
+        setEditingBlockId(instanceId);
+        setBlocks((prev) =>
+            prev.map((b) =>
+                b.instanceId === instanceId ? { ...b, collapsed: false } : b
+            )
+        );
+    };
+
+    const handleBlockCardKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, instanceId: string) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openBlockEditor(instanceId);
+        }
+    };
+
+    const updateBlock = (instanceId: string, updater: (block: CanvasBlock) => CanvasBlock) => {
+        setBlocks((prev) =>
+            prev.map((block) => block.instanceId === instanceId ? updater(block) : block)
+        );
+        markTemplateChanged();
+    };
+
+    const updateBlockTitle = (instanceId: string, title: string) => {
+        updateBlock(instanceId, (block) => ({ ...block, title }));
+    };
+
+    const updateBlockField = (
+        instanceId: string,
+        fieldIndex: number,
+        patch: Partial<Pick<CanvasField, "label" | "fieldType" | "required">>
+    ) => {
+        updateBlock(instanceId, (block) => ({
+            ...block,
+            fields: block.fields.map((field, idx) => {
+                if (idx !== fieldIndex) return field;
+                const nextLabel = patch.label ?? field.label;
+                return {
+                    ...field,
+                    ...patch,
+                    key: patch.label !== undefined ? normalizeFieldKey(nextLabel) || field.key : field.key,
+                    label: nextLabel,
+                };
+            }),
+        }));
+    };
+
+    const addFieldToBlock = (instanceId: string) => {
+        updateBlock(instanceId, (block) => ({
+            ...block,
+            fields: [
+                ...block.fields,
+                makeBlankCanvasField(block.fields.length),
+            ],
+        }));
+    };
+
+    const removeFieldFromBlock = (instanceId: string, fieldIndex: number) => {
+        updateBlock(instanceId, (block) => ({
+            ...block,
+            fields: block.fields
+                .filter((_, idx) => idx !== fieldIndex)
+                .map((field, idx) => ({ ...field, order: idx })),
+        }));
+    };
 
     // ── Save ──────────────────────────────────────────────────────────────────
 
@@ -286,6 +377,10 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
     };
 
     const isSaving = createMutation.isPending || updateMutation.isPending;
+    const hasInvalidBlocks = blocks.some((block) =>
+        !block.title.trim() || block.fields.some((field) => !field.key.trim())
+    );
+    const canSaveTemplate = blocks.length > 0 && Boolean(templateName.trim()) && !hasInvalidBlocks;
     const savedTemplateId = initialTemplate?.id ?? createdTemplateId;
     const useInFormsHref = savedTemplateId ? `/forms?templateId=${savedTemplateId}` : null;
     const backLabel = returnTo === "/forms" ? "Forms" : "My Templates";
@@ -387,7 +482,7 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                 <div className="hidden flex-shrink-0 items-center gap-2 md:flex">
                     <button
                         onClick={handleSave}
-                        disabled={isSaving || blocks.length === 0 || !templateName.trim()}
+                        disabled={isSaving || !canSaveTemplate}
                         className={`flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition-[background-color,transform,opacity] duration-150 active:scale-[0.98] active:opacity-90 ${saved
                             ? "bg-emerald-600 hover:bg-emerald-700"
                             : "bg-[#2149A1] hover:bg-[#1a3a87]"
@@ -430,104 +525,216 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                         </div>
                     ) : (
                         <div className="mx-auto w-full max-w-2xl space-y-3">
-                            {blocks.map((block, idx) => (
-                                <div
-                                    key={block.instanceId}
-                                    draggable
-                                    onDragStart={() => handleDragStart(idx)}
-                                    onDragOver={(e) => handleDragOver(e, idx)}
-                                    onDrop={(e) => handleDrop(e, idx)}
-                                    onDragEnd={handleDragEnd}
-                                    className={`bg-white border rounded-xl overflow-hidden transition-all duration-150 dark:bg-slate-900/80 ${dragOverIndex === idx
-                                        ? "border-[#2149A1] shadow-md dark:border-blue-400"
-                                        : "border-slate-200 dark:border-slate-800"
-                                        }`}
-                                >
-                                    {/* Block header */}
-                                    <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-3 bg-white dark:bg-slate-900">
-                                        {/* Drag handle — desktop only */}
-                                        <div className="hidden md:block cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors flex-shrink-0 dark:text-slate-400 dark:hover:text-slate-300">
-                                            <GripVertical className="w-4 h-4" />
-                                        </div>
+                            {blocks.map((block, idx) => {
+                                const isEditing = editingBlockId === block.instanceId;
 
-                                        {/* Up/down reorder — mobile only */}
-                                        <div className="flex md:hidden flex-col flex-shrink-0">
-                                            <button
-                                                onClick={() => moveBlock(idx, -1)}
-                                                disabled={idx === 0}
-                                                className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors active:scale-95 active:opacity-80 dark:text-slate-400 dark:hover:text-slate-300"
-                                                title="Move up"
+                                return (
+                                    <div
+                                        key={block.instanceId}
+                                        draggable={!isEditing}
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-pressed={isEditing}
+                                        aria-label={`Edit ${block.title || "block"}`}
+                                        onClick={() => openBlockEditor(block.instanceId)}
+                                        onKeyDown={(event) => handleBlockCardKeyDown(event, block.instanceId)}
+                                        onDragStart={() => handleDragStart(idx)}
+                                        onDragOver={(e) => handleDragOver(e, idx)}
+                                        onDrop={(e) => handleDrop(e, idx)}
+                                        onDragEnd={handleDragEnd}
+                                        className={`bg-white border rounded-xl overflow-hidden transition-all duration-150 outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[#2149A1]/30 dark:bg-slate-900/80 ${dragOverIndex === idx
+                                            ? "border-[#2149A1] shadow-md dark:border-blue-400"
+                                            : isEditing
+                                                ? "border-[#2149A1]/60 shadow-sm ring-2 ring-[#2149A1]/10 dark:border-blue-400/70 dark:ring-blue-400/10"
+                                                : "border-slate-200 hover:border-[#2149A1]/30 hover:shadow-sm dark:border-slate-800 dark:hover:border-blue-400/40"
+                                            }`}
+                                    >
+                                        {/* Block header */}
+                                        <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-3 bg-white dark:bg-slate-900">
+                                            {/* Drag handle — desktop only */}
+                                            <div
+                                                className="hidden md:block cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors flex-shrink-0 dark:text-slate-400 dark:hover:text-slate-300"
+                                                onClick={(event) => event.stopPropagation()}
+                                                onMouseDown={(event) => event.stopPropagation()}
                                             >
-                                                <ChevronUp className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => moveBlock(idx, 1)}
-                                                disabled={idx === blocks.length - 1}
-                                                className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors active:scale-95 active:opacity-80 dark:text-slate-400 dark:hover:text-slate-300"
-                                                title="Move down"
-                                            >
-                                                <ChevronDown className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
+                                                <GripVertical className="w-4 h-4" />
+                                            </div>
 
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-semibold text-sm text-slate-800 dark:text-slate-100">{block.title}</p>
-                                            <p className="text-xs text-[#868C94] dark:text-slate-400">
-                                                {block.fields.length} field{block.fields.length !== 1 ? "s" : ""}
-                                                {block.sourceType === "SYSTEM" && (
-                                                    <span className="ml-1.5 text-[#2149A1] dark:text-blue-300">· System</span>
-                                                )}
-                                                {block.sourceType === "USER" && (
-                                                    <span className="ml-1.5 text-emerald-600 dark:text-emerald-400">· Custom</span>
-                                                )}
-                                            </p>
-                                        </div>
-
-                                        <div className="flex items-center gap-0.5">
-                                            <button
-                                                onClick={() => toggleCollapse(block.instanceId)}
-                                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 hover:text-slate-700 transition-colors active:scale-95 active:opacity-80 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                                                title={block.collapsed ? "Expand" : "Collapse"}
+                                            {/* Up/down reorder — mobile only */}
+                                            <div
+                                                className="flex md:hidden flex-col flex-shrink-0"
+                                                onClick={(event) => event.stopPropagation()}
                                             >
-                                                {block.collapsed ? (
-                                                    <ChevronDown className="w-4 h-4" />
-                                                ) : (
-                                                    <ChevronUp className="w-4 h-4" />
-                                                )}
-                                            </button>
-                                            <button
-                                                onClick={() => removeBlock(block.instanceId)}
-                                                className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-red-50 hover:text-red-500 transition-colors active:scale-95 active:opacity-80 dark:text-slate-400 dark:hover:bg-red-950/30 dark:hover:text-red-400"
-                                                title="Remove block"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Fields */}
-                                    {!block.collapsed && (
-                                        <div className="border-t border-slate-100 px-4 py-3 grid grid-cols-2 gap-2 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40">
-                                            {block.fields.map((field) => (
-                                                <div
-                                                    key={field.key}
-                                                    className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 dark:border-slate-800 dark:bg-slate-900"
+                                                <button
+                                                    type="button"
+                                                    onClick={() => moveBlock(idx, -1)}
+                                                    disabled={idx === 0}
+                                                    className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors active:scale-95 active:opacity-80 dark:text-slate-400 dark:hover:text-slate-300"
+                                                    title="Move up"
                                                 >
-                                                    <div className="w-1.5 h-1.5 bg-[#2149A1]/40 rounded-full flex-shrink-0" />
-                                                    <div className="min-w-0">
-                                                        <p className="text-xs font-medium text-slate-700 truncate dark:text-slate-200">
-                                                            {field.label}
-                                                        </p>
-                                                        <p className="text-xs text-[#868C94] dark:text-slate-400">
-                                                            {FIELD_TYPE_LABELS[field.fieldType]}
-                                                        </p>
+                                                    <ChevronUp className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => moveBlock(idx, 1)}
+                                                    disabled={idx === blocks.length - 1}
+                                                    className="p-1 text-slate-300 hover:text-slate-600 disabled:opacity-25 transition-colors active:scale-95 active:opacity-80 dark:text-slate-400 dark:hover:text-slate-300"
+                                                    title="Move down"
+                                                >
+                                                    <ChevronDown className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-sm text-slate-800 dark:text-slate-100">{block.title || "Untitled block"}</p>
+                                                <p className="text-xs text-[#868C94] dark:text-slate-400">
+                                                    {isEditing ? "Editing block details" : `${block.fields.length} field${block.fields.length !== 1 ? "s" : ""}`}
+                                                    {block.sourceType === "SYSTEM" && (
+                                                        <span className="ml-1.5 text-[#2149A1] dark:text-blue-300">· System</span>
+                                                    )}
+                                                    {block.sourceType === "USER" && (
+                                                        <span className="ml-1.5 text-emerald-600 dark:text-emerald-400">· Custom</span>
+                                                    )}
+                                                </p>
+                                            </div>
+
+                                            <div
+                                                className="flex items-center gap-0.5"
+                                                onClick={(event) => event.stopPropagation()}
+                                            >
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleCollapse(block.instanceId)}
+                                                    className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-slate-100 hover:text-slate-700 transition-colors active:scale-95 active:opacity-80 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                    title={block.collapsed ? "Expand" : "Collapse"}
+                                                >
+                                                    {block.collapsed ? (
+                                                        <ChevronDown className="w-4 h-4" />
+                                                    ) : (
+                                                        <ChevronUp className="w-4 h-4" />
+                                                    )}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeBlock(block.instanceId)}
+                                                    className="flex items-center justify-center w-9 h-9 rounded-lg text-[#868C94] hover:bg-red-50 hover:text-red-500 transition-colors active:scale-95 active:opacity-80 dark:text-slate-400 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                                                    title="Remove block"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Fields */}
+                                        {!block.collapsed && (
+                                            isEditing ? (
+                                                <div
+                                                    className="border-t border-slate-100 bg-slate-50/70 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/50"
+                                                    onClick={(event) => event.stopPropagation()}
+                                                >
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-[#868C94] mb-1.5 dark:text-slate-400">
+                                                                Block name
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={block.title}
+                                                                onChange={(event) => updateBlockTitle(block.instanceId, event.target.value)}
+                                                                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 transition-all dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+                                                                placeholder="Block name"
+                                                            />
+                                                        </div>
+
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <div>
+                                                                    <p className="text-xs font-medium text-[#868C94] dark:text-slate-400">Fields</p>
+                                                                    <p className="text-[11px] text-slate-400 dark:text-slate-500">Changes apply to this template.</p>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => addFieldToBlock(block.instanceId)}
+                                                                    className="flex items-center gap-1 text-xs text-[#2149A1] hover:text-[#1a3a87] font-medium transition-opacity active:opacity-80"
+                                                                >
+                                                                    <Plus className="w-3 h-3" />
+                                                                    Add field
+                                                                </button>
+                                                            </div>
+
+                                                            <div className="space-y-2">
+                                                                {block.fields.length === 0 ? (
+                                                                    <div className="rounded-lg border border-dashed border-slate-200 bg-white px-3 py-4 text-center text-xs text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500">
+                                                                        No fields yet. Add one to capture information in this block.
+                                                                    </div>
+                                                                ) : (
+                                                                    block.fields.map((field, fieldIndex) => (
+                                                                        <div key={`${field.key}-${fieldIndex}`} className="grid gap-2 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-[minmax(0,1fr)_8.5rem_auto_auto] sm:items-center">
+                                                                            <input
+                                                                                type="text"
+                                                                                value={field.label}
+                                                                                onChange={(event) => updateBlockField(block.instanceId, fieldIndex, { label: event.target.value })}
+                                                                                placeholder="Field name"
+                                                                                className="min-w-0 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition-all focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+                                                                            />
+                                                                            <select
+                                                                                value={field.fieldType}
+                                                                                onChange={(event) => updateBlockField(block.instanceId, fieldIndex, { fieldType: event.target.value as FieldType })}
+                                                                                className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 outline-none transition-all focus:border-[#2149A1] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:focus:border-blue-400"
+                                                                            >
+                                                                                {Object.entries(FIELD_TYPE_LABELS).map(([value, label]) => (
+                                                                                    <option key={value} value={value}>{label}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                            <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={field.required}
+                                                                                    onChange={(event) => updateBlockField(block.instanceId, fieldIndex, { required: event.target.checked })}
+                                                                                    className="h-3.5 w-3.5 rounded border-slate-300 text-[#2149A1] focus:ring-[#2149A1]/30 dark:border-slate-700 dark:bg-slate-950"
+                                                                                />
+                                                                                Required
+                                                                            </label>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => removeFieldFromBlock(block.instanceId, fieldIndex)}
+                                                                                className="flex h-8 w-8 items-center justify-center rounded-lg text-[#868C94] transition-colors hover:bg-red-50 hover:text-red-500 active:scale-95 active:opacity-80 dark:text-slate-400 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                                                                                title="Remove field"
+                                                                                aria-label={`Remove ${field.label || "field"}`}
+                                                                            >
+                                                                                <X className="h-3.5 w-3.5" />
+                                                                            </button>
+                                                                        </div>
+                                                                    ))
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                                            ) : (
+                                                <div className="border-t border-slate-100 px-4 py-3 grid grid-cols-2 gap-2 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40">
+                                                    {block.fields.map((field) => (
+                                                        <div
+                                                            key={field.key}
+                                                            className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 dark:border-slate-800 dark:bg-slate-900"
+                                                        >
+                                                            <div className="w-1.5 h-1.5 bg-[#2149A1]/40 rounded-full flex-shrink-0" />
+                                                            <div className="min-w-0">
+                                                                <p className="text-xs font-medium text-slate-700 truncate dark:text-slate-200">
+                                                                    {field.label}
+                                                                </p>
+                                                                <p className="text-xs text-[#868C94] dark:text-slate-400">
+                                                                    {FIELD_TYPE_LABELS[field.fieldType]}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -727,7 +934,7 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                         </button>
                         <button
                             onClick={handleSave}
-                            disabled={isSaving || blocks.length === 0 || !templateName.trim()}
+                            disabled={isSaving || !canSaveTemplate}
                             className={`flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium py-3 rounded-xl transition-[background-color,transform,opacity] active:scale-[0.98] active:opacity-90 ${saved
                                 ? "bg-emerald-600 hover:bg-emerald-700"
                                 : "bg-[#2149A1] hover:bg-[#1a3a87]"
