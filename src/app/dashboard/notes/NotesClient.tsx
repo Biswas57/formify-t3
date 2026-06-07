@@ -2265,66 +2265,10 @@ export default function NotesClient({ user }: { user: User }) {
                             </div>
 
                             {hasNotes && (
-                                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-                                    <div className="relative" ref={actionsMenuRef}>
-                                        <button
-                                            type="button"
-                                            onClick={() => setActionsOpen((value) => !value)}
-                                            disabled={!hasVisibleNotes}
-                                            aria-haspopup="menu"
-                                            aria-expanded={actionsOpen}
-                                            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                                        >
-                                            Actions
-                                            <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${actionsOpen ? "rotate-180" : ""}`} />
-                                        </button>
-
-                                        {actionsOpen && (
-                                            <div
-                                                role="menu"
-                                                className="absolute right-0 top-full z-20 mt-1.5 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
-                                            >
-                                                <button
-                                                    type="button"
-                                                    role="menuitem"
-                                                    onClick={() => void handleSummariseNotes()}
-                                                    disabled={!canRunTransform}
-                                                    className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
-                                                >
-                                                    <span>Summarise</span>
-                                                    {summariseNotes.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    role="menuitem"
-                                                    onClick={openReorganiseDialog}
-                                                    disabled={!canRunTransform}
-                                                    className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
-                                                >
-                                                    <span>Reorganise</span>
-                                                    {reorganiseNotes.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />}
-                                                </button>
-                                                <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-                                                <button
-                                                    type="button"
-                                                    role="menuitem"
-                                                    onClick={handleUndoLastChange}
-                                                    disabled={!canUndoTransform}
-                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
-                                                >
-                                                    Undo last change
-                                                </button>
-                                                {transformDisabledReason && (
-                                                    <div className="border-t border-slate-100 px-3 py-2 text-[11px] leading-snug text-slate-400 dark:border-slate-800 dark:text-slate-500">
-                                                        {transformDisabledReason}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                    {canEditNotes && (
-                                        isEditingNotes ? (
-                                            <>
+                                <div className="w-full sm:w-auto" ref={actionsMenuRef}>
+                                    <div className="flex w-full items-center justify-end sm:hidden">
+                                        {isEditingNotes ? (
+                                            <div className="flex items-center gap-2">
                                                 <button
                                                     type="button"
                                                     onClick={handleDoneNotesEdit}
@@ -2340,80 +2284,309 @@ export default function NotesClient({ user }: { user: User }) {
                                                 >
                                                     Cancel
                                                 </button>
-                                            </>
+                                            </div>
                                         ) : (
                                             <button
                                                 type="button"
-                                                onClick={handleStartNotesEdit}
-                                                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                onClick={() => {
+                                                    setDownloadOpen(false);
+                                                    setActionsOpen((value) => !value);
+                                                }}
+                                                disabled={!hasVisibleNotes}
+                                                aria-haspopup="dialog"
+                                                aria-expanded={actionsOpen}
+                                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                                             >
-                                                <NotebookPen className="h-3.5 w-3.5" />
-                                                Edit
+                                                Actions
+                                                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${actionsOpen ? "rotate-180" : ""}`} />
                                             </button>
-                                        )
+                                        )}
+                                    </div>
+
+                                    {actionsOpen && !isEditingNotes && (
+                                        <div className="fixed inset-0 z-[70] sm:hidden" role="dialog" aria-modal="true" aria-labelledby="notes-mobile-actions-title">
+                                            <button
+                                                type="button"
+                                                aria-label="Close notes actions"
+                                                className="absolute inset-0 bg-black/45"
+                                                onClick={() => setActionsOpen(false)}
+                                            />
+                                            <div className="absolute inset-x-0 bottom-0 max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/70">
+                                                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+                                                    <div>
+                                                        <h3 id="notes-mobile-actions-title" className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                            Notes Actions
+                                                        </h3>
+                                                        {transformDisabledReason && (
+                                                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                                                {transformDisabledReason}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActionsOpen(false)}
+                                                        className="rounded-lg p-2 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                        aria-label="Close notes actions"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-1 px-3 py-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleSummariseNotes()}
+                                                        disabled={!canRunTransform}
+                                                        className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        <span>Summarise</span>
+                                                        {summariseNotes.isPending && <Loader2 className="h-4 w-4 animate-spin text-[#2149A1] dark:text-blue-300" />}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={openReorganiseDialog}
+                                                        disabled={!canRunTransform}
+                                                        className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        <span>Reorganise</span>
+                                                        {reorganiseNotes.isPending && <Loader2 className="h-4 w-4 animate-spin text-[#2149A1] dark:text-blue-300" />}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleUndoLastChange}
+                                                        disabled={!canUndoTransform}
+                                                        className="flex w-full items-center rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        Undo last change
+                                                    </button>
+                                                    <div className="my-2 border-t border-slate-100 dark:border-slate-800" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setActionsOpen(false);
+                                                            handleStartNotesEdit();
+                                                        }}
+                                                        disabled={!canEditNotes}
+                                                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        <NotebookPen className="h-4 w-4 text-slate-400" />
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setActionsOpen(false);
+                                                            void handleCopy();
+                                                        }}
+                                                        disabled={!hasVisibleNotes}
+                                                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        {copied ? (
+                                                            <Check className="h-4 w-4 text-emerald-600" />
+                                                        ) : (
+                                                            <Copy className="h-4 w-4 text-slate-400" />
+                                                        )}
+                                                        {copied ? "Copied" : "Copy"}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (isGeneratingPDF) return;
+                                                            setActionsOpen(false);
+                                                            void handleSavePDF();
+                                                        }}
+                                                        disabled={!hasVisibleNotes || isGeneratingPDF}
+                                                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        {isGeneratingPDF ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin text-[#2149A1] dark:text-blue-300" />
+                                                        ) : (
+                                                            <Download className="h-4 w-4 text-[#2149A1] dark:text-blue-300" />
+                                                        )}
+                                                        {isGeneratingPDF ? "Generating PDF…" : "Download PDF"}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setActionsOpen(false);
+                                                            handleDownloadMarkdown();
+                                                        }}
+                                                        disabled={!hasVisibleNotes}
+                                                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        <Download className="h-4 w-4 text-[#2149A1] dark:text-blue-300" />
+                                                        Download Markdown
+                                                    </button>
+                                                </div>
+                                                <div className="px-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActionsOpen(false)}
+                                                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-600 transition-colors active:scale-[0.99] active:opacity-80 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     )}
-                                    <button
-                                        type="button"
-                                        onClick={handleCopy}
-                                        disabled={!hasVisibleNotes}
-                                        className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                                    >
-                                        {copied
-                                            ? <><Check className="w-3.5 h-3.5 text-emerald-600" /> Copied</>
-                                            : <><Copy className="w-3.5 h-3.5" /> Copy</>
-                                        }
-                                    </button>
-                                    <div className="relative" ref={downloadMenuRef}>
+
+                                    <div className="hidden w-full flex-wrap items-center gap-2 sm:flex sm:w-auto sm:justify-end">
+                                        <div className="relative">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setDownloadOpen(false);
+                                                    setActionsOpen((value) => !value);
+                                                }}
+                                                disabled={!hasVisibleNotes}
+                                                aria-haspopup="menu"
+                                                aria-expanded={actionsOpen}
+                                                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                            >
+                                                Actions
+                                                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${actionsOpen ? "rotate-180" : ""}`} />
+                                            </button>
+
+                                            {actionsOpen && (
+                                                <div
+                                                    role="menu"
+                                                    className="absolute right-0 top-full z-20 mt-1.5 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
+                                                >
+                                                    <button
+                                                        type="button"
+                                                        role="menuitem"
+                                                        onClick={() => void handleSummariseNotes()}
+                                                        disabled={!canRunTransform}
+                                                        className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        <span>Summarise</span>
+                                                        {summariseNotes.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        role="menuitem"
+                                                        onClick={openReorganiseDialog}
+                                                        disabled={!canRunTransform}
+                                                        className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        <span>Reorganise</span>
+                                                        {reorganiseNotes.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />}
+                                                    </button>
+                                                    <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                                                    <button
+                                                        type="button"
+                                                        role="menuitem"
+                                                        onClick={handleUndoLastChange}
+                                                        disabled={!canUndoTransform}
+                                                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        Undo last change
+                                                    </button>
+                                                    {transformDisabledReason && (
+                                                        <div className="border-t border-slate-100 px-3 py-2 text-[11px] leading-snug text-slate-400 dark:border-slate-800 dark:text-slate-500">
+                                                            {transformDisabledReason}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                        {canEditNotes && (
+                                            isEditingNotes ? (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleDoneNotesEdit}
+                                                        className="flex items-center gap-1.5 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors active:scale-[0.98] active:opacity-90 hover:bg-[#1a3a87]"
+                                                    >
+                                                        <Check className="h-3.5 w-3.5" />
+                                                        Done
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleCancelNotesEdit}
+                                                        className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleStartNotesEdit}
+                                                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                >
+                                                    <NotebookPen className="h-3.5 w-3.5" />
+                                                    Edit
+                                                </button>
+                                            )
+                                        )}
                                         <button
                                             type="button"
-                                            onClick={() => setDownloadOpen((value) => !value)}
+                                            onClick={handleCopy}
                                             disabled={!hasVisibleNotes}
-                                            aria-haspopup="menu"
-                                            aria-expanded={downloadOpen}
-                                            className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] px-2.5 py-1.5 rounded-lg hover:bg-[#e8eef9] transition-colors active:scale-[0.98] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-300 dark:hover:bg-blue-500/15 dark:hover:text-blue-200"
+                                            className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                         >
-                                            <Download className="w-3.5 h-3.5" />
-                                            Download
-                                            <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${downloadOpen ? "rotate-180" : ""}`} />
+                                            {copied
+                                                ? <><Check className="w-3.5 h-3.5 text-emerald-600" /> Copied</>
+                                                : <><Copy className="w-3.5 h-3.5" /> Copy</>
+                                            }
                                         </button>
-
-                                        {downloadOpen && (
-                                            <div
-                                                role="menu"
-                                                className="absolute right-0 top-full z-20 mt-1.5 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
+                                        <div className="relative" ref={downloadMenuRef}>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setActionsOpen(false);
+                                                    setDownloadOpen((value) => !value);
+                                                }}
+                                                disabled={!hasVisibleNotes}
+                                                aria-haspopup="menu"
+                                                aria-expanded={downloadOpen}
+                                                className="flex items-center gap-1.5 text-xs font-medium text-[#2149A1] hover:text-[#1a3a87] px-2.5 py-1.5 rounded-lg hover:bg-[#e8eef9] transition-colors active:scale-[0.98] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-300 dark:hover:bg-blue-500/15 dark:hover:text-blue-200"
                                             >
-                                                <button
-                                                    type="button"
-                                                    role="menuitem"
-                                                    onClick={() => {
-                                                        if (isGeneratingPDF) return;
-                                                        setDownloadOpen(false);
-                                                        void handleSavePDF();
-                                                    }}
-                                                    disabled={isGeneratingPDF}
-                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                <Download className="w-3.5 h-3.5" />
+                                                Download
+                                                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${downloadOpen ? "rotate-180" : ""}`} />
+                                            </button>
+
+                                            {downloadOpen && (
+                                                <div
+                                                    role="menu"
+                                                    className="absolute right-0 top-full z-20 mt-1.5 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
                                                 >
-                                                    {isGeneratingPDF ? (
-                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />
-                                                    ) : (
+                                                    <button
+                                                        type="button"
+                                                        role="menuitem"
+                                                        onClick={() => {
+                                                            if (isGeneratingPDF) return;
+                                                            setDownloadOpen(false);
+                                                            void handleSavePDF();
+                                                        }}
+                                                        disabled={isGeneratingPDF}
+                                                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        {isGeneratingPDF ? (
+                                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />
+                                                        ) : (
+                                                            <Download className="w-3.5 h-3.5 text-[#2149A1] dark:text-blue-300" />
+                                                        )}
+                                                        {isGeneratingPDF ? "Generating PDF…" : "Download PDF"}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        role="menuitem"
+                                                        onClick={() => {
+                                                            setDownloadOpen(false);
+                                                            handleDownloadMarkdown();
+                                                        }}
+                                                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
                                                         <Download className="w-3.5 h-3.5 text-[#2149A1] dark:text-blue-300" />
-                                                    )}
-                                                    {isGeneratingPDF ? "Generating PDF…" : "Download PDF"}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    role="menuitem"
-                                                    onClick={() => {
-                                                        setDownloadOpen(false);
-                                                        handleDownloadMarkdown();
-                                                    }}
-                                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
-                                                >
-                                                    <Download className="w-3.5 h-3.5 text-[#2149A1] dark:text-blue-300" />
-                                                    Download Markdown (.md)
-                                                </button>
-                                            </div>
-                                        )}
+                                                        Download Markdown (.md)
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             )}
