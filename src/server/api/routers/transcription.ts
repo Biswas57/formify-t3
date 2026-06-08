@@ -15,6 +15,7 @@ import { randomUUID } from "crypto";
 import { TRPCError } from "@trpc/server";
 import { env } from "@/env";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { countWords, logPerf, safeJsonChars } from "@/server/api/perf-log";
 import { mintWSToken } from "@/server/ws-token";
 
 const NOTE_STYLE_VALUES = ["general", "clinical", "meeting", "study"] as const;
@@ -24,6 +25,19 @@ const NOTES_TRANSFORM_MAX_SECTIONS = 12;
 const NOTES_TRANSFORM_TIMEOUT_MS = 60_000;
 
 type NotesTransformKind = "summarise" | "reorganise";
+
+type NotesTransformBridgeMetadata = {
+    kind: NotesTransformKind;
+    notesChars: number;
+    notesWords: number;
+    targetSectionCount: number;
+};
+
+type NotesTransformBridgeResult = {
+    payload: unknown;
+    durationMs: number;
+    httpStatus: number;
+};
 
 const notesTransformBaseSchema = z.object({
     notesMarkdown: z.string(),
@@ -49,10 +63,6 @@ function todayUTC(): string {
     return new Date().toISOString().split("T")[0]!;
 }
 
-function countWords(value: string): number {
-    return value.trim().split(/\s+/).filter(Boolean).length;
-}
-
 function validateNotesTransformInput(notesMarkdown: string, kind: NotesTransformKind) {
     const trimmed = notesMarkdown.trim();
     if (
@@ -66,6 +76,47 @@ function validateNotesTransformInput(notesMarkdown: string, kind: NotesTransform
                 : "These notes are too short to reorganise yet.",
         });
     }
+}
+
+function getNotesTransformBridgeMetadata(
+    kind: NotesTransformKind,
+    notesMarkdown: string,
+    targetSectionCount = 0
+): NotesTransformBridgeMetadata {
+    const trimmed = notesMarkdown.trim();
+    return {
+        kind,
+        notesChars: trimmed.length,
+        notesWords: countWords(trimmed),
+        targetSectionCount,
+    };
+}
+
+function logNotesTransformBridge(
+    metadata: NotesTransformBridgeMetadata,
+    event: {
+        category: string;
+        durationMs: number;
+        httpStatus?: number;
+        outputChars?: number;
+        resultJsonChars?: number;
+        backendCode?: string;
+        errorName?: string;
+    }
+): void {
+    logPerf("notes-transform-bridge", {
+        type: metadata.kind,
+        category: event.category,
+        durationMs: event.durationMs,
+        httpStatus: event.httpStatus,
+        notesChars: metadata.notesChars,
+        notesWords: metadata.notesWords,
+        targetSectionCount: metadata.targetSectionCount,
+        outputChars: event.outputChars,
+        resultJsonChars: event.resultJsonChars,
+        backendCode: event.backendCode,
+        errorName: event.errorName,
+    });
 }
 
 function getNotesTransformBaseUrl(): string | null {
@@ -114,10 +165,16 @@ function mapBackendTransformError(kind: NotesTransformKind, code?: string, statu
 
 async function callNotesTransform(
     kind: NotesTransformKind,
-    body: Record<string, unknown>
-): Promise<unknown> {
+    body: Record<string, unknown>,
+    metadata: NotesTransformBridgeMetadata
+): Promise<NotesTransformBridgeResult> {
+    const startedAt = Date.now();
     const baseUrl = getNotesTransformBaseUrl();
     if (!baseUrl || !env.NOTES_TRANSFORM_SECRET) {
+        logNotesTransformBridge(metadata, {
+            category: "unavailable",
+            durationMs: Date.now() - startedAt,
+        });
         throw new TRPCError({
             code: "SERVICE_UNAVAILABLE",
             message: "The notes transform service is unavailable. Your notes were not changed.",
@@ -151,10 +208,11 @@ async function callNotesTransform(
         if (!response.ok) {
             const parsed = backendErrorSchema.safeParse(payload);
             const errorCode = parsed.success ? parsed.data.error.code : undefined;
-            console.warn("[NotesTransform] Backend transform failed.", {
-                kind,
-                status: response.status,
-                code: errorCode ?? "unknown",
+            logNotesTransformBridge(metadata, {
+                category: parsed.success ? "backend-error-envelope" : "non-2xx",
+                durationMs: Date.now() - startedAt,
+                httpStatus: response.status,
+                backendCode: errorCode ?? "unknown",
             });
             throw new TRPCError({
                 code: response.status === 503 ? "SERVICE_UNAVAILABLE" : "BAD_GATEWAY",
@@ -162,21 +220,27 @@ async function callNotesTransform(
             });
         }
 
-        return payload;
+        return {
+            payload,
+            durationMs: Date.now() - startedAt,
+            httpStatus: response.status,
+        };
     } catch (error) {
         if (error instanceof TRPCError) throw error;
 
-        const message = error instanceof Error && error.name === "AbortError"
+        const isAbort = error instanceof Error && error.name === "AbortError";
+        const message = isAbort
             ? "The notes transform service is unavailable. Your notes were not changed."
             : "The transform failed. Your notes were not changed.";
 
-        console.warn("[NotesTransform] Server-to-server transform request failed.", {
-            kind,
-            reason: error instanceof Error ? error.name : "unknown",
+        logNotesTransformBridge(metadata, {
+            category: isAbort ? "timeout" : "fetch-failure",
+            durationMs: Date.now() - startedAt,
+            errorName: error instanceof Error ? error.name : "unknown",
         });
 
         throw new TRPCError({
-            code: error instanceof Error && error.name === "AbortError" ? "TIMEOUT" : "BAD_GATEWAY",
+            code: isAbort ? "TIMEOUT" : "BAD_GATEWAY",
             message,
         });
     } finally {
@@ -229,19 +293,34 @@ export const transcriptionRouter = createTRPCRouter({
         .input(notesTransformBaseSchema)
         .mutation(async ({ input }) => {
             validateNotesTransformInput(input.notesMarkdown, "summarise");
+            const metadata = getNotesTransformBridgeMetadata("summarise", input.notesMarkdown);
 
-            const payload = await callNotesTransform("summarise", {
+            const result = await callNotesTransform("summarise", {
                 notesMarkdown: input.notesMarkdown,
                 noteStyle: input.noteStyle,
-            });
+            }, metadata);
 
-            const parsed = summariseResponseSchema.safeParse(payload);
+            const parsed = summariseResponseSchema.safeParse(result.payload);
             if (!parsed.success || !parsed.data.summaryMarkdown.trim()) {
+                logNotesTransformBridge(metadata, {
+                    category: "incomplete-output",
+                    durationMs: result.durationMs,
+                    httpStatus: result.httpStatus,
+                    resultJsonChars: safeJsonChars(result.payload),
+                });
                 throw new TRPCError({
                     code: "BAD_GATEWAY",
                     message: "The transform result looked incomplete. Your notes were not changed.",
                 });
             }
+
+            logNotesTransformBridge(metadata, {
+                category: "success",
+                durationMs: result.durationMs,
+                httpStatus: result.httpStatus,
+                outputChars: parsed.data.summaryMarkdown.length,
+                resultJsonChars: safeJsonChars(result.payload),
+            });
 
             return { summaryMarkdown: parsed.data.summaryMarkdown };
         }),
@@ -263,20 +342,39 @@ export const transcriptionRouter = createTRPCRouter({
                     message: "Use up to 12 sections.",
                 });
             }
+            const metadata = getNotesTransformBridgeMetadata(
+                "reorganise",
+                input.notesMarkdown,
+                targetSections.length
+            );
 
-            const payload = await callNotesTransform("reorganise", {
+            const result = await callNotesTransform("reorganise", {
                 notesMarkdown: input.notesMarkdown,
                 noteStyle: input.noteStyle,
                 targetSections,
-            });
+            }, metadata);
 
-            const parsed = reorganiseResponseSchema.safeParse(payload);
+            const parsed = reorganiseResponseSchema.safeParse(result.payload);
             if (!parsed.success || !parsed.data.reorganisedMarkdown.trim()) {
+                logNotesTransformBridge(metadata, {
+                    category: "incomplete-output",
+                    durationMs: result.durationMs,
+                    httpStatus: result.httpStatus,
+                    resultJsonChars: safeJsonChars(result.payload),
+                });
                 throw new TRPCError({
                     code: "BAD_GATEWAY",
                     message: "The transform result looked incomplete. Your notes were not changed.",
                 });
             }
+
+            logNotesTransformBridge(metadata, {
+                category: "success",
+                durationMs: result.durationMs,
+                httpStatus: result.httpStatus,
+                outputChars: parsed.data.reorganisedMarkdown.length,
+                resultJsonChars: safeJsonChars(result.payload),
+            });
 
             return { reorganisedMarkdown: parsed.data.reorganisedMarkdown };
         }),
