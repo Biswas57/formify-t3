@@ -67,6 +67,11 @@ type NotesTransformPreview = {
     markdown: string;
 };
 
+type ActiveTransformRun = {
+    id: number;
+    type: NotesTransformType;
+};
+
 type NotesUndoSnapshot = {
     markdown: string;
     preFinalNotesMarkdown: string | null;
@@ -290,11 +295,27 @@ function getReorganiseSectionPrefill(markdown: string): string {
 
 function getSafeTransformErrorMessage(error: unknown, type: NotesTransformType): string {
     const fallback = "The transform failed. Your notes were not changed.";
+    const timeout = "The transform took too long. Your notes were not changed. Try again with shorter notes or try again later.";
     const message = error instanceof Error ? error.message : "";
+    const errorRecord = error && typeof error === "object"
+        ? error as {
+            data?: { code?: unknown };
+            shape?: { data?: { code?: unknown } };
+        }
+        : null;
+    const code =
+        typeof errorRecord?.data?.code === "string"
+            ? errorRecord.data.code
+            : typeof errorRecord?.shape?.data?.code === "string"
+                ? errorRecord.shape.data.code
+                : "";
+    const normalizedCode = code.toLocaleUpperCase();
+    const normalizedMessage = message.toLocaleLowerCase();
     const safeMessages = new Set([
         "These notes are too short to summarise yet.",
         "These notes are too short to reorganise yet.",
         "Use up to 12 sections.",
+        timeout,
         "The notes transform service is unavailable. Your notes were not changed.",
         "The transform failed. Your notes were not changed.",
         "The transform result looked incomplete. Your notes were not changed.",
@@ -302,13 +323,19 @@ function getSafeTransformErrorMessage(error: unknown, type: NotesTransformType):
     ]);
 
     if (safeMessages.has(message)) return message;
-    if (message.toLocaleLowerCase().includes("too short")) {
+    if (normalizedCode === "TIMEOUT" || normalizedMessage.includes("timeout") || normalizedMessage.includes("abort")) {
+        return timeout;
+    }
+    if (normalizedMessage.includes("too short")) {
         return type === "summary"
             ? "These notes are too short to summarise yet."
             : "These notes are too short to reorganise yet.";
     }
-    if (message.toLocaleLowerCase().includes("12 sections")) return "Use up to 12 sections.";
-    if (message.toLocaleLowerCase().includes("unavailable")) {
+    if (normalizedMessage.includes("12 sections") || normalizedMessage.includes("too many sections")) return "Use up to 12 sections.";
+    if (normalizedMessage.includes("incomplete") || normalizedMessage.includes("suspicious") || normalizedMessage.includes("invalid output")) {
+        return "The transform result looked incomplete. Your notes were not changed.";
+    }
+    if (normalizedCode === "SERVICE_UNAVAILABLE" || normalizedMessage.includes("unavailable")) {
         return "The notes transform service is unavailable. Your notes were not changed.";
     }
 
@@ -451,6 +478,7 @@ export default function NotesClient({ user }: { user: User }) {
     const [mobileActionsSheetVisible, setMobileActionsSheetVisible] = useState(false);
     const [transformError, setTransformError] = useState<string | null>(null);
     const [transformPreview, setTransformPreview] = useState<NotesTransformPreview | null>(null);
+    const [activeTransformRun, setActiveTransformRun] = useState<ActiveTransformRun | null>(null);
     const [reorganiseDialogOpen, setReorganiseDialogOpen] = useState(false);
     const [reorganiseSectionsRaw, setReorganiseSectionsRaw] = useState("");
     const [reorganiseAutoSections, setReorganiseAutoSections] = useState(false);
@@ -470,6 +498,10 @@ export default function NotesClient({ user }: { user: User }) {
     const isEditingNotesRef = useRef(false);
     const hasManualEditsRef = useRef(false);
     const visibleNotesMarkdownRef = useRef("");
+    const transformRunIdRef = useRef(0);
+    const activeTransformRunRef = useRef<ActiveTransformRun | null>(null);
+    const ignoredTransformRunIdsRef = useRef<Set<number>>(new Set());
+    const componentMountedRef = useRef(true);
     const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reconnectGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reconnectAttemptRef = useRef(0);
@@ -565,12 +597,17 @@ export default function NotesClient({ user }: { user: User }) {
             : isConnected
                 ? "Connected"
                 : "Disconnected";
-    const isTransforming = summariseNotes.isPending || reorganiseNotes.isPending;
-    const activeTransformLabel = summariseNotes.isPending
+    const isTransforming = activeTransformRun !== null;
+    const isSummaryTransforming = activeTransformRun?.type === "summary";
+    const isReorganiseTransforming = activeTransformRun?.type === "reorganise";
+    const activeTransformLabel = activeTransformRun?.type === "summary"
         ? "Generating summary preview…"
-        : reorganiseNotes.isPending
+        : activeTransformRun?.type === "reorganise"
             ? "Reorganising notes…"
             : null;
+    const activeTransformBody = activeTransformRun
+        ? "Your notes are unchanged until you apply the result."
+        : null;
     const notesAreLongEnoughForTransform = hasEnoughNotesForTransform(visibleNotesMarkdown);
     const transformsBlockedByLifecycle =
         isStartingRecording ||
@@ -600,6 +637,59 @@ export default function NotesClient({ user }: { user: User }) {
     useEffect(() => {
         visibleNotesMarkdownRef.current = visibleNotesMarkdown;
     }, [visibleNotesMarkdown]);
+
+    useEffect(() => {
+        activeTransformRunRef.current = activeTransformRun;
+    }, [activeTransformRun]);
+
+    useEffect(() => {
+        const ignoredTransformRunIds = ignoredTransformRunIdsRef.current;
+        return () => {
+            componentMountedRef.current = false;
+            const activeRun = activeTransformRunRef.current;
+            if (activeRun) {
+                ignoredTransformRunIds.add(activeRun.id);
+            }
+        };
+    }, []);
+
+    const isTransformRunCurrent = useCallback((run: ActiveTransformRun) => {
+        const activeRun = activeTransformRunRef.current;
+        return (
+            componentMountedRef.current &&
+            activeRun?.id === run.id &&
+            activeRun.type === run.type &&
+            !ignoredTransformRunIdsRef.current.has(run.id)
+        );
+    }, []);
+
+    const clearActiveTransformRun = useCallback((run: ActiveTransformRun) => {
+        if (activeTransformRunRef.current?.id !== run.id) return;
+        activeTransformRunRef.current = null;
+        setActiveTransformRun(null);
+    }, []);
+
+    const beginTransformRun = useCallback((type: NotesTransformType): ActiveTransformRun => {
+        const previousRun = activeTransformRunRef.current;
+        if (previousRun) {
+            ignoredTransformRunIdsRef.current.add(previousRun.id);
+        }
+
+        const run = { id: transformRunIdRef.current + 1, type };
+        transformRunIdRef.current = run.id;
+        activeTransformRunRef.current = run;
+        setActiveTransformRun(run);
+        setTransformPreview(null);
+        setTransformError(null);
+        return run;
+    }, []);
+
+    const ignoreTransformRun = useCallback((run = activeTransformRunRef.current) => {
+        if (!run) return;
+        ignoredTransformRunIdsRef.current.add(run.id);
+        clearActiveTransformRun(run);
+        setTransformError(null);
+    }, [clearActiveTransformRun]);
 
     const openMobileActionsSheet = useCallback(() => {
         if (mobileActionsCloseTimerRef.current) {
@@ -1933,7 +2023,6 @@ export default function NotesClient({ user }: { user: User }) {
 
     const handleSummariseNotes = async () => {
         closeActionsMenu();
-        setTransformError(null);
 
         const preflightError = getTransformPreflightError("summary");
         if (preflightError) {
@@ -1941,24 +2030,32 @@ export default function NotesClient({ user }: { user: User }) {
             return;
         }
 
+        const run = beginTransformRun("summary");
+
         try {
             const result = await summariseNotes.mutateAsync({
                 notesMarkdown: visibleNotesMarkdownRef.current,
                 noteStyle,
             });
+            if (!isTransformRunCurrent(run)) return;
+
             if (!result.summaryMarkdown.trim()) {
+                clearActiveTransformRun(run);
                 setTransformError("The transform result looked incomplete. Your notes were not changed.");
                 return;
             }
+            clearActiveTransformRun(run);
             setTransformPreview({ type: "summary", markdown: result.summaryMarkdown });
         } catch (error) {
+            if (!isTransformRunCurrent(run)) return;
+            clearActiveTransformRun(run);
             setTransformError(getSafeTransformErrorMessage(error, "summary"));
+        } finally {
+            ignoredTransformRunIdsRef.current.delete(run.id);
         }
     };
 
     const handleGenerateReorganisePreview = async () => {
-        setTransformError(null);
-
         const preflightError = getTransformPreflightError("reorganise");
         if (preflightError) {
             setTransformError(preflightError);
@@ -1971,24 +2068,35 @@ export default function NotesClient({ user }: { user: User }) {
             return;
         }
 
+        const run = beginTransformRun("reorganise");
+
         try {
             const result = await reorganiseNotes.mutateAsync({
                 notesMarkdown: visibleNotesMarkdownRef.current,
                 noteStyle,
                 targetSections,
             });
+            if (!isTransformRunCurrent(run)) return;
+
             if (!result.reorganisedMarkdown.trim()) {
+                clearActiveTransformRun(run);
                 setTransformError("The transform result looked incomplete. Your notes were not changed.");
                 return;
             }
+            clearActiveTransformRun(run);
             setTransformPreview({ type: "reorganise", markdown: result.reorganisedMarkdown });
             setReorganiseDialogOpen(false);
         } catch (error) {
+            if (!isTransformRunCurrent(run)) return;
+            clearActiveTransformRun(run);
             setTransformError(getSafeTransformErrorMessage(error, "reorganise"));
+        } finally {
+            ignoredTransformRunIdsRef.current.delete(run.id);
         }
     };
 
     const cancelTransformFlow = () => {
+        ignoreTransformRun();
         setTransformPreview(null);
         setReorganiseDialogOpen(false);
         setTransformError(null);
@@ -2429,7 +2537,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                         className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
                                                         <span className="flex items-center gap-3">
-                                                            {summariseNotes.isPending ? (
+                                                            {isSummaryTransforming ? (
                                                                 <Loader2 className="h-4 w-4 animate-spin text-[#2149A1] dark:text-blue-300" />
                                                             ) : (
                                                                 <Sparkles className="h-4 w-4 text-[#2149A1] dark:text-blue-300" />
@@ -2444,7 +2552,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                         className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
                                                         <span className="flex items-center gap-3">
-                                                            {reorganiseNotes.isPending ? (
+                                                            {isReorganiseTransforming ? (
                                                                 <Loader2 className="h-4 w-4 animate-spin text-[#2149A1] dark:text-blue-300" />
                                                             ) : (
                                                                 <ListTree className="h-4 w-4 text-[#2149A1] dark:text-blue-300" />
@@ -2664,7 +2772,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                         className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
                                                         <span className="flex items-center gap-2.5">
-                                                            {summariseNotes.isPending ? (
+                                                            {isSummaryTransforming ? (
                                                                 <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />
                                                             ) : (
                                                                 <Sparkles className="h-3.5 w-3.5 text-[#2149A1] dark:text-blue-300" />
@@ -2680,7 +2788,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                         className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
                                                         <span className="flex items-center gap-2.5">
-                                                            {reorganiseNotes.isPending ? (
+                                                            {isReorganiseTransforming ? (
                                                                 <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />
                                                             ) : (
                                                                 <ListTree className="h-3.5 w-3.5 text-[#2149A1] dark:text-blue-300" />
@@ -2715,6 +2823,27 @@ export default function NotesClient({ user }: { user: User }) {
                         {notesEditMessage && (
                             <div className="border-b border-amber-100 bg-amber-50 px-5 py-2 text-xs font-medium text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
                                 {notesEditMessage}
+                            </div>
+                        )}
+
+                        {activeTransformRun && activeTransformLabel && activeTransformBody && (
+                            <div className="flex flex-col gap-2 border-b border-[#2149A1]/15 bg-[#e8eef9]/70 px-5 py-3 text-xs text-[#2149A1] dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex min-w-0 items-start gap-2">
+                                    <Loader2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 animate-spin" />
+                                    <div className="min-w-0">
+                                        <p className="font-semibold">{activeTransformLabel}</p>
+                                        <p className="mt-0.5 leading-relaxed text-[#2149A1]/80 dark:text-blue-200/80">
+                                            {activeTransformBody}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => ignoreTransformRun()}
+                                    className="self-start rounded-lg border border-[#2149A1]/20 bg-white/70 px-2.5 py-1.5 text-xs font-semibold text-[#2149A1] transition-colors active:scale-[0.98] active:opacity-80 hover:bg-white dark:border-blue-400/30 dark:bg-slate-950/40 dark:text-blue-200 dark:hover:bg-slate-950"
+                                >
+                                    Ignore result
+                                </button>
                             </div>
                         )}
 
@@ -2789,8 +2918,9 @@ export default function NotesClient({ user }: { user: User }) {
                     <button
                         type="button"
                         aria-label="Cancel reorganise notes"
-                        className="absolute inset-0 bg-black/50 motion-safe:animate-fade-in motion-reduce:animate-none"
-                        onClick={cancelTransformFlow}
+                        disabled={isReorganiseTransforming}
+                        className="absolute inset-0 bg-black/50 motion-safe:animate-fade-in motion-reduce:animate-none disabled:cursor-default"
+                        onClick={isReorganiseTransforming ? undefined : cancelTransformFlow}
                     />
                     <div className="relative flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl motion-safe:animate-slide-up motion-reduce:animate-none sm:rounded-xl sm:motion-safe:animate-fade-up dark:bg-slate-900 dark:shadow-slate-950/60">
                         <div className="border-b border-slate-100 px-6 py-5 dark:border-slate-800">
@@ -2809,13 +2939,26 @@ export default function NotesClient({ user }: { user: User }) {
                         </div>
 
                         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+                            {isReorganiseTransforming && (
+                                <div className="mb-4 rounded-xl border border-[#2149A1]/15 bg-[#e8eef9]/70 px-3 py-3 text-sm text-[#2149A1] dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200">
+                                    <div className="flex items-start gap-2">
+                                        <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 animate-spin" />
+                                        <div>
+                                            <p className="font-semibold">Reorganising notes…</p>
+                                            <p className="mt-1 text-xs leading-relaxed text-[#2149A1]/80 dark:text-blue-200/80">
+                                                Your notes are unchanged until you apply the result. Choose Ignore result to close this and discard the pending preview when it finishes.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <label className="block text-xs font-medium text-[#868C94] dark:text-slate-400">
                                 Sections <span className="font-normal">(comma-separated)</span>
                             </label>
                             <textarea
                                 value={reorganiseSectionsRaw}
                                 onChange={(event) => setReorganiseSectionsRaw(event.target.value)}
-                                disabled={reorganiseAutoSections}
+                                disabled={reorganiseAutoSections || isReorganiseTransforming}
                                 rows={5}
                                 placeholder="Summary, Key Points, Actions"
                                 className="mt-1.5 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm leading-6 text-slate-900 outline-none transition-colors placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-900 dark:disabled:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
@@ -2826,6 +2969,7 @@ export default function NotesClient({ user }: { user: User }) {
                                     type="checkbox"
                                     checked={reorganiseAutoSections}
                                     onChange={(event) => setReorganiseAutoSections(event.target.checked)}
+                                    disabled={isReorganiseTransforming}
                                     className="h-4 w-4 rounded border-slate-300 text-[#2149A1] focus:ring-[#2149A1]/30 dark:border-slate-700 dark:bg-slate-950"
                                 />
                                 Auto sections
@@ -2842,18 +2986,18 @@ export default function NotesClient({ user }: { user: User }) {
                             <button
                                 type="button"
                                 onClick={() => void handleGenerateReorganisePreview()}
-                                disabled={reorganiseNotes.isPending}
+                                disabled={isReorganiseTransforming}
                                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#2149A1] px-4 py-2 text-sm font-medium text-white transition-[background-color,transform,opacity] hover:bg-[#1a3a87] active:scale-[0.98] active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                {reorganiseNotes.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                                Preview Reorganised Notes
+                                {isReorganiseTransforming && <Loader2 className="h-4 w-4 animate-spin" />}
+                                {isReorganiseTransforming ? "Reorganising notes…" : "Preview Reorganised Notes"}
                             </button>
                             <button
                                 type="button"
                                 onClick={cancelTransformFlow}
                                 className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
-                                Cancel
+                                {isReorganiseTransforming ? "Ignore result" : "Cancel"}
                             </button>
                         </div>
                     </div>
