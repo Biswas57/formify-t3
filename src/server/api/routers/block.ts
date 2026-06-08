@@ -1,8 +1,47 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { SYSTEM_BLOCKS } from "@/server/blocks-library";
+import {
+    countTemplateFields,
+    logPerf,
+    safeJsonChars,
+} from "@/server/api/perf-log";
 
 export const blockRouter = createTRPCRouter({
+    listUserBlocks: protectedProcedure.query(async ({ ctx }) => {
+        const userBlocks = await ctx.db.blockDefinition.findMany({
+            where: { ownerId: ctx.session.user.id },
+            include: { fields: { orderBy: { order: "asc" } } },
+            orderBy: { createdAt: "desc" },
+        });
+
+        const result = userBlocks.map((b: {
+            id: string; name: string;
+            fields: { key: string; label: string | null; fieldType: string; required: boolean; order: number }[]
+        }) => ({
+            id: b.id,
+            name: b.name,
+            sourceType: "USER" as const,
+            fields: b.fields.map((f: {
+                key: string; label: string | null; fieldType: string; required: boolean; order: number
+            }) => ({
+                key: f.key,
+                label: f.label ?? f.key,
+                fieldType: f.fieldType,
+                required: f.required,
+                order: f.order,
+            })),
+        }));
+
+        logPerf("block.listUserBlocks", {
+            blockCount: result.length,
+            fieldCount: countTemplateFields({ blocks: result }),
+            resultJsonChars: safeJsonChars(result),
+        });
+
+        return result;
+    }),
+
     listLibrary: protectedProcedure.query(async ({ ctx }) => {
         const userBlocks = await ctx.db.blockDefinition.findMany({
             where: { ownerId: ctx.session.user.id },
@@ -44,22 +83,45 @@ export const blockRouter = createTRPCRouter({
             })).min(1),
         }))
         .mutation(async ({ ctx, input }) => {
-            return ctx.db.blockDefinition.create({
-                data: {
-                    ownerId: ctx.session.user.id,
-                    name: input.name,
-                    fields: {
-                        create: input.fields.map((f, i) => ({
-                            key: f.key,
-                            label: f.label ?? f.key,
-                            fieldType: f.fieldType,
-                            required: f.required,
-                            order: i,
-                        })),
+            const baseLog = {
+                fieldCount: input.fields.length,
+                payloadJsonChars: safeJsonChars(input),
+            };
+
+            try {
+                const result = await ctx.db.blockDefinition.create({
+                    data: {
+                        ownerId: ctx.session.user.id,
+                        name: input.name,
+                        fields: {
+                            create: input.fields.map((f, i) => ({
+                                key: f.key,
+                                label: f.label ?? f.key,
+                                fieldType: f.fieldType,
+                                required: f.required,
+                                order: i,
+                            })),
+                        },
                     },
-                },
-                include: { fields: { orderBy: { order: "asc" } } },
-            });
+                    include: { fields: { orderBy: { order: "asc" } } },
+                });
+
+                logPerf("block.createCustom", {
+                    ...baseLog,
+                    status: "success",
+                    resultFieldCount: result.fields.length,
+                    resultJsonChars: safeJsonChars(result),
+                });
+
+                return result;
+            } catch (error) {
+                logPerf("block.createCustom", {
+                    ...baseLog,
+                    status: "error",
+                    errorName: error instanceof Error ? error.name : "unknown",
+                });
+                throw error;
+            }
         }),
 
     /** Delete an owned custom block. */

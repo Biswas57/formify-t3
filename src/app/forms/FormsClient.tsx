@@ -320,10 +320,11 @@ export default function FormsClient({ user }: { user: User }) {
     // ── Template preload from query param ────────────────────────────────────────
     const searchParams = useSearchParams();
     const templateId = searchParams.get("templateId");
+    const [shouldLoadTemplateSummaries, setShouldLoadTemplateSummaries] = useState(() => !templateId);
 
     // Forms mode requires a saved template. With no templateId, the workspace
     // stays in the select-template state and never falls back to a default form.
-    const { data: preloadedTemplate, isLoading: templateLoading } = api.template.get.useQuery(
+    const { data: preloadedTemplate, isLoading: templateLoading } = api.template.getForForms.useQuery(
         { id: templateId! },
         {
             enabled: !!templateId,
@@ -335,9 +336,13 @@ export default function FormsClient({ user }: { user: User }) {
     );
 
     const { data: templateSummaries = [], isLoading: templatesLoading } = api.template.listSummary.useQuery(undefined, {
+        enabled: shouldLoadTemplateSummaries,
         staleTime: 5 * 60 * 1000,
         refetchOnWindowFocus: false,
     });
+    const templateSummariesList = templateSummaries as TemplateSummary[];
+    const templateSummariesLoading = shouldLoadTemplateSummaries && templatesLoading;
+    const templateSelectorLoading = !shouldLoadTemplateSummaries || templatesLoading;
 
     const hasTemplateId = Boolean(templateId);
     const hasValidTemplate = Boolean(preloadedTemplate);
@@ -346,8 +351,8 @@ export default function FormsClient({ user }: { user: User }) {
     const hasRestorableDraft =
         !templateId &&
         Boolean(restoredDraft) &&
-        (templatesLoading ||
-            (templateSummaries as TemplateSummary[]).some((template) => template.id === restoredDraft?.templateId));
+        (templateSummariesLoading ||
+            templateSummariesList.some((template) => template.id === restoredDraft?.templateId));
 
     // Derived
     const blocks = parseBlocks(templateRaw);
@@ -387,6 +392,44 @@ export default function FormsClient({ user }: { user: User }) {
         return parseFormsDraft(window.localStorage.getItem(formsDraftStorageKey));
     }, [formsDraftStorageKey]);
 
+    useEffect(() => {
+        if (!templateId) {
+            setShouldLoadTemplateSummaries(true);
+            return;
+        }
+
+        if (templateDrawerVisible) {
+            setShouldLoadTemplateSummaries(true);
+        }
+    }, [templateDrawerVisible, templateId]);
+
+    useEffect(() => {
+        if (!templateId || shouldLoadTemplateSummaries || typeof window === "undefined") return;
+
+        const desktopQuery = window.matchMedia("(min-width: 768px)");
+        const enableDesktopSummaries = () => {
+            if (desktopQuery.matches) {
+                setShouldLoadTemplateSummaries(true);
+            }
+        };
+
+        const frameId = window.requestAnimationFrame(enableDesktopSummaries);
+
+        if (typeof desktopQuery.addEventListener === "function") {
+            desktopQuery.addEventListener("change", enableDesktopSummaries);
+            return () => {
+                window.cancelAnimationFrame(frameId);
+                desktopQuery.removeEventListener("change", enableDesktopSummaries);
+            };
+        }
+
+        desktopQuery.addListener(enableDesktopSummaries);
+        return () => {
+            window.cancelAnimationFrame(frameId);
+            desktopQuery.removeListener(enableDesktopSummaries);
+        };
+    }, [shouldLoadTemplateSummaries, templateId]);
+
     const clearFormsDraft = useCallback(() => {
         if (draftSaveTimerRef.current) {
             clearTimeout(draftSaveTimerRef.current);
@@ -413,13 +456,13 @@ export default function FormsClient({ user }: { user: User }) {
     }, [formsDraftStorageKey, readFormsDraft]);
 
     useEffect(() => {
-        if (templateId || templatesLoading) return;
+        if (templateId || !shouldLoadTemplateSummaries || templateSummariesLoading) return;
 
         const latestDraft = readFormsDraft();
         setRestoredDraft(latestDraft);
         if (!latestDraft) return;
 
-        const draftTemplateExists = (templateSummaries as TemplateSummary[]).some(
+        const draftTemplateExists = templateSummariesList.some(
             (template) => template.id === latestDraft.templateId
         );
         if (!draftTemplateExists) return;
@@ -427,7 +470,14 @@ export default function FormsClient({ user }: { user: User }) {
 
         draftReplaceTemplateIdRef.current = latestDraft.templateId;
         router.replace(`/forms?templateId=${encodeURIComponent(latestDraft.templateId)}`);
-    }, [readFormsDraft, router, templateId, templateSummaries, templatesLoading]);
+    }, [
+        readFormsDraft,
+        router,
+        shouldLoadTemplateSummaries,
+        templateId,
+        templateSummariesList,
+        templateSummariesLoading,
+    ]);
 
     useEffect(() => {
         if (!preloadedTemplate) {
@@ -439,10 +489,10 @@ export default function FormsClient({ user }: { user: User }) {
         }
         setFormTitle(preloadedTemplate.name);
         // Build raw template string — field keys will be normalized by parseBlocks
-        const raw = preloadedTemplate.blocks
+        const raw = [...preloadedTemplate.blocks]
             .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
             .map((b: { title: string; fields: { key: string; order: number }[] }) =>
-                `${b.title}: ${b.fields
+                `${b.title}: ${[...b.fields]
                     .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
                     .map((f: { key: string }) => f.key)
                     .join(", ")}`
@@ -1043,6 +1093,7 @@ export default function FormsClient({ user }: { user: User }) {
     };
 
     const openTemplateDrawer = () => {
+        setShouldLoadTemplateSummaries(true);
         setTemplateDrawerVisible(true);
         requestAnimationFrame(() => setTemplateDrawerOpen(true));
     };
@@ -1207,9 +1258,9 @@ export default function FormsClient({ user }: { user: User }) {
                     </div>
                 ) : (
                     <TemplateSelector
-                        templates={templateSummaries as TemplateSummary[]}
+                        templates={templateSummariesList}
                         selectedTemplateId={templateId}
-                        loading={templatesLoading}
+                        loading={templateSelectorLoading}
                         disabled={templateSwitchDisabled}
                         onSelect={requestTemplateSwitch}
                         onToggleSidebar={() => setIsSidebarCollapsed(true)}
@@ -1229,9 +1280,9 @@ export default function FormsClient({ user }: { user: User }) {
                         className={`absolute inset-y-0 left-0 flex w-80 max-w-[86vw] transform flex-col bg-white shadow-2xl transition-transform duration-200 ease-out dark:bg-slate-950 ${templateDrawerOpen ? "translate-x-0" : "-translate-x-full"}`}
                     >
                         <TemplateSelector
-                            templates={templateSummaries as TemplateSummary[]}
+                            templates={templateSummariesList}
                             selectedTemplateId={templateId}
-                            loading={templatesLoading}
+                            loading={templateSelectorLoading}
                             disabled={templateSwitchDisabled}
                             onSelect={requestTemplateSwitch}
                             onClose={closeTemplateDrawer}

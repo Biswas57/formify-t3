@@ -1,4 +1,4 @@
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient } from "@/trpc/server";
 import { auth } from "@/server/auth";
 import { redirect } from "next/navigation";
 import TemplateBuilderLazy from "../TemplateBuilderLazy";
@@ -21,8 +21,6 @@ export default async function NewTemplatePage({
 
     const session = await auth();
     if (!session?.user) redirect(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
-
-    void api.block.listLibrary.prefetch();
 
     return (
         <HydrateClient>

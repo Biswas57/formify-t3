@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { api } from "@/trpc/react";
 import {
@@ -48,6 +48,7 @@ interface DBTemplate {
         sourceBlockId: string | null;
         order: number;
         fields: {
+            id: string;
             key: string;
             label: string | null;
             fieldType: string;
@@ -123,6 +124,29 @@ function canvasToSavePayload(name: string, blocks: CanvasBlock[]) {
     };
 }
 
+function getCanvasSaveSignature(name: string, blocks: CanvasBlock[]) {
+    return JSON.stringify(canvasToSavePayload(name, blocks));
+}
+
+function getTemplateSaveSignature(template: DBTemplate) {
+    return JSON.stringify({
+        name: template.name,
+        blocks: template.blocks.map((block, blockIndex) => ({
+            title: block.title,
+            sourceType: block.sourceType,
+            sourceBlockId: block.sourceBlockId ?? undefined,
+            order: blockIndex,
+            fields: block.fields.map((field, fieldIndex) => ({
+                key: field.key,
+                label: field.label ?? field.key,
+                fieldType: field.fieldType,
+                required: field.required,
+                order: fieldIndex,
+            })),
+        })),
+    });
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -137,8 +161,13 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
         initialTemplate ? dbBlocksToCanvas(initialTemplate) : []
     );
     const [saved, setSaved] = useState(false);
+    const [savedSignature, setSavedSignature] = useState<string | null>(
+        () => initialTemplate ? getTemplateSaveSignature(initialTemplate) : null
+    );
     const [createdTemplateId, setCreatedTemplateId] = useState<string | null>(null);
     const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+    const savedFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const submittedSaveSignatureRef = useRef<string | null>(null);
 
     // Drag state
     const dragIndex = useRef<number | null>(null);
@@ -151,41 +180,91 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
     const [modalFields, setModalFields] = useState<
         { key: string; label: string; fieldType: FieldType }[]
     >([{ key: "", label: "", fieldType: "TEXT" }]);
+    const [shouldLoadUserBlocks, setShouldLoadUserBlocks] = useState(false);
 
     const utils = api.useUtils();
+
+    const currentSavePayload = useMemo(() => canvasToSavePayload(templateName, blocks), [blocks, templateName]);
+    const currentSaveSignature = useMemo(() => getCanvasSaveSignature(templateName, blocks), [blocks, templateName]);
+    const currentSaveSignatureRef = useRef(currentSaveSignature);
+    useEffect(() => {
+        currentSaveSignatureRef.current = currentSaveSignature;
+    }, [currentSaveSignature]);
+
+    const hasUnsavedChanges = savedSignature !== currentSaveSignature;
 
     const markTemplateChanged = useCallback(() => {
         setSaved(false);
     }, []);
 
+    const showSavedFeedback = useCallback(() => {
+        if (savedFeedbackTimerRef.current) {
+            clearTimeout(savedFeedbackTimerRef.current);
+        }
+        setSaved(true);
+        savedFeedbackTimerRef.current = setTimeout(() => {
+            setSaved(false);
+            savedFeedbackTimerRef.current = null;
+        }, 2500);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (savedFeedbackTimerRef.current) {
+                clearTimeout(savedFeedbackTimerRef.current);
+            }
+        };
+    }, []);
+
     const createMutation = api.template.create.useMutation({
         onSuccess: (t: { id: string }) => {
+            const submittedSignature = submittedSaveSignatureRef.current;
             setCreatedTemplateId(t.id);
-            setSaved(true);
-            void utils.template.list.invalidate();
+            if (submittedSignature) {
+                setSavedSignature(submittedSignature);
+                if (currentSaveSignatureRef.current === submittedSignature) {
+                    showSavedFeedback();
+                } else {
+                    setSaved(false);
+                }
+            }
             void utils.template.listSummary.invalidate();
+            void utils.template.get.invalidate({ id: t.id });
+            void utils.template.getForBuilder.invalidate({ id: t.id });
+            void utils.template.getForForms.invalidate({ id: t.id });
         },
         onError: (err) => {
+            submittedSaveSignatureRef.current = null;
             console.error("[TemplateBuilder] Create failed:", err.message);
         },
     });
 
     const updateMutation = api.template.update.useMutation({
-        onSuccess: () => {
-            setSaved(true);
-            void utils.template.list.invalidate();
-            void utils.template.listSummary.invalidate();
-            if (initialTemplate) {
-                setTimeout(() => setSaved(false), 2500);
+        onSuccess: (_updatedTemplate, variables) => {
+            const submittedSignature = submittedSaveSignatureRef.current;
+            if (submittedSignature) {
+                setSavedSignature(submittedSignature);
+                if (currentSaveSignatureRef.current === submittedSignature) {
+                    showSavedFeedback();
+                } else {
+                    setSaved(false);
+                }
             }
+            void utils.template.listSummary.invalidate();
+            void utils.template.get.invalidate({ id: variables.id });
+            void utils.template.getForBuilder.invalidate({ id: variables.id });
+            void utils.template.getForForms.invalidate({ id: variables.id });
         },
         onError: (err) => {
+            submittedSaveSignatureRef.current = null;
             console.error("[TemplateBuilder] Update failed:", err.message);
         },
     });
 
     const createBlockMutation = api.block.createCustom.useMutation({
         onSuccess: (newBlock) => {
+            setShouldLoadUserBlocks(true);
+            void utils.block.listUserBlocks.invalidate();
             void utils.block.listLibrary.invalidate();
             // Also add it to canvas immediately
             addBlockToCanvas({
@@ -207,19 +286,62 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
     });
 
     // ── Library for right panel ───────────────────────────────────────────────
-    // No initialData needed — server prefetched this in the page component.
-    // staleTime=5min means no background refetch on mount.
-    const { data: libraryData } = api.block.listLibrary.useQuery();
+    useEffect(() => {
+        if (shouldLoadUserBlocks || typeof window === "undefined") return;
 
-    const allLibraryBlocks: LibraryBlock[] = [
-        ...(libraryData?.systemBlocks ?? SYSTEM_BLOCKS).map((b) => ({
+        const desktopQuery = window.matchMedia("(min-width: 768px)");
+        const enableDesktopUserBlocks = () => {
+            if (desktopQuery.matches) {
+                setShouldLoadUserBlocks(true);
+            }
+        };
+
+        const frameId = window.requestAnimationFrame(enableDesktopUserBlocks);
+
+        if (typeof desktopQuery.addEventListener === "function") {
+            desktopQuery.addEventListener("change", enableDesktopUserBlocks);
+            return () => {
+                window.cancelAnimationFrame(frameId);
+                desktopQuery.removeEventListener("change", enableDesktopUserBlocks);
+            };
+        }
+
+        desktopQuery.addListener(enableDesktopUserBlocks);
+        return () => {
+            window.cancelAnimationFrame(frameId);
+            desktopQuery.removeListener(enableDesktopUserBlocks);
+        };
+    }, [shouldLoadUserBlocks]);
+
+    const { data: userBlocksData = [], isLoading: userBlocksLoading } = api.block.listUserBlocks.useQuery(undefined, {
+        enabled: shouldLoadUserBlocks,
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+
+    const systemLibraryBlocks: LibraryBlock[] = useMemo(() => (
+        SYSTEM_BLOCKS.map((b) => ({
             id: b.id,
             name: b.name,
             sourceType: "SYSTEM" as const,
             fields: b.fields as CanvasField[],
-        })),
-        ...(libraryData?.userBlocks ?? []) as LibraryBlock[],
-    ];
+        }))
+    ), []);
+
+    const userLibraryBlocks: LibraryBlock[] = useMemo(() => (
+        userBlocksData.map((b) => ({
+            id: b.id,
+            name: b.name,
+            sourceType: "USER" as const,
+            fields: b.fields.map((f, index) => ({
+                key: f.key,
+                label: f.label,
+                fieldType: f.fieldType as FieldType,
+                required: f.required,
+                order: index,
+            })),
+        }))
+    ), [userBlocksData]);
 
     // ── Canvas operations ─────────────────────────────────────────────────────
 
@@ -367,12 +489,14 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
     // ── Save ──────────────────────────────────────────────────────────────────
 
     const handleSave = () => {
-        const payload = canvasToSavePayload(templateName, blocks);
+        if (isSaving || !canSaveTemplate) return;
+
         const existingId = initialTemplate?.id ?? createdTemplateId;
+        submittedSaveSignatureRef.current = currentSaveSignature;
         if (existingId) {
-            updateMutation.mutate({ id: existingId, ...payload });
+            updateMutation.mutate({ id: existingId, ...currentSavePayload });
         } else {
-            createMutation.mutate(payload);
+            createMutation.mutate(currentSavePayload);
         }
     };
 
@@ -380,11 +504,13 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
     const hasInvalidBlocks = blocks.some((block) =>
         !block.title.trim() || block.fields.some((field) => !field.key.trim())
     );
-    const canSaveTemplate = blocks.length > 0 && Boolean(templateName.trim()) && !hasInvalidBlocks;
+    const hasValidTemplateContent = blocks.length > 0 && Boolean(templateName.trim()) && !hasInvalidBlocks;
+    const canSaveTemplate = hasValidTemplateContent && hasUnsavedChanges;
     const savedTemplateId = initialTemplate?.id ?? createdTemplateId;
     const useInFormsHref = savedTemplateId ? `/forms?templateId=${savedTemplateId}` : null;
     const backLabel = returnTo === "/forms" ? "Forms" : "My Templates";
     const useInFormsDisabledText = "Save the template before using it in Forms.";
+    const saveButtonText = isSaving ? "Saving…" : saved ? "Saved!" : !hasUnsavedChanges ? "No changes" : "Save";
 
     const renderUseInFormsAction = (variant: "header" | "mobile" = "header") => {
         const sizeClass =
@@ -453,6 +579,11 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
         setModalOpen(true);
     };
 
+    const openLibrarySheet = () => {
+        setShouldLoadUserBlocks(true);
+        setShowLibrary(true);
+    };
+
     // ─────────────────────────────────────────────────────────────────────────
     // RENDER
     // ─────────────────────────────────────────────────────────────────────────
@@ -490,12 +621,12 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                     >
                         {isSaving ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : saved ? (
+                        ) : saved || !hasUnsavedChanges ? (
                             <Check className="w-4 h-4" />
                         ) : (
                             <Save className="w-4 h-4" />
                         )}
-                        {isSaving ? "Saving…" : saved ? "Saved!" : "Save"}
+                        {saveButtonText}
                     </button>
                     {renderUseInFormsAction()}
                 </div>
@@ -751,15 +882,13 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                     <div className="px-4 py-3">
                         <p className="text-xs font-medium text-slate-500 mb-2 dark:text-slate-400">System Blocks</p>
                         <div className="space-y-1.5">
-                            {allLibraryBlocks
-                                .filter((b) => b.sourceType === "SYSTEM")
-                                .map((lib) => (
-                                    <LibraryBlockRow
-                                        key={lib.id}
-                                        block={lib}
-                                        onAdd={() => addBlockToCanvas(lib)}
-                                    />
-                                ))}
+                            {systemLibraryBlocks.map((lib) => (
+                                <LibraryBlockRow
+                                    key={lib.id}
+                                    block={lib}
+                                    onAdd={() => addBlockToCanvas(lib)}
+                                />
+                            ))}
                         </div>
                     </div>
 
@@ -775,7 +904,11 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                                 Create
                             </button>
                         </div>
-                        {allLibraryBlocks.filter((b) => b.sourceType === "USER").length === 0 ? (
+                        {userBlocksLoading ? (
+                            <div className="flex items-center justify-center py-6 text-slate-400 dark:text-slate-500">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            </div>
+                        ) : userLibraryBlocks.length === 0 ? (
                             <div className="text-center py-6">
                                 <p className="text-xs text-[#868C94] mb-3 dark:text-slate-400">No custom blocks yet</p>
                                 <button
@@ -787,15 +920,13 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                             </div>
                         ) : (
                             <div className="space-y-1.5">
-                                {allLibraryBlocks
-                                    .filter((b) => b.sourceType === "USER")
-                                    .map((lib) => (
-                                        <LibraryBlockRow
-                                            key={lib.id}
-                                            block={lib}
-                                            onAdd={() => addBlockToCanvas(lib)}
-                                        />
-                                    ))}
+                                {userLibraryBlocks.map((lib) => (
+                                    <LibraryBlockRow
+                                        key={lib.id}
+                                        block={lib}
+                                        onAdd={() => addBlockToCanvas(lib)}
+                                    />
+                                ))}
                             </div>
                         )}
                     </div>
@@ -926,7 +1057,7 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                 <div className="flex flex-col gap-2">
                     <div className="grid grid-cols-2 gap-3">
                         <button
-                            onClick={() => setShowLibrary(true)}
+                            onClick={openLibrarySheet}
                             className="flex items-center justify-center gap-2 border border-slate-200 text-slate-700 text-sm font-medium py-3 rounded-xl hover:bg-slate-50 transition-colors active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
                         >
                             <Plus className="w-4 h-4" />
@@ -942,12 +1073,12 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                         >
                             {isSaving ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : saved ? (
+                            ) : saved || !hasUnsavedChanges ? (
                                 <Check className="w-4 h-4" />
                             ) : (
                                 <Save className="w-4 h-4" />
                             )}
-                            {isSaving ? "Saving…" : saved ? "Saved" : "Save"}
+                            {saveButtonText}
                         </button>
                     </div>
                     {renderUseInFormsAction("mobile")}
@@ -987,15 +1118,13 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                             <div className="py-3">
                                 <p className="text-xs font-medium text-slate-500 mb-2 dark:text-slate-400">System Blocks</p>
                                 <div className="space-y-1.5">
-                                    {allLibraryBlocks
-                                        .filter((b) => b.sourceType === "SYSTEM")
-                                        .map((lib) => (
-                                            <LibraryBlockRow
-                                                key={lib.id}
-                                                block={lib}
-                                                onAdd={() => { addBlockToCanvas(lib); setShowLibrary(false); }}
-                                            />
-                                        ))}
+                                    {systemLibraryBlocks.map((lib) => (
+                                        <LibraryBlockRow
+                                            key={lib.id}
+                                            block={lib}
+                                            onAdd={() => { addBlockToCanvas(lib); setShowLibrary(false); }}
+                                        />
+                                    ))}
                                 </div>
                             </div>
                             {/* Custom blocks */}
@@ -1010,7 +1139,11 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                                         Create
                                     </button>
                                 </div>
-                                {allLibraryBlocks.filter((b) => b.sourceType === "USER").length === 0 ? (
+                                {userBlocksLoading ? (
+                                    <div className="flex items-center justify-center py-6 text-slate-400 dark:text-slate-500">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    </div>
+                                ) : userLibraryBlocks.length === 0 ? (
                                     <div className="text-center py-6">
                                         <p className="text-xs text-[#868C94] mb-3 dark:text-slate-400">No custom blocks yet</p>
                                         <button
@@ -1022,15 +1155,13 @@ export default function TemplateBuilder({ initialTemplate, returnTo = "/template
                                     </div>
                                 ) : (
                                     <div className="space-y-1.5">
-                                        {allLibraryBlocks
-                                            .filter((b) => b.sourceType === "USER")
-                                            .map((lib) => (
-                                                <LibraryBlockRow
-                                                    key={lib.id}
-                                                    block={lib}
-                                                    onAdd={() => { addBlockToCanvas(lib); setShowLibrary(false); }}
-                                                />
-                                            ))}
+                                        {userLibraryBlocks.map((lib) => (
+                                            <LibraryBlockRow
+                                                key={lib.id}
+                                                block={lib}
+                                                onAdd={() => { addBlockToCanvas(lib); setShowLibrary(false); }}
+                                            />
+                                        ))}
                                     </div>
                                 )}
                             </div>

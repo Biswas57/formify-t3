@@ -14,12 +14,12 @@ export default async function FormsPage({
     const session = await auth();
     if (!session?.user) redirect("/login?callbackUrl=/forms");
 
-    void api.template.listSummary.prefetch();
-
     const params = await searchParams;
     const templateId = Array.isArray(params.templateId) ? params.templateId[0] : params.templateId;
     if (templateId) {
-        void api.template.get.prefetch({ id: templateId });
+        void api.template.getForForms.prefetch({ id: templateId });
+    } else {
+        void api.template.listSummary.prefetch();
     }
 
     return (

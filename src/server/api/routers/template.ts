@@ -2,6 +2,14 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import type { BlockSource, FieldType } from "../../../../generated/prisma";
 import { TRPCError } from "@trpc/server";
+import {
+    countSubmittedBlocks,
+    countSubmittedFields,
+    countTemplateBlocks,
+    countTemplateFields,
+    logPerf,
+    safeJsonChars,
+} from "@/server/api/perf-log";
 
 const templateFieldSchema = z.object({
     key: z.string().min(1),
@@ -123,7 +131,7 @@ export const templateRouter = createTRPCRouter({
         // Flatten into a stable client shape.
         // previewTitles: first 3 block titles for the badge row on the card.
         // blockCount / fieldCount: metadata line ("3 blocks · 12 fields").
-        return templates.map((t) => ({
+        const result = templates.map((t) => ({
             id: t.id,
             name: t.name,
             updatedAt: t.updatedAt,
@@ -131,6 +139,15 @@ export const templateRouter = createTRPCRouter({
             fieldCount: t.blocks.reduce((sum, b) => sum + b._count.fields, 0),
             previewTitles: t.blocks.slice(0, 3).map((b) => b.title),
         }));
+
+        logPerf("template.listSummary", {
+            templateCount: result.length,
+            blockCount: result.reduce((sum, template) => sum + countTemplateBlocks(template), 0),
+            fieldCount: result.reduce((sum, template) => sum + countTemplateFields(template), 0),
+            resultJsonChars: safeJsonChars(result),
+        });
+
+        return result;
     }),
 
     // ── list ─────────────────────────────────────────────────────────────────
@@ -168,45 +185,178 @@ export const templateRouter = createTRPCRouter({
             });
         }),
 
+    getForBuilder: protectedProcedure
+        .input(z.object({ id: z.string() }))
+        .query(async ({ ctx, input }) => {
+            const result = await ctx.db.template.findFirst({
+                where: { id: input.id, ownerId: ctx.session.user.id },
+                select: {
+                    id: true,
+                    name: true,
+                    blocks: {
+                        orderBy: { order: "asc" },
+                        select: {
+                            id: true,
+                            title: true,
+                            sourceType: true,
+                            sourceBlockId: true,
+                            order: true,
+                            fields: {
+                                orderBy: { order: "asc" },
+                                select: {
+                                    id: true,
+                                    key: true,
+                                    label: true,
+                                    fieldType: true,
+                                    required: true,
+                                    order: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+
+            logPerf("template.getForBuilder", {
+                found: result !== null,
+                blockCount: countTemplateBlocks(result),
+                fieldCount: countTemplateFields(result),
+                resultJsonChars: safeJsonChars(result),
+            });
+
+            return result;
+        }),
+
+    getForForms: protectedProcedure
+        .input(z.object({ id: z.string() }))
+        .query(async ({ ctx, input }) => {
+            const result = await ctx.db.template.findFirst({
+                where: { id: input.id, ownerId: ctx.session.user.id },
+                select: {
+                    id: true,
+                    name: true,
+                    blocks: {
+                        orderBy: { order: "asc" },
+                        select: {
+                            id: true,
+                            title: true,
+                            order: true,
+                            fields: {
+                                orderBy: { order: "asc" },
+                                select: {
+                                    id: true,
+                                    key: true,
+                                    label: true,
+                                    fieldType: true,
+                                    required: true,
+                                    order: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+
+            logPerf("template.getForForms", {
+                found: result !== null,
+                blockCount: countTemplateBlocks(result),
+                fieldCount: countTemplateFields(result),
+                resultJsonChars: safeJsonChars(result),
+            });
+
+            return result;
+        }),
+
     create: protectedProcedure
         .input(templateBodySchema)
         .mutation(async ({ ctx, input }) => {
-            return ctx.db.template.create({
-                data: {
-                    ownerId: ctx.session.user.id,
-                    name: input.name,
-                    blocks: { create: input.blocks.map(buildBlockCreate) },
-                },
-                select: POST_WRITE_SELECT,
-            });
+            const baseLog = {
+                blockCount: countSubmittedBlocks(input),
+                fieldCount: countSubmittedFields(input),
+                payloadJsonChars: safeJsonChars(input),
+            };
+
+            try {
+                const result = await ctx.db.template.create({
+                    data: {
+                        ownerId: ctx.session.user.id,
+                        name: input.name,
+                        blocks: { create: input.blocks.map(buildBlockCreate) },
+                    },
+                    select: POST_WRITE_SELECT,
+                });
+
+                logPerf("template.create", {
+                    ...baseLog,
+                    status: "success",
+                    resultBlockCount: countTemplateBlocks(result),
+                    resultFieldCount: countTemplateFields(result),
+                    resultJsonChars: safeJsonChars(result),
+                });
+
+                return result;
+            } catch (error) {
+                logPerf("template.create", {
+                    ...baseLog,
+                    status: "error",
+                    errorName: error instanceof Error ? error.name : "unknown",
+                });
+                throw error;
+            }
         }),
 
     update: protectedProcedure
         .input(z.object({ id: z.string() }).merge(templateBodySchema))
         .mutation(async ({ ctx, input }) => {
             const userId = ctx.session.user.id;
+            const baseLog = {
+                blockCount: countSubmittedBlocks(input),
+                fieldCount: countSubmittedFields(input),
+                payloadJsonChars: safeJsonChars(input),
+            };
 
             const existing = await ctx.db.template.findFirst({
                 where: { id: input.id, ownerId: userId },
                 select: { id: true },
             });
             if (!existing) {
+                logPerf("template.update", {
+                    ...baseLog,
+                    status: "not-found",
+                });
                 throw new TRPCError({ code: "NOT_FOUND", message: "Template not found" });
             }
 
-            const [, updatedTemplate] = await ctx.db.$transaction([
-                ctx.db.templateBlock.deleteMany({ where: { templateId: input.id } }),
-                ctx.db.template.update({
-                    where: { id: input.id },
-                    data: {
-                        name: input.name,
-                        blocks: { create: input.blocks.map(buildBlockCreate) },
-                    },
-                    select: POST_WRITE_SELECT,
-                }),
-            ]);
+            try {
+                const [, updatedTemplate] = await ctx.db.$transaction([
+                    ctx.db.templateBlock.deleteMany({ where: { templateId: input.id } }),
+                    ctx.db.template.update({
+                        where: { id: input.id },
+                        data: {
+                            name: input.name,
+                            blocks: { create: input.blocks.map(buildBlockCreate) },
+                        },
+                        select: POST_WRITE_SELECT,
+                    }),
+                ]);
 
-            return updatedTemplate;
+                logPerf("template.update", {
+                    ...baseLog,
+                    status: "success",
+                    resultBlockCount: countTemplateBlocks(updatedTemplate),
+                    resultFieldCount: countTemplateFields(updatedTemplate),
+                    resultJsonChars: safeJsonChars(updatedTemplate),
+                });
+
+                return updatedTemplate;
+            } catch (error) {
+                logPerf("template.update", {
+                    ...baseLog,
+                    status: "error",
+                    errorName: error instanceof Error ? error.name : "unknown",
+                });
+                throw error;
+            }
         }),
 
     duplicate: protectedProcedure

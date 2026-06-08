@@ -17,9 +17,7 @@ export default async function EditTemplatePage({
         redirect(`/login?callbackUrl=${encodeURIComponent(`/templates/${id}`)}`);
     }
 
-    void api.block.listLibrary.prefetch();
-
-    const template = await api.template.get({ id });
+    const template = await api.template.getForBuilder({ id });
     if (!template) notFound();
 
     return (
