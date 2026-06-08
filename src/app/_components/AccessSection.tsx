@@ -23,7 +23,7 @@ const INCLUDED_FEATURES = [
 
 export default function AccessSection() {
     return (
-        <section id="access" className="py-16 sm:py-20 bg-white">
+        <section id="access" className="scroll-mt-[73px] py-16 sm:py-20 bg-white">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-12 animate-fade-up">
                     <span className="inline-flex items-center gap-2 rounded-full border border-[#2149A1]/20 bg-[#e8eef9] px-3 py-1 text-xs font-medium text-[#2149A1] mb-4">

@@ -9,6 +9,7 @@ import {
     Shield,
     Clock,
     MessageSquare,
+    NotebookPen,
     ArrowRight,
     CheckCircle,
     Menu,
@@ -27,15 +28,14 @@ export default function HomePage() {
     ];
 
     const scrollToSection = (sectionId: string) => {
-        const element = document.getElementById(sectionId);
-        if (element) {
-            // Account for the sticky header height (~73px) so the section
-            // isn't hidden behind it on mobile.
-            const headerHeight = 73;
-            const top = element.getBoundingClientRect().top + window.scrollY - headerHeight;
-            window.scrollTo({ top, behavior: "smooth" });
-        }
         setIsMobileMenuOpen(false);
+
+        requestAnimationFrame(() => {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        });
     };
 
     return (
@@ -213,7 +213,7 @@ export default function HomePage() {
                 {/* Hero Content */}
                 <div className="container mx-auto px-4 text-center relative z-10">
                     <span className="inline-block mb-4 bg-[#e8eef9] text-[#2149A1] border border-[#2149A1]/20 text-xs sm:text-sm font-medium px-3 py-1 rounded-full animate-bounce-in">
-                        Voice-Powered Form Filling
+                        Voice-Powered Forms and Notes
                     </span>
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight animate-fade-up">
                         Transform Speech into
@@ -222,8 +222,8 @@ export default function HomePage() {
                         </span>
                     </h1>
                     <p className="text-lg sm:text-xl text-[#868C94] mb-8 max-w-3xl mx-auto leading-relaxed animate-fade-up-delay-2 px-4">
-                        Formify streamlines form-filling by converting speech to text in real time. Eliminate
-                        manual data entry and connect more deeply with your clients through focused, genuine conversations.
+                        Formify turns spoken sessions into structured forms and organised notes in real time.
+                        Eliminate manual data entry and stay focused on genuine conversations.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 animate-fade-up-delay-3 px-4">
                         <Link href="/register" className="w-full sm:w-auto">
@@ -249,7 +249,7 @@ export default function HomePage() {
             </section>
 
             {/* ── About ── */}
-            <section id="about" className="py-16 sm:py-20">
+            <section id="about" className="scroll-mt-[73px] py-16 sm:py-20">
                 <div className="container mx-auto px-4">
                     <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
                         <div className="animate-slide-right order-2 lg:order-1">
@@ -342,8 +342,125 @@ export default function HomePage() {
                 </div>
             </section>
 
+            {/* ── Notes Showcase ── */}
+            <section className="py-16 sm:py-20 bg-white">
+                <div className="container mx-auto px-4">
+                    <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                        <div className="animate-slide-right order-2 lg:order-1">
+                            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-6">
+                                Capture Every Conversation Clearly
+                            </h2>
+                            <p className="text-base sm:text-lg text-[#868C94] mb-6 leading-relaxed">
+                                Formify turns recorded sessions into structured notes you can review,
+                                summarise, reorganise, copy, or export, so important details are captured
+                                without interrupting the conversation.
+                            </p>
+                            <div className="space-y-4">
+                                {[
+                                    {
+                                        title: "Live Session Notes",
+                                        desc: "See useful notes take shape while the conversation is still happening.",
+                                        delay: "animate-fade-in-up",
+                                    },
+                                    {
+                                        title: "Summarise and Reorganise",
+                                        desc: "Condense long notes or restructure them into clearer sections when you are ready.",
+                                        delay: "animate-fade-in-up-delay",
+                                    },
+                                    {
+                                        title: "Exportable Records",
+                                        desc: "Copy notes or export them for documentation, study, handover, or follow-up.",
+                                        delay: "animate-fade-in-up-delay-2",
+                                    },
+                                ].map(({ title, desc, delay }) => (
+                                    <div key={title} className={`flex items-start gap-3 ${delay} group`}>
+                                        <CheckCircle className="w-6 h-6 text-[#2149A1] mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
+                                        <div>
+                                            <h3 className="font-semibold text-slate-900 group-hover:text-[#2149A1] transition-colors duration-300">
+                                                {title}
+                                            </h3>
+                                            <p className="text-[#868C94]">{desc}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Notes Mockup Card */}
+                        <div className="bg-gradient-to-br from-[#e8eef9] to-slate-50 rounded-2xl p-4 sm:p-6 lg:p-12 animate-slide-left order-1 lg:order-2">
+                            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow duration-500">
+                                <div className="flex items-center gap-3 mb-5 sm:mb-6">
+                                    <div className="w-10 h-10 bg-[#2149A1] rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <NotebookPen className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-slate-800">Session Notes</h3>
+                                        <div className="flex items-center gap-2 text-xs font-medium text-emerald-600">
+                                            <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                                            Complete
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-5 rounded-lg border border-slate-200 bg-slate-50 p-4 text-left">
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-slate-900 mb-2">
+                                            Key discussion points
+                                        </h4>
+                                        <ul className="space-y-2 text-sm text-slate-600">
+                                            <li className="flex gap-2">
+                                                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[#2149A1] flex-shrink-0"></span>
+                                                Client goals and current blockers were captured.
+                                            </li>
+                                            <li className="flex gap-2">
+                                                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[#2149A1] flex-shrink-0"></span>
+                                                Important dates and follow-up items were identified.
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-slate-900 mb-2">
+                                            Actions / Follow-up
+                                        </h4>
+                                        <ul className="space-y-2 text-sm text-slate-600">
+                                            <li className="flex gap-2">
+                                                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                                                Send summary to the team.
+                                            </li>
+                                            <li className="flex gap-2">
+                                                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                                                Review next steps before the next meeting.
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-slate-900 mb-2">
+                                            Open Questions / Verify
+                                        </h4>
+                                        <p className="text-sm text-slate-600">Confirm final deadline.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 pt-4 mt-5 border-t border-slate-200">
+                                    {["Summarise", "Reorganise", "Copy"].map((action) => (
+                                        <span
+                                            key={action}
+                                            className="rounded-full border border-[#2149A1]/20 bg-[#e8eef9] px-3 py-1 text-xs font-medium text-[#2149A1]"
+                                        >
+                                            {action}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* ── Features ── */}
-            <section id="features" className="py-16 sm:py-20 bg-slate-50">
+            <section id="features" className="scroll-mt-[73px] py-16 sm:py-20 bg-slate-50">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12 sm:mb-16 animate-fade-up">
                         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">
@@ -358,6 +475,7 @@ export default function HomePage() {
                             { icon: Mic, color: "bg-emerald-100", iconColor: "text-emerald-600", title: "Real-Time Speech Recognition", desc: "Advanced voice processing converts natural speech to structured text instantly", delay: "animate-slide-up" },
                             { icon: Zap, color: "bg-orange-100", iconColor: "text-orange-600", title: "WebSocket Integration", desc: "Lightning-fast real-time connections ensure seamless data flow and instant updates", delay: "animate-slide-up-delay" },
                             { icon: MessageSquare, color: "bg-purple-100", iconColor: "text-purple-600", title: "Natural Dialogue Mapping", desc: "Intelligent algorithms map conversational speech into structured form fields automatically", delay: "animate-slide-up-delay-2" },
+                            { icon: NotebookPen, color: "bg-blue-100", iconColor: "text-blue-600", title: "Structured Session Notes", desc: "Capture conversations as organised notes that can be reviewed, summarised, reorganised, copied, or exported.", delay: "animate-slide-up-delay-3" },
                             { icon: Users, color: "bg-cyan-100", iconColor: "text-cyan-600", title: "Client-Focused Interactions", desc: "Maintain eye contact and genuine connections while forms fill themselves", delay: "animate-slide-up-delay-3" },
                             { icon: Shield, color: "bg-red-100", iconColor: "text-red-600", title: "Enterprise Security", desc: "HIPAA compliant with end-to-end encryption for sensitive professional data", delay: "animate-slide-up-delay-4" },
                             { icon: Clock, color: "bg-green-100", iconColor: "text-green-600", title: "Custom Form Builder", desc: "Create tailored forms for any industry with drag-and-drop simplicity", delay: "animate-slide-up-delay-5" },
@@ -375,7 +493,7 @@ export default function HomePage() {
             </section>
 
             {/* ── Industries ── */}
-            <section id="industries" className="py-16 sm:py-20 bg-[#FBFBFB] overflow-hidden">
+            <section id="industries" className="scroll-mt-[73px] py-16 sm:py-20 bg-[#FBFBFB] overflow-hidden">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12 sm:mb-16 animate-fade-up">
                         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-4">
@@ -388,13 +506,13 @@ export default function HomePage() {
 
                     {/* Stacked paper cards */}
                     <div className="flex justify-center overflow-hidden">
-                        <div className="relative w-full max-w-[320px] sm:max-w-[480px] md:max-w-[600px] h-64 sm:h-80 md:h-96 group">
+                        <div className="relative w-full max-w-[320px] sm:max-w-[560px] md:max-w-[680px] h-64 sm:h-80 md:h-96 group">
                             {[
-                                { label: "Legal", icon: Bell, color: "orange", rotate: "-15deg", left: "0px", z: 10 },
-                                { label: "Education", icon: MessageSquare, color: "purple", rotate: "-5deg", left: "140px", z: 20 },
-                                { label: "Finance", icon: Users, color: "green", rotate: "5deg", left: "280px", z: 30 },
-                                { label: "Healthcare", icon: Shield, color: "cyan", rotate: "15deg", left: "420px", z: 40 },
-                            ].map(({ label, icon: Icon, color, rotate, left, z }) => {
+                                { label: "Legal", icon: Bell, color: "orange", rotate: "-15deg", position: "-translate-x-[9rem] sm:-translate-x-[18rem] md:-translate-x-[21rem]", z: 10 },
+                                { label: "Education", icon: MessageSquare, color: "purple", rotate: "-5deg", position: "-translate-x-[5.75rem] sm:-translate-x-[9.5rem] md:-translate-x-[12.25rem]", z: 20 },
+                                { label: "Finance", icon: Users, color: "green", rotate: "5deg", position: "-translate-x-[2.5rem] sm:-translate-x-[1rem] md:-translate-x-[3.5rem]", z: 30 },
+                                { label: "Healthcare", icon: Shield, color: "cyan", rotate: "15deg", position: "translate-x-[0.75rem] sm:translate-x-[7.5rem] md:translate-x-[5.25rem]", z: 40 },
+                            ].map(({ label, icon: Icon, color, rotate, position, z }) => {
                                 const colorMap: Record<string, { bg: string; text: string; accent: string }> = {
                                     orange: { bg: "bg-orange-100", text: "text-orange-600", accent: "bg-orange-200" },
                                     purple: { bg: "bg-purple-100", text: "text-purple-600", accent: "bg-purple-200" },
@@ -405,17 +523,17 @@ export default function HomePage() {
                                 return (
                                     <div
                                         key={label}
-                                        className="absolute top-10 w-64 h-80 bg-white rounded-lg shadow-xl border border-slate-200 cursor-pointer transition-all duration-500 ease-out hover:-translate-y-4"
-                                        style={{ transform: `rotate(${rotate})`, left, zIndex: z }}
+                                        className={`absolute left-1/2 top-8 sm:top-10 w-36 sm:w-64 h-56 sm:h-80 bg-white rounded-lg shadow-xl border border-slate-200 cursor-pointer transition-all duration-500 ease-out hover:-translate-y-4 ${position}`}
+                                        style={{ rotate, zIndex: z }}
                                     >
-                                        <div className="p-6 h-full">
-                                            <div className="flex items-center gap-3 mb-4">
-                                                <div className={`w-8 h-8 ${c.bg} rounded-full flex items-center justify-center`}>
-                                                    <Icon className={`w-5 h-5 ${c.text}`} />
+                                        <div className="p-4 sm:p-6 h-full">
+                                            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                                                <div className={`w-7 h-7 sm:w-8 sm:h-8 ${c.bg} rounded-full flex items-center justify-center`}>
+                                                    <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${c.text}`} />
                                                 </div>
-                                                <h3 className="text-lg font-semibold text-slate-900">{label}</h3>
+                                                <h3 className="text-base sm:text-lg font-semibold text-slate-900">{label}</h3>
                                             </div>
-                                            <p className="text-slate-600 text-sm mb-6">
+                                            <p className="text-slate-600 text-xs sm:text-sm mb-4 sm:mb-6 leading-relaxed">
                                                 {label === "Legal" && "Client intake, case documentation, and consultation records with security"}
                                                 {label === "Education" && "Student assessments, parent conferences, and administrative documentation"}
                                                 {label === "Finance" && "Client onboarding, risk assessments, and financial planning documentation"}
@@ -491,7 +609,7 @@ export default function HomePage() {
                         ))}
                     </div>
                     <div className="border-t border-slate-800 mt-6 sm:mt-8 pt-6 sm:pt-8 flex flex-col md:flex-row justify-between items-center">
-                        <p className="text-slate-400 text-sm">© 2025 Formify. All rights reserved.</p>
+                        <p className="text-slate-400 text-sm">© 2026 Formify. All rights reserved.</p>
                         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 text-sm text-slate-400 mt-4 md:mt-0">
                             {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((item) => (
                                 <a key={item} href="#" className="hover:text-[#4a72d4] transition-colors duration-300 active:opacity-70 text-center sm:text-left">{item}</a>
