@@ -64,6 +64,7 @@
 | T-169 Align Forms/Notes workspace UI and remove product email export | Completed | Hid New Template header actions on mobile, aligned Notes sidebar visuals to the Forms sidebar while preserving note template edit/delete/save behaviour, aligned shared recording/status/reset controls, removed product-level Forms email export and product `/api/email`, kept password reset/auth Resend usage, simplified My Templates metadata, and refreshed docs/context. |
 | T-171 Complete Forms/Notes sidebar consistency polish | Completed | Forms and Notes template sidebars now use matching mobile trigger labels, drawer/header copy, spacing, close/new-template placement, and desktop/mobile open-close behaviour while preserving Forms template selection and Notes select/edit/delete controls. |
 | T-172 Allow custom blocks to be edited | Completed | Template Builder custom/info block cards now open the existing block editing flow on click/tap/keyboard activation, preserve nested delete/reorder/collapse controls, mark edits dirty through the existing save path, and keep the current template data model. |
+| T-177 Polish Notes Actions menu and transform loading UI | Completed | Notes Actions now use icon rows, a mobile slide-up sheet, desktop menu polish, visible transform loading, improved preview/reorganise overlays, a roomier edit surface, and one-level undo for transforms plus committed manual edits. Backend, WS, prompts, exports, Forms, and localStorage key semantics unchanged. |
 
 ## Active
 

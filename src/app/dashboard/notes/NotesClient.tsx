@@ -5,6 +5,8 @@ import {
     Mic, Square, Wifi, WifiOff, RotateCcw, Loader2,
     NotebookPen, Copy, Check, Download, AlertCircle,
     BookMarked, PanelLeftOpen, ChevronDown, X,
+    SlidersHorizontal, Sparkles, ListTree, Undo2,
+    Pencil, FileText, FileDown,
 } from "lucide-react";
 import { env } from "@/env";
 import { api } from "@/trpc/react";
@@ -67,6 +69,9 @@ type NotesTransformPreview = {
 
 type NotesUndoSnapshot = {
     markdown: string;
+    preFinalNotesMarkdown: string | null;
+    isFinal: boolean;
+    hasManualEdits: boolean;
 };
 
 const MAX_NOTES_SESSION_MS = 60 * 60_000;
@@ -553,8 +558,12 @@ export default function NotesClient({ user }: { user: User }) {
             : isConnected
                 ? "Connected"
                 : "Disconnected";
-    const canEditNotes = hasNotes && isFinal && !isRecording && !isFinalizing;
     const isTransforming = summariseNotes.isPending || reorganiseNotes.isPending;
+    const activeTransformLabel = summariseNotes.isPending
+        ? "Generating summary preview…"
+        : reorganiseNotes.isPending
+            ? "Reorganising notes…"
+            : null;
     const notesAreLongEnoughForTransform = hasEnoughNotesForTransform(visibleNotesMarkdown);
     const transformsBlockedByLifecycle =
         isStartingRecording ||
@@ -574,6 +583,7 @@ export default function NotesClient({ user }: { user: User }) {
         return null;
     })();
     const canRunTransform = transformDisabledReason === null;
+    const canEditNotes = hasNotes && isFinal && !transformsBlockedByLifecycle && !isTransforming;
     const canUndoTransform =
         undoSnapshot !== null &&
         !isEditingNotes &&
@@ -721,16 +731,30 @@ export default function NotesClient({ user }: { user: User }) {
         setNotesEditMessage(null);
     };
 
+    const captureUndoSnapshot = (): NotesUndoSnapshot => ({
+        markdown: notesMarkdown,
+        preFinalNotesMarkdown,
+        isFinal,
+        hasManualEdits,
+    });
+
     const handleStartNotesEdit = () => {
         if (!canEditNotes) return;
+        setActionsOpen(false);
+        setDownloadOpen(false);
         setDraftNotesMarkdown(notesMarkdown);
         setNotesEditMessage(null);
         setNotesEditing(true);
     };
 
     const handleDoneNotesEdit = () => {
+        if (draftNotesMarkdown !== notesMarkdown) {
+            setUndoSnapshot(captureUndoSnapshot());
+        }
         setNotesMarkdown(draftNotesMarkdown);
-        setNotesManualEdits(true);
+        if (draftNotesMarkdown !== notesMarkdown) {
+            setNotesManualEdits(true);
+        }
         setNotesEditing(false);
         setNotesEditMessage(null);
     };
@@ -1934,8 +1958,7 @@ export default function NotesClient({ user }: { user: User }) {
     const applyTransformPreview = () => {
         if (!transformPreview) return;
 
-        const previousMarkdown = visibleNotesMarkdownRef.current;
-        setUndoSnapshot({ markdown: previousMarkdown });
+        setUndoSnapshot(captureUndoSnapshot());
         replaceCanonicalNotes(transformPreview.markdown);
         setTransformPreview(null);
         setReorganiseDialogOpen(false);
@@ -1946,7 +1969,12 @@ export default function NotesClient({ user }: { user: User }) {
         if (!undoSnapshot || !canUndoTransform) return;
 
         setActionsOpen(false);
-        replaceCanonicalNotes(undoSnapshot.markdown);
+        setNotesMarkdown(undoSnapshot.markdown);
+        visibleNotesMarkdownRef.current = undoSnapshot.markdown;
+        setPreFinalNotesMarkdown(undoSnapshot.preFinalNotesMarkdown);
+        setIsFinal(undoSnapshot.isFinal);
+        clearNotesEditState();
+        setNotesManualEdits(undoSnapshot.hasManualEdits);
         setUndoSnapshot(null);
         setTransformPreview(null);
         setReorganiseDialogOpen(false);
@@ -2232,14 +2260,14 @@ export default function NotesClient({ user }: { user: User }) {
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden flex-1 dark:border-slate-800 dark:bg-slate-900/80">
                         {/* Panel header */}
                         <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/60 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
-                            <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-start">
+                            <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-start">
                                 <div className="flex min-w-0 items-center gap-2">
                                     <NotebookPen className="w-4 h-4 flex-shrink-0 text-[#2149A1] dark:text-blue-300" />
                                     <span className="truncate text-sm font-semibold text-slate-600 dark:text-slate-200">
                                         {isFinal ? "Final Notes" : "Live Notes"}
                                     </span>
                                 </div>
-                                <div className="flex flex-wrap items-center justify-end gap-1.5 sm:justify-start">
+                                <div className="flex flex-wrap items-center justify-start gap-1.5">
                                     {!isFinal && isRecording && (
                                         <span className="flex items-center gap-1 text-xs text-[#868C94] dark:text-slate-400">
                                             <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
@@ -2259,6 +2287,12 @@ export default function NotesClient({ user }: { user: User }) {
                                     {hasManualEdits && !isEditingNotes && (
                                         <span className="text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full font-medium dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                             Edited
+                                        </span>
+                                    )}
+                                    {activeTransformLabel && (
+                                        <span className="flex items-center gap-1 rounded-full border border-[#2149A1]/20 bg-[#e8eef9] px-2 py-0.5 text-xs font-medium text-[#2149A1] dark:border-blue-400/20 dark:bg-blue-500/15 dark:text-blue-200">
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                            {activeTransformLabel}
                                         </span>
                                     )}
                                 </div>
@@ -2295,8 +2329,13 @@ export default function NotesClient({ user }: { user: User }) {
                                                 disabled={!hasVisibleNotes}
                                                 aria-haspopup="dialog"
                                                 aria-expanded={actionsOpen}
-                                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-[background-color,border-color,color,transform,opacity] active:scale-[0.98] active:opacity-80 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                                             >
+                                                {isTransforming ? (
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />
+                                                ) : (
+                                                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                                                )}
                                                 Actions
                                                 <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${actionsOpen ? "rotate-180" : ""}`} />
                                             </button>
@@ -2308,10 +2347,10 @@ export default function NotesClient({ user }: { user: User }) {
                                             <button
                                                 type="button"
                                                 aria-label="Close notes actions"
-                                                className="absolute inset-0 bg-black/45"
+                                                className="absolute inset-0 bg-black/45 motion-safe:animate-fade-in motion-reduce:animate-none"
                                                 onClick={() => setActionsOpen(false)}
                                             />
-                                            <div className="absolute inset-x-0 bottom-0 max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/70">
+                                            <div className="absolute inset-x-0 bottom-0 max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-2xl motion-safe:animate-slide-up motion-reduce:animate-none dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/70">
                                                 <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
                                                     <div>
                                                         <h3 id="notes-mobile-actions-title" className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -2337,26 +2376,39 @@ export default function NotesClient({ user }: { user: User }) {
                                                         type="button"
                                                         onClick={() => void handleSummariseNotes()}
                                                         disabled={!canRunTransform}
-                                                        className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                        className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
-                                                        <span>Summarise</span>
-                                                        {summariseNotes.isPending && <Loader2 className="h-4 w-4 animate-spin text-[#2149A1] dark:text-blue-300" />}
+                                                        <span className="flex items-center gap-3">
+                                                            {summariseNotes.isPending ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin text-[#2149A1] dark:text-blue-300" />
+                                                            ) : (
+                                                                <Sparkles className="h-4 w-4 text-[#2149A1] dark:text-blue-300" />
+                                                            )}
+                                                            Summarise
+                                                        </span>
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={openReorganiseDialog}
                                                         disabled={!canRunTransform}
-                                                        className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                        className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
-                                                        <span>Reorganise</span>
-                                                        {reorganiseNotes.isPending && <Loader2 className="h-4 w-4 animate-spin text-[#2149A1] dark:text-blue-300" />}
+                                                        <span className="flex items-center gap-3">
+                                                            {reorganiseNotes.isPending ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin text-[#2149A1] dark:text-blue-300" />
+                                                            ) : (
+                                                                <ListTree className="h-4 w-4 text-[#2149A1] dark:text-blue-300" />
+                                                            )}
+                                                            Reorganise
+                                                        </span>
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={handleUndoLastChange}
                                                         disabled={!canUndoTransform}
-                                                        className="flex w-full items-center rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
+                                                        <Undo2 className="h-4 w-4 text-slate-400" />
                                                         Undo last change
                                                     </button>
                                                     <div className="my-2 border-t border-slate-100 dark:border-slate-800" />
@@ -2369,7 +2421,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                         disabled={!canEditNotes}
                                                         className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
-                                                        <NotebookPen className="h-4 w-4 text-slate-400" />
+                                                        <Pencil className="h-4 w-4 text-slate-400" />
                                                         Edit
                                                     </button>
                                                     <button
@@ -2401,7 +2453,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                         {isGeneratingPDF ? (
                                                             <Loader2 className="h-4 w-4 animate-spin text-[#2149A1] dark:text-blue-300" />
                                                         ) : (
-                                                            <Download className="h-4 w-4 text-[#2149A1] dark:text-blue-300" />
+                                                            <FileText className="h-4 w-4 text-[#2149A1] dark:text-blue-300" />
                                                         )}
                                                         {isGeneratingPDF ? "Generating PDF…" : "Download PDF"}
                                                     </button>
@@ -2414,7 +2466,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                         disabled={!hasVisibleNotes}
                                                         className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
-                                                        <Download className="h-4 w-4 text-[#2149A1] dark:text-blue-300" />
+                                                        <FileDown className="h-4 w-4 text-[#2149A1] dark:text-blue-300" />
                                                         Download Markdown
                                                     </button>
                                                 </div>
@@ -2444,6 +2496,11 @@ export default function NotesClient({ user }: { user: User }) {
                                                 aria-expanded={actionsOpen}
                                                 className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                             >
+                                                {isTransforming ? (
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />
+                                                ) : (
+                                                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                                                )}
                                                 Actions
                                                 <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${actionsOpen ? "rotate-180" : ""}`} />
                                             </button>
@@ -2460,8 +2517,14 @@ export default function NotesClient({ user }: { user: User }) {
                                                         disabled={!canRunTransform}
                                                         className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
-                                                        <span>Summarise</span>
-                                                        {summariseNotes.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />}
+                                                        <span className="flex items-center gap-2.5">
+                                                            {summariseNotes.isPending ? (
+                                                                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />
+                                                            ) : (
+                                                                <Sparkles className="h-3.5 w-3.5 text-[#2149A1] dark:text-blue-300" />
+                                                            )}
+                                                            Summarise
+                                                        </span>
                                                     </button>
                                                     <button
                                                         type="button"
@@ -2470,8 +2533,14 @@ export default function NotesClient({ user }: { user: User }) {
                                                         disabled={!canRunTransform}
                                                         className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
-                                                        <span>Reorganise</span>
-                                                        {reorganiseNotes.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />}
+                                                        <span className="flex items-center gap-2.5">
+                                                            {reorganiseNotes.isPending ? (
+                                                                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />
+                                                            ) : (
+                                                                <ListTree className="h-3.5 w-3.5 text-[#2149A1] dark:text-blue-300" />
+                                                            )}
+                                                            Reorganise
+                                                        </span>
                                                     </button>
                                                     <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
                                                     <button
@@ -2481,7 +2550,18 @@ export default function NotesClient({ user }: { user: User }) {
                                                         disabled={!canUndoTransform}
                                                         className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
+                                                        <Undo2 className="h-3.5 w-3.5 text-slate-400" />
                                                         Undo last change
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        role="menuitem"
+                                                        onClick={handleStartNotesEdit}
+                                                        disabled={!canEditNotes}
+                                                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        <Pencil className="h-3.5 w-3.5 text-slate-400" />
+                                                        Edit
                                                     </button>
                                                     {transformDisabledReason && (
                                                         <div className="border-t border-slate-100 px-3 py-2 text-[11px] leading-snug text-slate-400 dark:border-slate-800 dark:text-slate-500">
@@ -2491,35 +2571,24 @@ export default function NotesClient({ user }: { user: User }) {
                                                 </div>
                                             )}
                                         </div>
-                                        {canEditNotes && (
-                                            isEditingNotes ? (
-                                                <>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleDoneNotesEdit}
-                                                        className="flex items-center gap-1.5 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors active:scale-[0.98] active:opacity-90 hover:bg-[#1a3a87]"
-                                                    >
-                                                        <Check className="h-3.5 w-3.5" />
-                                                        Done
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleCancelNotesEdit}
-                                                        className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                </>
-                                            ) : (
+                                        {isEditingNotes && (
+                                            <>
                                                 <button
                                                     type="button"
-                                                    onClick={handleStartNotesEdit}
-                                                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                    onClick={handleDoneNotesEdit}
+                                                    className="flex items-center gap-1.5 rounded-lg bg-[#2149A1] px-2.5 py-1.5 text-xs font-medium text-white transition-colors active:scale-[0.98] active:opacity-90 hover:bg-[#1a3a87]"
                                                 >
-                                                    <NotebookPen className="h-3.5 w-3.5" />
-                                                    Edit
+                                                    <Check className="h-3.5 w-3.5" />
+                                                    Done
                                                 </button>
-                                            )
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCancelNotesEdit}
+                                                    className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors active:scale-[0.98] active:opacity-80 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </>
                                         )}
                                         <button
                                             type="button"
@@ -2568,7 +2637,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                         {isGeneratingPDF ? (
                                                             <Loader2 className="w-3.5 h-3.5 animate-spin text-[#2149A1] dark:text-blue-300" />
                                                         ) : (
-                                                            <Download className="w-3.5 h-3.5 text-[#2149A1] dark:text-blue-300" />
+                                                            <FileText className="w-3.5 h-3.5 text-[#2149A1] dark:text-blue-300" />
                                                         )}
                                                         {isGeneratingPDF ? "Generating PDF…" : "Download PDF"}
                                                     </button>
@@ -2581,7 +2650,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                         }}
                                                         className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
-                                                        <Download className="w-3.5 h-3.5 text-[#2149A1] dark:text-blue-300" />
+                                                        <FileDown className="w-3.5 h-3.5 text-[#2149A1] dark:text-blue-300" />
                                                         Download Markdown (.md)
                                                     </button>
                                                 </div>
@@ -2613,15 +2682,22 @@ export default function NotesClient({ user }: { user: User }) {
                         )}
 
                         {/* Notes content */}
-                        <div className="px-6 py-5">
+                        <div className="px-4 py-4 sm:px-6 sm:py-5">
                             {isEditingNotes ? (
-                                <textarea
-                                    value={draftNotesMarkdown}
-                                    onChange={(event) => setDraftNotesMarkdown(event.target.value)}
-                                    aria-label="Edit final notes markdown"
-                                    className="min-h-[360px] w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 font-mono text-sm leading-relaxed text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
-                                    spellCheck
-                                />
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 shadow-inner dark:border-slate-800 dark:bg-slate-950/50">
+                                    <div className="mb-2 flex items-center justify-between gap-3 px-1">
+                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                                            Edit your final notes. Done commits changes; Cancel leaves notes unchanged.
+                                        </p>
+                                    </div>
+                                    <textarea
+                                        value={draftNotesMarkdown}
+                                        onChange={(event) => setDraftNotesMarkdown(event.target.value)}
+                                        aria-label="Edit final notes markdown"
+                                        className="min-h-[55vh] w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-4 text-[15px] leading-7 text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 sm:min-h-[520px] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+                                        spellCheck
+                                    />
+                                </div>
                             ) : hasNotes ? (
                                 <div className="min-h-[200px]">
                                     {renderMarkdown(visibleNotesMarkdown)}
@@ -2658,56 +2734,60 @@ export default function NotesClient({ user }: { user: User }) {
             </div>
 
             {reorganiseDialogOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
                     <button
                         type="button"
                         aria-label="Cancel reorganise notes"
-                        className="absolute inset-0 bg-black/50"
+                        className="absolute inset-0 bg-black/50 motion-safe:animate-fade-in motion-reduce:animate-none"
                         onClick={cancelTransformFlow}
                     />
-                    <div className="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:shadow-slate-950/60">
-                        <button
-                            type="button"
-                            onClick={cancelTransformFlow}
-                            className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                            aria-label="Cancel reorganise notes"
-                        >
-                            <X className="h-4 w-4" />
-                        </button>
-                        <h3 className="pr-8 text-lg font-semibold text-slate-900 dark:text-slate-100">Reorganise notes</h3>
-                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                            Choose target sections for a preview, or let Formify organise the notes automatically.
-                        </p>
-
-                        <label className="mt-5 block text-xs font-medium text-[#868C94] dark:text-slate-400">
-                            Sections <span className="font-normal">(comma-separated)</span>
-                        </label>
-                        <textarea
-                            value={reorganiseSectionsRaw}
-                            onChange={(event) => setReorganiseSectionsRaw(event.target.value)}
-                            disabled={reorganiseAutoSections}
-                            rows={4}
-                            placeholder="Summary, Key Points, Actions"
-                            className="mt-1.5 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-900 dark:disabled:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
-                        />
-
-                        <label className="mt-3 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                            <input
-                                type="checkbox"
-                                checked={reorganiseAutoSections}
-                                onChange={(event) => setReorganiseAutoSections(event.target.checked)}
-                                className="h-4 w-4 rounded border-slate-300 text-[#2149A1] focus:ring-[#2149A1]/30 dark:border-slate-700 dark:bg-slate-950"
-                            />
-                            Auto sections
-                        </label>
-
-                        {transformError && (
-                            <p className="mt-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
-                                {transformError}
+                    <div className="relative flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl motion-safe:animate-slide-up motion-reduce:animate-none sm:rounded-xl sm:motion-safe:animate-fade-up dark:bg-slate-900 dark:shadow-slate-950/60">
+                        <div className="border-b border-slate-100 px-6 py-5 dark:border-slate-800">
+                            <button
+                                type="button"
+                                onClick={cancelTransformFlow}
+                                className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                aria-label="Cancel reorganise notes"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                            <h3 className="pr-8 text-lg font-semibold text-slate-900 dark:text-slate-100">Reorganise notes</h3>
+                            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                                Choose target sections for a preview, or let Formify organise the notes automatically.
                             </p>
-                        )}
+                        </div>
 
-                        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+                            <label className="block text-xs font-medium text-[#868C94] dark:text-slate-400">
+                                Sections <span className="font-normal">(comma-separated)</span>
+                            </label>
+                            <textarea
+                                value={reorganiseSectionsRaw}
+                                onChange={(event) => setReorganiseSectionsRaw(event.target.value)}
+                                disabled={reorganiseAutoSections}
+                                rows={5}
+                                placeholder="Summary, Key Points, Actions"
+                                className="mt-1.5 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm leading-6 text-slate-900 outline-none transition-colors placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 focus:border-[#2149A1] focus:ring-2 focus:ring-[#2149A1]/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-900 dark:disabled:text-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+                            />
+
+                            <label className="mt-3 flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
+                                <input
+                                    type="checkbox"
+                                    checked={reorganiseAutoSections}
+                                    onChange={(event) => setReorganiseAutoSections(event.target.checked)}
+                                    className="h-4 w-4 rounded border-slate-300 text-[#2149A1] focus:ring-[#2149A1]/30 dark:border-slate-700 dark:bg-slate-950"
+                                />
+                                Auto sections
+                            </label>
+
+                            {transformError && (
+                                <p className="mt-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+                                    {transformError}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="sticky bottom-0 flex flex-col gap-3 border-t border-slate-100 bg-white px-6 py-4 sm:flex-row dark:border-slate-800 dark:bg-slate-900">
                             <button
                                 type="button"
                                 onClick={() => void handleGenerateReorganisePreview()}
@@ -2730,14 +2810,14 @@ export default function NotesClient({ user }: { user: User }) {
             )}
 
             {transformPreview && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
                     <button
                         type="button"
                         aria-label="Cancel notes action preview"
-                        className="absolute inset-0 bg-black/50"
+                        className="absolute inset-0 bg-black/50 motion-safe:animate-fade-in motion-reduce:animate-none"
                         onClick={cancelTransformFlow}
                     />
-                    <div className="relative flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-xl dark:bg-slate-900 dark:shadow-slate-950/60">
+                    <div className="relative flex max-h-[94dvh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl motion-safe:animate-slide-up motion-reduce:animate-none sm:max-h-[88vh] sm:rounded-xl sm:motion-safe:animate-fade-up dark:bg-slate-900 dark:shadow-slate-950/60">
                         <div className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">
                             <button
                                 type="button"
@@ -2751,22 +2831,17 @@ export default function NotesClient({ user }: { user: User }) {
                                 {transformPreview.type === "summary" ? "Summary Preview" : "Reorganised Notes Preview"}
                             </h3>
                             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                Your current notes will not change until you apply this preview.
+                                Review before applying. Your current notes are unchanged.
                             </p>
                         </div>
 
-                        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-                            {renderMarkdown(transformPreview.markdown)}
+                        <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50/70 px-4 py-4 sm:px-6 sm:py-5 dark:bg-slate-950/40">
+                            <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+                                {renderMarkdown(transformPreview.markdown)}
+                            </div>
                         </div>
 
-                        <div className="flex flex-col gap-3 border-t border-slate-100 px-6 py-4 sm:flex-row dark:border-slate-800">
-                            <button
-                                type="button"
-                                onClick={applyTransformPreview}
-                                className="flex-1 rounded-lg bg-[#2149A1] px-4 py-2 text-sm font-medium text-white transition-[background-color,transform,opacity] hover:bg-[#1a3a87] active:scale-[0.98] active:opacity-90"
-                            >
-                                {transformPreview.type === "summary" ? "Apply Summary" : "Apply Reorganised Notes"}
-                            </button>
+                        <div className="sticky bottom-0 flex flex-col gap-3 border-t border-slate-100 bg-white px-6 py-4 sm:flex-row dark:border-slate-800 dark:bg-slate-900">
                             {transformPreview.type === "reorganise" && (
                                 <button
                                     type="button"
@@ -2782,6 +2857,13 @@ export default function NotesClient({ user }: { user: User }) {
                                 className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={applyTransformPreview}
+                                className="flex-1 rounded-lg bg-[#2149A1] px-4 py-2 text-sm font-medium text-white transition-[background-color,transform,opacity] hover:bg-[#1a3a87] active:scale-[0.98] active:opacity-90"
+                            >
+                                {transformPreview.type === "summary" ? "Apply Summary" : "Apply Reorganised Notes"}
                             </button>
                         </div>
                     </div>
