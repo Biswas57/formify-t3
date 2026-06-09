@@ -483,6 +483,8 @@ export default function NotesClient({ user }: { user: User }) {
     const [reorganiseSectionsRaw, setReorganiseSectionsRaw] = useState("");
     const [reorganiseAutoSections, setReorganiseAutoSections] = useState(false);
     const [undoSnapshot, setUndoSnapshot] = useState<NotesUndoSnapshot | null>(null);
+    const [dismissedSessionLimitWarningLevel, setDismissedSessionLimitWarningLevel] =
+        useState<SessionLimitWarningLevel | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarDrawerVisible, setSidebarDrawerVisible] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -532,7 +534,13 @@ export default function NotesClient({ user }: { user: User }) {
     const errorMessage = wsError ?? micError;
     const sessionLimitRemainingMinutes =
         sessionLimitRemainingMs === null ? null : Math.max(0, Math.ceil(sessionLimitRemainingMs / 60_000));
-    const showSessionLimitWarning = sessionLimitWarningLevel !== "none";
+    const canDismissSessionLimitWarning =
+        isRecording && sessionLimitWarningLevel !== "none" && sessionLimitWarningLevel !== "reached";
+    const showSessionLimitWarning =
+        sessionLimitWarningLevel === "reached" ||
+        (isRecording &&
+            sessionLimitWarningLevel !== "none" &&
+            dismissedSessionLimitWarningLevel !== sessionLimitWarningLevel);
     const sessionLimitWarningCopy = (() => {
         if (sessionLimitWarningLevel === "warning") {
             const minutesLabel = sessionLimitRemainingMinutes === 1 ? "1 minute" : `${sessionLimitRemainingMinutes ?? 0} minutes`;
@@ -547,6 +555,9 @@ export default function NotesClient({ user }: { user: User }) {
             return `This recording is almost at the 60-minute reliability window and will finalise shortly. Your notes are preserved, and you can resume afterwards. About ${minutesLabel} remaining.`;
         }
         if (sessionLimitWarningLevel === "reached") {
+            if (isFinal) {
+                return "This recording reached the 60-minute reliability window and final notes are ready. Your notes were preserved, and you can resume afterwards.";
+            }
             return "This recording is finalising for reliability at the 60-minute mark. Your notes are preserved, and you can resume afterwards.";
         }
         return "";
@@ -557,11 +568,11 @@ export default function NotesClient({ user }: { user: User }) {
             "border-yellow-200 bg-yellow-50 text-yellow-800 " +
             "dark:border-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-200",
         "final-warning":
-            "border-orange-300 bg-orange-50 text-orange-800 " +
-            "dark:border-orange-500/40 dark:bg-orange-500/10 dark:text-orange-200",
+            "border-amber-300 bg-amber-50 text-amber-800 " +
+            "dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200",
         "strong-warning":
-            "border-orange-400 bg-orange-100 text-orange-900 " +
-            "dark:border-orange-500/60 dark:bg-orange-500/20 dark:text-orange-100",
+            "border-orange-300 bg-orange-50 text-orange-800 " +
+            "dark:border-orange-400/50 dark:bg-orange-500/10 dark:text-orange-200",
         reached:
             "border-red-300 bg-red-50 text-red-800 " +
             "dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200",
@@ -742,6 +753,17 @@ export default function NotesClient({ user }: { user: User }) {
         const interval = setInterval(tick, 1000);
         return () => clearInterval(interval);
     }, [recordStatus]);
+
+    useEffect(() => {
+        if (!dismissedSessionLimitWarningLevel) return;
+        if (
+            sessionLimitWarningLevel === "none" ||
+            sessionLimitWarningLevel === "reached" ||
+            sessionLimitWarningLevel !== dismissedSessionLimitWarningLevel
+        ) {
+            setDismissedSessionLimitWarningLevel(null);
+        }
+    }, [dismissedSessionLimitWarningLevel, sessionLimitWarningLevel]);
 
     useEffect(() => {
         if (!downloadOpen) return;
@@ -1508,6 +1530,7 @@ export default function NotesClient({ user }: { user: User }) {
                     recordStatusRef.current = "paused";
                     manualStopRequestedRef.current = false;
                     recordingSessionStartedAtRef.current = null;
+                    setDismissedSessionLimitWarningLevel(null);
                     clearLogicalRecordingSession();
                     stopInFlightRef.current = false;
 
@@ -1785,6 +1808,7 @@ export default function NotesClient({ user }: { user: User }) {
         recordingSessionStartedAtRef.current = null;
         setSessionLimitWarningLevel("none");
         setSessionLimitRemainingMs(null);
+        setDismissedSessionLimitWarningLevel(null);
 
         let stream: MediaStream | null = null;
         let recorder: MediaRecorder | null = null;
@@ -1917,6 +1941,7 @@ export default function NotesClient({ user }: { user: User }) {
         stopInFlightRef.current = true;
         resetReconnectState();
         manualStopRequestedRef.current = true;
+        setDismissedSessionLimitWarningLevel(null);
         wsSessionReadyRef.current = false;
         setSessionReady(false);
         setRecordStatus("finalizing");
@@ -1961,6 +1986,7 @@ export default function NotesClient({ user }: { user: User }) {
         setMicError(null);
         setWsError(null);
         setWsStatus("disconnected");
+        setDismissedSessionLimitWarningLevel(null);
         manualStopRequestedRef.current = false;
         recordingSessionStartedAtRef.current = null;
         setSessionLimitWarningLevel("none");
@@ -1977,9 +2003,22 @@ export default function NotesClient({ user }: { user: User }) {
         closeMobileSidebar();
     };
 
-    const cancelNotesConfigChange = () => {
+    const cancelNotesConfigChange = useCallback(() => {
         setPendingNotesConfigChange(null);
-    };
+    }, []);
+
+    useEffect(() => {
+        if (!pendingNotesConfigChange) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                cancelNotesConfigChange();
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [cancelNotesConfigChange, pendingNotesConfigChange]);
 
     // ── Notes transforms ─────────────────────────────────────────────────────
 
@@ -2293,7 +2332,17 @@ export default function NotesClient({ user }: { user: User }) {
                 {showSessionLimitWarning && (
                     <div className={`flex items-start gap-2.5 rounded-lg border px-4 py-3 text-sm ${sessionLimitWarningClasses[sessionLimitWarningLevel]}`}>
                         <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                        <p>{sessionLimitWarningCopy}</p>
+                        <p className="flex-1">{sessionLimitWarningCopy}</p>
+                        {canDismissSessionLimitWarning && (
+                            <button
+                                type="button"
+                                onClick={() => setDismissedSessionLimitWarningLevel(sessionLimitWarningLevel)}
+                                className="rounded-md p-1 opacity-70 transition-[background-color,opacity,transform] active:scale-95 active:opacity-60 hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10"
+                                aria-label="Dismiss session warning"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        )}
                     </div>
                 )}
 
@@ -3066,9 +3115,23 @@ export default function NotesClient({ user }: { user: User }) {
             )}
 
             {pendingNotesConfigChange && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:shadow-slate-950/60">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Change notes template?</h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <button
+                        type="button"
+                        aria-label="Cancel notes template change"
+                        className="absolute inset-0 bg-black/50"
+                        onClick={cancelNotesConfigChange}
+                    />
+                    <div className="relative w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:shadow-slate-950/60">
+                        <button
+                            type="button"
+                            onClick={cancelNotesConfigChange}
+                            className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 transition-colors active:scale-95 active:opacity-80 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                            aria-label="Cancel notes template change"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                        <h3 className="pr-8 text-lg font-semibold text-slate-900 dark:text-slate-100">Change notes template?</h3>
                         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                             Changing templates will clear your current notes for this session. This cannot be undone unless you have copied or downloaded them.
                         </p>
