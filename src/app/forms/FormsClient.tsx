@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/trpc/react";
 import Link from "next/link";
@@ -355,8 +355,8 @@ export default function FormsClient({ user }: { user: User }) {
             templateSummariesList.some((template) => template.id === restoredDraft?.templateId));
 
     // Derived
-    const blocks = parseBlocks(templateRaw);
-    const allFields = Object.values(blocks).flat();
+    const blocks = useMemo(() => parseBlocks(templateRaw), [templateRaw]);
+    const allFields = useMemo(() => Object.values(blocks).flat(), [blocks]);
     const isConnected = wsStatus === "connected" && isSessionReady;
     const isRecording = recordStatus === "recording";
     const isFinalizing = recordStatus === "finalizing";
