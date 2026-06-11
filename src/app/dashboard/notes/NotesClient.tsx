@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Mic, Square, Wifi, WifiOff, RotateCcw, Loader2,
     NotebookPen, Copy, Check, Download, AlertCircle,
     BookMarked, PanelLeftOpen, ChevronDown, X,
     SlidersHorizontal, Sparkles, ListTree, Undo2,
-    Pencil, FileText, FileDown,
+    Redo2, Pencil, FileText, FileDown,
 } from "lucide-react";
 import { env } from "@/env";
 import { api } from "@/trpc/react";
@@ -72,7 +72,9 @@ type ActiveTransformRun = {
     type: NotesTransformType;
 };
 
-type NotesUndoSnapshot = {
+type NotesCopyFormat = "text" | "markdown";
+
+type NotesHistoryEntry = {
     markdown: string;
     preFinalNotesMarkdown: string | null;
     isFinal: boolean;
@@ -94,6 +96,7 @@ const NOTES_TRANSFORM_MIN_CHARS = 500;
 const NOTES_TRANSFORM_MIN_WORDS = 80;
 const NOTES_TRANSFORM_MAX_SECTIONS = 12;
 const NOTES_ACTIONS_SHEET_EXIT_MS = 220;
+const NOTES_HISTORY_LIMIT = 40;
 
 const NON_RETRYABLE_NOTES_ERROR_CODES = new Set([
     "invalid-token",
@@ -153,6 +156,85 @@ function isMobileActionsViewport(): boolean {
 
 function isNoteStyle(value: unknown): value is NoteStyle {
     return typeof value === "string" && NOTE_STYLE_VALUES.includes(value as NoteStyle);
+}
+
+function markdownToReadableText(markdown: string): string {
+    const trimmed = markdown.trim();
+    if (!trimmed) return "";
+
+    return trimmed
+        .replace(/```[^\n\r]*\r?\n?([\s\S]*?)```/g, (_match, code: string) => code.trim())
+        .replace(/`([^`]+)`/g, "$1")
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)")
+        .split(/\r?\n/)
+        .map((line) => {
+            let text = line;
+            text = text.replace(/^#{1,6}\s+/, "");
+            text = text.replace(/^>\s?/, "");
+            text = text.replace(/^(\s*)[-*+]\s+/, "$1- ");
+            text = text.replace(/^(\s*)\|(.+)\|\s*$/, (_match, leading: string, body: string) => {
+                const cells = body
+                    .split("|")
+                    .map((cell) => cell.trim())
+                    .filter(Boolean);
+                return cells.length > 0 ? `${leading}${cells.join(" | ")}` : "";
+            });
+            text = text.replace(/(\*\*|__)(.*?)\1/g, "$2");
+            text = text.replace(/(\*|_)(.*?)\1/g, "$2");
+            text = text.replace(/~~(.*?)~~/g, "$1");
+            return text.trimEnd();
+        })
+        .filter((line, index, lines) => {
+            const isTableRule = /^\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+$/.test(line);
+            if (isTableRule) return false;
+            return line.trim().length > 0 || lines[index - 1]?.trim().length !== 0;
+        })
+        .join("\n")
+        .trim();
+}
+
+async function writeClipboardText(text: string): Promise<void> {
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    textarea.style.top = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    try {
+        const copied = document.execCommand("copy");
+        if (!copied) {
+            throw new Error("copy-command-failed");
+        }
+    } finally {
+        textarea.remove();
+    }
+}
+
+function isSameHistoryEntry(a: NotesHistoryEntry, b: NotesHistoryEntry): boolean {
+    return (
+        a.markdown === b.markdown &&
+        a.preFinalNotesMarkdown === b.preFinalNotesMarkdown &&
+        a.isFinal === b.isFinal &&
+        a.hasManualEdits === b.hasManualEdits
+    );
+}
+
+function isTextEntryTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    if (target.isContentEditable) return true;
+
+    const tagName = target.tagName.toLowerCase();
+    return tagName === "input" || tagName === "textarea" || tagName === "select";
 }
 
 function getNotesDraftStorageKey(user: User): string | null {
@@ -471,7 +553,9 @@ export default function NotesClient({ user }: { user: User }) {
     const [notesEditMessage, setNotesEditMessage] = useState<string | null>(null);
 
     // UI
-    const [copied, setCopied] = useState(false);
+    const [copiedFormat, setCopiedFormat] = useState<NotesCopyFormat | null>(null);
+    const [copyError, setCopyError] = useState<string | null>(null);
+    const [copyOpen, setCopyOpen] = useState(false);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [downloadOpen, setDownloadOpen] = useState(false);
     const [actionsOpen, setActionsOpen] = useState(false);
@@ -482,7 +566,8 @@ export default function NotesClient({ user }: { user: User }) {
     const [reorganiseDialogOpen, setReorganiseDialogOpen] = useState(false);
     const [reorganiseSectionsRaw, setReorganiseSectionsRaw] = useState("");
     const [reorganiseAutoSections, setReorganiseAutoSections] = useState(false);
-    const [undoSnapshot, setUndoSnapshot] = useState<NotesUndoSnapshot | null>(null);
+    const [undoStack, setUndoStack] = useState<NotesHistoryEntry[]>([]);
+    const [redoStack, setRedoStack] = useState<NotesHistoryEntry[]>([]);
     const [dismissedSessionLimitWarningLevel, setDismissedSessionLimitWarningLevel] =
         useState<SessionLimitWarningLevel | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -500,6 +585,7 @@ export default function NotesClient({ user }: { user: User }) {
     const isEditingNotesRef = useRef(false);
     const hasManualEditsRef = useRef(false);
     const visibleNotesMarkdownRef = useRef("");
+    const copyMenuRef = useRef<HTMLDivElement>(null);
     const transformRunIdRef = useRef(0);
     const activeTransformRunRef = useRef<ActiveTransformRun | null>(null);
     const ignoredTransformRunIdsRef = useRef<Set<number>>(new Set());
@@ -579,6 +665,14 @@ export default function NotesClient({ user }: { user: User }) {
     };
 
     const visibleNotesMarkdown = isEditingNotes ? draftNotesMarkdown : notesMarkdown;
+    const renderedVisibleNotesMarkdown = useMemo(
+        () => renderMarkdown(visibleNotesMarkdown),
+        [visibleNotesMarkdown]
+    );
+    const renderedTransformPreviewMarkdown = useMemo(
+        () => transformPreview ? renderMarkdown(transformPreview.markdown) : null,
+        [transformPreview]
+    );
     const hasNotes = notesMarkdown.trim().length > 0;
     const hasVisibleNotes = visibleNotesMarkdown.trim().length > 0;
     const hasNotesContent = hasNotes || isFinal || hasManualEdits || isEditingNotes;
@@ -619,6 +713,12 @@ export default function NotesClient({ user }: { user: User }) {
     const activeTransformBody = activeTransformRun
         ? "Your notes are unchanged until you apply the result."
         : null;
+    const copyFeedbackMessage =
+        copiedFormat === "text"
+            ? "Copied text"
+            : copiedFormat === "markdown"
+                ? "Copied Markdown"
+                : null;
     const notesAreLongEnoughForTransform = hasEnoughNotesForTransform(visibleNotesMarkdown);
     const transformsBlockedByLifecycle =
         isStartingRecording ||
@@ -639,8 +739,13 @@ export default function NotesClient({ user }: { user: User }) {
     })();
     const canRunTransform = transformDisabledReason === null;
     const canEditNotes = hasNotes && isFinal && !transformsBlockedByLifecycle && !isTransforming;
-    const canUndoTransform =
-        undoSnapshot !== null &&
+    const canUndoNotes =
+        undoStack.length > 0 &&
+        !isEditingNotes &&
+        !transformsBlockedByLifecycle &&
+        !isTransforming;
+    const canRedoNotes =
+        redoStack.length > 0 &&
         !isEditingNotes &&
         !transformsBlockedByLifecycle &&
         !isTransforming;
@@ -709,6 +814,7 @@ export default function NotesClient({ user }: { user: User }) {
         }
 
         setDownloadOpen(false);
+        setCopyOpen(false);
         setActionsOpen(true);
         setMobileActionsSheetVisible(false);
         requestAnimationFrame(() => setMobileActionsSheetVisible(true));
@@ -766,6 +872,30 @@ export default function NotesClient({ user }: { user: User }) {
     }, [dismissedSessionLimitWarningLevel, sessionLimitWarningLevel]);
 
     useEffect(() => {
+        if (!copyOpen) return;
+
+        const handleClick = (event: MouseEvent) => {
+            if (copyMenuRef.current && !copyMenuRef.current.contains(event.target as Node)) {
+                setCopyOpen(false);
+            }
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setCopyOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClick);
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClick);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [copyOpen]);
+
+    useEffect(() => {
         if (!downloadOpen) return;
 
         const handleClick = (event: MouseEvent) => {
@@ -815,6 +945,7 @@ export default function NotesClient({ user }: { user: User }) {
 
     useEffect(() => {
         if (!hasVisibleNotes) {
+            setCopyOpen(false);
             setDownloadOpen(false);
             setActionsOpen(false);
             setMobileActionsSheetVisible(false);
@@ -872,28 +1003,57 @@ export default function NotesClient({ user }: { user: User }) {
         suppressNextEmptyDraftSaveRef.current = true;
     }, [notesDraftStorageKey]);
 
-    const setNotesEditing = (editing: boolean) => {
+    const setNotesEditing = useCallback((editing: boolean) => {
         isEditingNotesRef.current = editing;
         setIsEditingNotes(editing);
-    };
+    }, []);
 
-    const setNotesManualEdits = (edited: boolean) => {
+    const setNotesManualEdits = useCallback((edited: boolean) => {
         hasManualEditsRef.current = edited;
         setHasManualEdits(edited);
-    };
+    }, []);
 
-    const clearNotesEditState = () => {
+    const clearNotesEditState = useCallback(() => {
         setNotesEditing(false);
         setDraftNotesMarkdown("");
         setNotesEditMessage(null);
-    };
+    }, [setNotesEditing]);
 
-    const captureUndoSnapshot = (): NotesUndoSnapshot => ({
+    const captureHistoryEntry = useCallback((): NotesHistoryEntry => ({
         markdown: notesMarkdown,
         preFinalNotesMarkdown,
         isFinal,
         hasManualEdits,
-    });
+    }), [hasManualEdits, isFinal, notesMarkdown, preFinalNotesMarkdown]);
+
+    const pushUndoHistory = useCallback((entry = captureHistoryEntry()) => {
+        setUndoStack((current) => {
+            const last = current[current.length - 1];
+            if (last && isSameHistoryEntry(last, entry)) {
+                return current;
+            }
+
+            return [...current, entry].slice(-NOTES_HISTORY_LIMIT);
+        });
+        setRedoStack([]);
+    }, [captureHistoryEntry]);
+
+    const clearNotesHistory = useCallback(() => {
+        setUndoStack([]);
+        setRedoStack([]);
+    }, []);
+
+    const restoreHistoryEntry = useCallback((entry: NotesHistoryEntry) => {
+        setNotesMarkdown(entry.markdown);
+        visibleNotesMarkdownRef.current = entry.markdown;
+        setPreFinalNotesMarkdown(entry.preFinalNotesMarkdown);
+        setIsFinal(entry.isFinal);
+        clearNotesEditState();
+        setNotesManualEdits(entry.hasManualEdits);
+        setTransformPreview(null);
+        setReorganiseDialogOpen(false);
+        setTransformError(null);
+    }, [clearNotesEditState, setNotesManualEdits]);
 
     const handleStartNotesEdit = () => {
         if (!canEditNotes) return;
@@ -906,7 +1066,7 @@ export default function NotesClient({ user }: { user: User }) {
 
     const handleDoneNotesEdit = () => {
         if (draftNotesMarkdown !== notesMarkdown) {
-            setUndoSnapshot(captureUndoSnapshot());
+            pushUndoHistory();
         }
         setNotesMarkdown(draftNotesMarkdown);
         if (draftNotesMarkdown !== notesMarkdown) {
@@ -1506,7 +1666,13 @@ export default function NotesClient({ user }: { user: User }) {
                         }
                         if (isEditingNotesRef.current || hasManualEditsRef.current) {
                             setNotesEditMessage("A late final update arrived, but your edits were kept.");
-                        } else {
+                        } else if (md !== previousVisibleNotes) {
+                            pushUndoHistory({
+                                markdown: previousVisibleNotes,
+                                preFinalNotesMarkdown: null,
+                                isFinal: false,
+                                hasManualEdits: false,
+                            });
                             setNotesMarkdown(md);
                         }
                     }
@@ -1801,7 +1967,7 @@ export default function NotesClient({ user }: { user: User }) {
         resetReconnectState();
         clearLogicalRecordingSession();
         cancelTransformFlow();
-        setUndoSnapshot(null);
+        clearNotesHistory();
         setIsStartingRecording(true);
         setMicError(null);
         manualStopRequestedRef.current = false;
@@ -1969,7 +2135,7 @@ export default function NotesClient({ user }: { user: User }) {
         startInFlightRef.current = false;
         stopInFlightRef.current = false;
         cancelTransformFlow();
-        setUndoSnapshot(null);
+        clearNotesHistory();
         stopLocalRecorder();
         clearLogicalRecordingSession();
         // Close any active socket intentionally and do not reconnect — a new
@@ -2150,28 +2316,63 @@ export default function NotesClient({ user }: { user: User }) {
     const applyTransformPreview = () => {
         if (!transformPreview) return;
 
-        setUndoSnapshot(captureUndoSnapshot());
+        pushUndoHistory();
         replaceCanonicalNotes(transformPreview.markdown);
         setTransformPreview(null);
         setReorganiseDialogOpen(false);
         setTransformError(null);
     };
 
-    const handleUndoLastChange = () => {
-        if (!undoSnapshot || !canUndoTransform) return;
+    const handleUndoNotes = useCallback(() => {
+        if (!canUndoNotes) return;
+
+        const previousEntry = undoStack[undoStack.length - 1];
+        if (!previousEntry) return;
 
         closeActionsMenu();
-        setNotesMarkdown(undoSnapshot.markdown);
-        visibleNotesMarkdownRef.current = undoSnapshot.markdown;
-        setPreFinalNotesMarkdown(undoSnapshot.preFinalNotesMarkdown);
-        setIsFinal(undoSnapshot.isFinal);
-        clearNotesEditState();
-        setNotesManualEdits(undoSnapshot.hasManualEdits);
-        setUndoSnapshot(null);
-        setTransformPreview(null);
-        setReorganiseDialogOpen(false);
-        setTransformError(null);
-    };
+        const currentEntry = captureHistoryEntry();
+        restoreHistoryEntry(previousEntry);
+        setUndoStack((current) => current.slice(0, -1));
+        setRedoStack((current) => [currentEntry, ...current].slice(0, NOTES_HISTORY_LIMIT));
+    }, [canUndoNotes, captureHistoryEntry, closeActionsMenu, restoreHistoryEntry, undoStack]);
+
+    const handleRedoNotes = useCallback(() => {
+        if (!canRedoNotes) return;
+
+        const nextEntry = redoStack[0];
+        if (!nextEntry) return;
+
+        closeActionsMenu();
+        const currentEntry = captureHistoryEntry();
+        restoreHistoryEntry(nextEntry);
+        setRedoStack((current) => current.slice(1));
+        setUndoStack((current) => [...current, currentEntry].slice(-NOTES_HISTORY_LIMIT));
+    }, [canRedoNotes, captureHistoryEntry, closeActionsMenu, redoStack, restoreHistoryEntry]);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (!(event.metaKey || event.ctrlKey)) return;
+            if (isTextEntryTarget(event.target) || isEditingNotesRef.current) return;
+
+            const key = event.key.toLowerCase();
+            const wantsRedo = (key === "z" && event.shiftKey) || key === "y";
+            const wantsUndo = key === "z" && !event.shiftKey;
+
+            if (wantsRedo && canRedoNotes) {
+                event.preventDefault();
+                handleRedoNotes();
+                return;
+            }
+
+            if (wantsUndo && canUndoNotes) {
+                event.preventDefault();
+                handleUndoNotes();
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [canRedoNotes, canUndoNotes, handleRedoNotes, handleUndoNotes]);
 
     // ── PDF Export ────────────────────────────────────────────────────────────
     // Client-side only — note content never leaves the browser.
@@ -2220,11 +2421,27 @@ export default function NotesClient({ user }: { user: User }) {
 
     // ── Copy ─────────────────────────────────────────────────────────────────
 
-    const handleCopy = async () => {
+    const handleCopy = async (format: NotesCopyFormat) => {
         if (!visibleNotesMarkdown.trim()) return;
-        await navigator.clipboard.writeText(visibleNotesMarkdown);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+
+        const text =
+            format === "markdown"
+                ? visibleNotesMarkdown
+                : markdownToReadableText(visibleNotesMarkdown);
+
+        try {
+            await writeClipboardText(text);
+            setCopyError(null);
+            setCopiedFormat(format);
+            setTimeout(() => {
+                setCopiedFormat((current) => (current === format ? null : current));
+            }, 2000);
+        } catch {
+            setCopiedFormat(null);
+            setCopyError("Couldn’t copy notes. Please try again.");
+        } finally {
+            setCopyOpen(false);
+        }
     };
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -2611,12 +2828,23 @@ export default function NotesClient({ user }: { user: User }) {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={handleUndoLastChange}
-                                                        disabled={!canUndoTransform}
+                                                        onClick={handleUndoNotes}
+                                                        disabled={!canUndoNotes}
+                                                        aria-label="Undo last notes change"
                                                         className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
                                                         <Undo2 className="h-4 w-4 text-slate-400" />
-                                                        Undo last change
+                                                        Undo
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleRedoNotes}
+                                                        disabled={!canRedoNotes}
+                                                        aria-label="Redo notes change"
+                                                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        <Redo2 className="h-4 w-4 text-slate-400" />
+                                                        Redo
                                                     </button>
                                                     <div className="my-2 border-t border-slate-100 dark:border-slate-800" />
                                                     <button
@@ -2635,17 +2863,33 @@ export default function NotesClient({ user }: { user: User }) {
                                                         type="button"
                                                         onClick={() => {
                                                             closeActionsMenu();
-                                                            void handleCopy();
+                                                            void handleCopy("text");
                                                         }}
                                                         disabled={!hasVisibleNotes}
                                                         className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
-                                                        {copied ? (
+                                                        {copiedFormat === "text" ? (
                                                             <Check className="h-4 w-4 text-emerald-600" />
                                                         ) : (
                                                             <Copy className="h-4 w-4 text-slate-400" />
                                                         )}
-                                                        {copied ? "Copied" : "Copy"}
+                                                        {copiedFormat === "text" ? "Copied text" : "Copy text"}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            closeActionsMenu();
+                                                            void handleCopy("markdown");
+                                                        }}
+                                                        disabled={!hasVisibleNotes}
+                                                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        {copiedFormat === "markdown" ? (
+                                                            <Check className="h-4 w-4 text-emerald-600" />
+                                                        ) : (
+                                                            <FileText className="h-4 w-4 text-slate-400" />
+                                                        )}
+                                                        {copiedFormat === "markdown" ? "Copied Markdown" : "Copy Markdown"}
                                                     </button>
                                                     <button
                                                         type="button"
@@ -2710,17 +2954,54 @@ export default function NotesClient({ user }: { user: User }) {
                                                 </button>
                                             </>
                                         )}
-                                        <button
-                                            type="button"
-                                            onClick={handleCopy}
-                                            disabled={!hasVisibleNotes}
-                                            className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                                        >
-                                            {copied
-                                                ? <><Check className="w-3.5 h-3.5 text-emerald-600" /> Copied</>
-                                                : <><Copy className="w-3.5 h-3.5" /> Copy</>
-                                            }
-                                        </button>
+                                        <div className="relative" ref={copyMenuRef}>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setDownloadOpen(false);
+                                                    setActionsOpen(false);
+                                                    setCopyOpen((value) => !value);
+                                                }}
+                                                disabled={!hasVisibleNotes}
+                                                aria-haspopup="menu"
+                                                aria-expanded={copyOpen}
+                                                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                            >
+                                                {copiedFormat ? (
+                                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                                ) : (
+                                                    <Copy className="w-3.5 h-3.5" />
+                                                )}
+                                                {copiedFormat === "text" ? "Copied text" : copiedFormat === "markdown" ? "Copied Markdown" : "Copy"}
+                                                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${copyOpen ? "rotate-180" : ""}`} />
+                                            </button>
+
+                                            {copyOpen && (
+                                                <div
+                                                    role="menu"
+                                                    className="absolute right-0 top-full z-20 mt-1.5 w-44 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40"
+                                                >
+                                                    <button
+                                                        type="button"
+                                                        role="menuitem"
+                                                        onClick={() => void handleCopy("text")}
+                                                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        <Copy className="h-3.5 w-3.5 text-slate-400" />
+                                                        Copy text
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        role="menuitem"
+                                                        onClick={() => void handleCopy("markdown")}
+                                                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        <FileText className="h-3.5 w-3.5 text-slate-400" />
+                                                        Copy Markdown
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                         {!isEditingNotes && (
                                             <button
                                                 type="button"
@@ -2736,6 +3017,7 @@ export default function NotesClient({ user }: { user: User }) {
                                             <button
                                                 type="button"
                                                 onClick={() => {
+                                                    setCopyOpen(false);
                                                     setActionsOpen(false);
                                                     setDownloadOpen((value) => !value);
                                                 }}
@@ -2791,6 +3073,7 @@ export default function NotesClient({ user }: { user: User }) {
                                             <button
                                                 type="button"
                                                 onClick={() => {
+                                                    setCopyOpen(false);
                                                     setDownloadOpen(false);
                                                     setActionsOpen((value) => !value);
                                                 }}
@@ -2849,12 +3132,24 @@ export default function NotesClient({ user }: { user: User }) {
                                                     <button
                                                         type="button"
                                                         role="menuitem"
-                                                        onClick={handleUndoLastChange}
-                                                        disabled={!canUndoTransform}
+                                                        onClick={handleUndoNotes}
+                                                        disabled={!canUndoNotes}
+                                                        aria-label="Undo last notes change"
                                                         className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
                                                         <Undo2 className="h-3.5 w-3.5 text-slate-400" />
-                                                        Undo last change
+                                                        Undo
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        role="menuitem"
+                                                        onClick={handleRedoNotes}
+                                                        disabled={!canRedoNotes}
+                                                        aria-label="Redo notes change"
+                                                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                                                    >
+                                                        <Redo2 className="h-3.5 w-3.5 text-slate-400" />
+                                                        Redo
                                                     </button>
                                                     {transformDisabledReason && (
                                                         <div className="border-t border-slate-100 px-3 py-2 text-[11px] leading-snug text-slate-400 dark:border-slate-800 dark:text-slate-500">
@@ -2868,6 +3163,26 @@ export default function NotesClient({ user }: { user: User }) {
                                 </div>
                             )}
                         </div>
+
+                        {copyFeedbackMessage && (
+                            <div className="border-b border-emerald-100 bg-emerald-50 px-5 py-2 text-xs font-medium text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300">
+                                {copyFeedbackMessage}
+                            </div>
+                        )}
+
+                        {copyError && (
+                            <div className="flex items-center justify-between gap-3 border-b border-red-100 bg-red-50 px-5 py-2 text-xs font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+                                <span>{copyError}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setCopyError(null)}
+                                    className="rounded-md px-1.5 py-1 text-red-500 transition-colors active:scale-95 active:opacity-80 hover:bg-red-100 hover:text-red-700 dark:text-red-300 dark:hover:bg-red-900/40 dark:hover:text-red-100"
+                                    aria-label="Dismiss notes copy error"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                        )}
 
                         {notesEditMessage && (
                             <div className="border-b border-amber-100 bg-amber-50 px-5 py-2 text-xs font-medium text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
@@ -2929,7 +3244,7 @@ export default function NotesClient({ user }: { user: User }) {
                                 </div>
                             ) : hasNotes ? (
                                 <div className="min-h-[200px]">
-                                    {renderMarkdown(visibleNotesMarkdown)}
+                                    {renderedVisibleNotesMarkdown}
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center min-h-[200px] text-center">
@@ -3081,7 +3396,7 @@ export default function NotesClient({ user }: { user: User }) {
 
                         <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50/70 px-4 py-4 sm:px-6 sm:py-5 dark:bg-slate-950/40">
                             <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
-                                {renderMarkdown(transformPreview.markdown)}
+                                {renderedTransformPreviewMarkdown}
                             </div>
                         </div>
 
