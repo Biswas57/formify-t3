@@ -29,6 +29,7 @@ interface ServerMessage {
     message?: string;
     notesMarkdown?: string;
     finalisationRecoveryId?: string;
+    activeRecordingRecovery?: ActiveRecordingRecoveryStatus;
     // legacy compat
     action?: string;
     notes_markdown?: string;
@@ -39,6 +40,7 @@ type RecordStatus = "idle" | "recording" | "finalizing" | "paused";
 type NoteStyle = "general" | "clinical" | "meeting" | "study";
 type SessionLimitWarningLevel = "none" | "warning" | "final-warning" | "strong-warning" | "reached";
 type RestoredRecordStatus = "idle" | "paused";
+type ActiveRecordingRecoveryStatus = "resumed" | "expired" | "not_found";
 
 type NotesDraft = {
     version: 1;
@@ -93,6 +95,16 @@ type NotesRecoveryDescriptor =
         ignored?: boolean;
     };
 
+type ActiveRecordingInterruptionDescriptor = {
+    version: 1;
+    kind: "active_notes_recording";
+    recordingSessionId: string;
+    finalisationRecoveryId?: string;
+    interruptedAt: number;
+    expiresAt: number;
+    priorStatus: "recording" | "reconnecting" | "paused";
+};
+
 type NotesRecoveryNotice = {
     tone: "info" | "success" | "warning";
     message: string;
@@ -112,9 +124,11 @@ const NOTES_SESSION_FINAL_WARNING_MS = 5 * 60_000;
 const NOTES_SESSION_STRONG_WARNING_MS = 2 * 60_000;
 const NOTES_DRAFT_STORAGE_PREFIX = "formify:notes:draft:v1";
 const NOTES_RECOVERY_STORAGE_PREFIX = "formify:notes:recovery:v1";
+const NOTES_ACTIVE_INTERRUPTION_STORAGE_PREFIX = "formify:notes:active-interruption:v1";
 const NOTES_DRAFT_SAVE_DEBOUNCE_MS = 300;
 const NOTES_FINAL_RECOVERY_DESCRIPTOR_TTL_MS = 5 * 60_000;
 const NOTES_TRANSFORM_RECOVERY_DESCRIPTOR_TTL_MS = 30 * 60_000;
+const NOTES_ACTIVE_INTERRUPTION_DESCRIPTOR_TTL_MS = 2 * 60_000;
 const NOTES_RECOVERY_POLL_INTERVAL_MS = 2000;
 const NOTES_RECONNECT_DELAYS_MS = [500, 1000, 2000, 4000, 8000] as const;
 const NOTES_RECONNECT_TOTAL_WINDOW_MS = 20_000;
@@ -276,6 +290,11 @@ function getNotesRecoveryStorageKey(user: User): string | null {
     return stableIdentifier ? `${NOTES_RECOVERY_STORAGE_PREFIX}:${stableIdentifier}` : null;
 }
 
+function getNotesActiveInterruptionStorageKey(user: User): string | null {
+    const stableIdentifier = user.id ?? user.email;
+    return stableIdentifier ? `${NOTES_ACTIVE_INTERRUPTION_STORAGE_PREFIX}:${stableIdentifier}` : null;
+}
+
 function hashNotesSource(markdown: string): string {
     let hash = 2166136261;
     for (let index = 0; index < markdown.length; index += 1) {
@@ -283,6 +302,10 @@ function hashNotesSource(markdown: string): string {
         hash = Math.imul(hash, 16777619);
     }
     return `${(hash >>> 0).toString(16)}:${markdown.length}`;
+}
+
+function isActiveRecordingRecoveryStatus(value: unknown): value is ActiveRecordingRecoveryStatus {
+    return value === "resumed" || value === "expired" || value === "not_found";
 }
 
 function isNotesRecoveryDescriptor(value: unknown): value is NotesRecoveryDescriptor {
@@ -309,6 +332,40 @@ function isNotesRecoveryDescriptor(value: unknown): value is NotesRecoveryDescri
     }
 
     return false;
+}
+
+function isActiveRecordingInterruptionDescriptor(value: unknown): value is ActiveRecordingInterruptionDescriptor {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    const descriptor = value as Partial<ActiveRecordingInterruptionDescriptor>;
+    return (
+        descriptor.version === 1 &&
+        descriptor.kind === "active_notes_recording" &&
+        typeof descriptor.recordingSessionId === "string" &&
+        descriptor.recordingSessionId.trim().length > 0 &&
+        (descriptor.finalisationRecoveryId === undefined || typeof descriptor.finalisationRecoveryId === "string") &&
+        typeof descriptor.interruptedAt === "number" &&
+        typeof descriptor.expiresAt === "number" &&
+        (
+            descriptor.priorStatus === "recording" ||
+            descriptor.priorStatus === "reconnecting" ||
+            descriptor.priorStatus === "paused"
+        )
+    );
+}
+
+function parseActiveRecordingInterruptionDescriptor(
+    raw: string | null,
+    now = Date.now()
+): ActiveRecordingInterruptionDescriptor | null {
+    if (!raw) return null;
+
+    try {
+        const parsed = JSON.parse(raw) as unknown;
+        if (!isActiveRecordingInterruptionDescriptor(parsed)) return null;
+        return parsed.expiresAt > now ? parsed : null;
+    } catch {
+        return null;
+    }
 }
 
 function parseNotesRecoveryDescriptors(raw: string | null, now = Date.now()): NotesRecoveryDescriptor[] {
@@ -603,6 +660,7 @@ function renderInline(text: string): React.ReactNode {
 export default function NotesClient({ user }: { user: User }) {
     const notesDraftStorageKey = getNotesDraftStorageKey(user);
     const notesRecoveryStorageKey = getNotesRecoveryStorageKey(user);
+    const notesActiveInterruptionStorageKey = getNotesActiveInterruptionStorageKey(user);
 
     // Connection
     const wsRef = useRef<WebSocket | null>(null);
@@ -658,6 +716,10 @@ export default function NotesClient({ user }: { user: User }) {
     const [transformPreview, setTransformPreview] = useState<NotesTransformPreview | null>(null);
     const [activeTransformRun, setActiveTransformRun] = useState<ActiveTransformRun | null>(null);
     const [recoveryNotice, setRecoveryNotice] = useState<NotesRecoveryNotice | null>(null);
+    const [activeInterruptionDescriptor, setActiveInterruptionDescriptor] =
+        useState<ActiveRecordingInterruptionDescriptor | null>(null);
+    const [activeRecordingRecoveryStatus, setActiveRecordingRecoveryStatus] =
+        useState<ActiveRecordingRecoveryStatus | null>(null);
     const [reorganiseDialogOpen, setReorganiseDialogOpen] = useState(false);
     const [reorganiseSectionsRaw, setReorganiseSectionsRaw] = useState("");
     const [reorganiseAutoSections, setReorganiseAutoSections] = useState(false);
@@ -689,6 +751,8 @@ export default function NotesClient({ user }: { user: User }) {
     const recoveryPollInFlightRef = useRef(false);
     const recoveryPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const pollRecoveryDescriptorsRef = useRef<(reason: string) => Promise<void>>(async () => undefined);
+    const activeRecordingRecoveryTerminalRef = useRef(false);
+    const beginReconnectRef = useRef<(reason: string) => boolean>(() => false);
     const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reconnectGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reconnectAttemptRef = useRef(0);
@@ -717,6 +781,16 @@ export default function NotesClient({ user }: { user: User }) {
         wsStatus === "error";
     const canSelectTemplate = !isStartingRecording && !isRecording && !isFinalizing;
     const errorMessage = wsError ?? micError;
+    const canResumeActiveInterruption =
+        activeInterruptionDescriptor !== null && isPaused && !isRecording && !isFinalizing;
+    const startRecordingLabel =
+        activeRecordingRecoveryStatus === "expired" || activeRecordingRecoveryStatus === "not_found"
+            ? "Start new recording"
+            : canResumeActiveInterruption
+                ? "Resume recording"
+                : isPaused
+                    ? "Resume"
+                    : "Start Recording";
     const sessionLimitRemainingMinutes =
         sessionLimitRemainingMs === null ? null : Math.max(0, Math.ceil(sessionLimitRemainingMs / 60_000));
     const canDismissSessionLimitWarning =
@@ -780,7 +854,7 @@ export default function NotesClient({ user }: { user: User }) {
     const statusText = isStartingRecording
         ? "Connecting — preparing notes session."
         : wsStatus === "reconnecting"
-            ? "Reconnecting — preserving your recording."
+            ? "Reconnecting… Keep this tab open while we restore your recording."
             : isRecording
             ? "Recording — notes are updating live."
             : isFinalizing
@@ -951,6 +1025,81 @@ export default function NotesClient({ user }: { user: User }) {
             console.warn("[Notes] Could not clear recovery descriptors:", error);
         }
     }, [notesRecoveryStorageKey]);
+
+    const readActiveRecordingInterruptionDescriptor = useCallback((): ActiveRecordingInterruptionDescriptor | null => {
+        if (!notesActiveInterruptionStorageKey || typeof window === "undefined") return null;
+
+        const raw = window.localStorage.getItem(notesActiveInterruptionStorageKey);
+        const descriptor = parseActiveRecordingInterruptionDescriptor(raw);
+        if (!descriptor && raw) {
+            try {
+                window.localStorage.removeItem(notesActiveInterruptionStorageKey);
+            } catch (error) {
+                console.warn("[Notes] Could not clear expired active recording descriptor:", error);
+            }
+        }
+
+        setActiveInterruptionDescriptor((current) => {
+            if (
+                current?.recordingSessionId === descriptor?.recordingSessionId &&
+                current?.interruptedAt === descriptor?.interruptedAt &&
+                current?.expiresAt === descriptor?.expiresAt
+            ) {
+                return current;
+            }
+            return descriptor;
+        });
+        return descriptor;
+    }, [notesActiveInterruptionStorageKey]);
+
+    const writeActiveRecordingInterruptionDescriptor = useCallback((
+        descriptor: ActiveRecordingInterruptionDescriptor
+    ) => {
+        if (!notesActiveInterruptionStorageKey || typeof window === "undefined") return;
+
+        try {
+            window.localStorage.setItem(notesActiveInterruptionStorageKey, JSON.stringify(descriptor));
+            setActiveInterruptionDescriptor(descriptor);
+        } catch (error) {
+            console.warn("[Notes] Could not save active recording descriptor:", error);
+        }
+    }, [notesActiveInterruptionStorageKey]);
+
+    const clearActiveRecordingInterruptionDescriptor = useCallback((
+        options: { clearStatus?: boolean } = {}
+    ) => {
+        if (notesActiveInterruptionStorageKey && typeof window !== "undefined") {
+            try {
+                window.localStorage.removeItem(notesActiveInterruptionStorageKey);
+            } catch (error) {
+                console.warn("[Notes] Could not clear active recording descriptor:", error);
+            }
+        }
+
+        setActiveInterruptionDescriptor(null);
+        if (options.clearStatus !== false) {
+            setActiveRecordingRecoveryStatus(null);
+        }
+    }, [notesActiveInterruptionStorageKey]);
+
+    const persistActiveRecordingInterruptionDescriptor = useCallback((
+        priorStatus: ActiveRecordingInterruptionDescriptor["priorStatus"]
+    ) => {
+        const recordingSessionId = logicalRecordingSessionIdRef.current;
+        if (!recordingSessionId) return;
+        if (recordStatusRef.current !== "recording" && priorStatus !== "reconnecting") return;
+
+        const now = Date.now();
+        writeActiveRecordingInterruptionDescriptor({
+            version: 1,
+            kind: "active_notes_recording",
+            recordingSessionId,
+            finalisationRecoveryId: finalisationRecoveryIdRef.current ?? undefined,
+            interruptedAt: now,
+            expiresAt: now + NOTES_ACTIVE_INTERRUPTION_DESCRIPTOR_TTL_MS,
+            priorStatus,
+        });
+    }, [writeActiveRecordingInterruptionDescriptor]);
 
     function scheduleRecoveryPoll(delayMs = NOTES_RECOVERY_POLL_INTERVAL_MS) {
         if (typeof document !== "undefined" && document.hidden) return;
@@ -1400,6 +1549,43 @@ export default function NotesClient({ user }: { user: User }) {
         finalisationRecoveryIdRef.current = null;
     }
 
+    function showActiveRecordingInterruptionNotice(status: ActiveRecordingRecoveryStatus) {
+        setActiveRecordingRecoveryStatus(status);
+        setRecoveryNotice({
+            tone: status === "resumed" ? "info" : "warning",
+            message: "Recording was interrupted",
+            detail: status === "resumed"
+                ? "Your notes draft is safe. Some audio may not have been captured while you were away."
+                : "Your notes draft is safe, but the recording could not be restored. Some audio may not have been captured while you were away.",
+        });
+    }
+
+    function pauseAfterUnavailableActiveRecordingRecovery(status: Extract<ActiveRecordingRecoveryStatus, "expired" | "not_found">, ws?: WebSocket) {
+        activeRecordingRecoveryTerminalRef.current = true;
+        resetReconnectState();
+        clearLogicalRecordingSession();
+        clearActiveRecordingInterruptionDescriptor({ clearStatus: false });
+        const socket = ws ?? wsRef.current;
+        if (socket && socket.readyState !== WebSocket.CLOSED && socket.readyState !== WebSocket.CLOSING) {
+            markSocketCloseIntentional(socket);
+            socket.close(1000, `active-recovery-${status}`);
+        }
+        if (wsRef.current === socket) {
+            wsRef.current = null;
+        }
+        markSessionInactive();
+        stopLocalRecorder();
+        setIsStartingRecording(false);
+        startInFlightRef.current = false;
+        stopInFlightRef.current = false;
+        setRecordStatus("paused");
+        recordStatusRef.current = "paused";
+        setWsError(null);
+        setMicError(null);
+        setWsStatus("disconnected");
+        showActiveRecordingInterruptionNotice(status);
+    }
+
     function persistFinalRecoveryDescriptor() {
         const recoveryId = finalisationRecoveryIdRef.current;
         if (!recoveryId) return;
@@ -1613,6 +1799,7 @@ export default function NotesClient({ user }: { user: User }) {
         }
 
         if (!reconnectingRef.current) {
+            persistActiveRecordingInterruptionDescriptor("reconnecting");
             reconnectingRef.current = true;
             reconnectAttemptRef.current = 0;
             reconnectDeadlineRef.current = Date.now() + NOTES_RECONNECT_TOTAL_WINDOW_MS;
@@ -1649,6 +1836,8 @@ export default function NotesClient({ user }: { user: User }) {
 
         return true;
     }
+
+    beginReconnectRef.current = (reason: string) => beginReconnect(reason);
 
     function scheduleReconnectAttempt() {
         if (!reconnectingRef.current || recordStatusRef.current !== "recording" || stopInFlightRef.current) {
@@ -1856,6 +2045,23 @@ export default function NotesClient({ user }: { user: User }) {
                     if (typeof msg.finalisationRecoveryId === "string" && msg.finalisationRecoveryId.trim()) {
                         finalisationRecoveryIdRef.current = msg.finalisationRecoveryId;
                     }
+
+                    const activeRecordingRecovery = isActiveRecordingRecoveryStatus(msg.activeRecordingRecovery)
+                        ? msg.activeRecordingRecovery
+                        : null;
+
+                    if (activeRecordingRecovery === "expired" || activeRecordingRecovery === "not_found") {
+                        pauseAfterUnavailableActiveRecordingRecovery(activeRecordingRecovery, ws);
+                        return;
+                    }
+
+                    if (activeRecordingRecovery === "resumed") {
+                        clearActiveRecordingInterruptionDescriptor({ clearStatus: false });
+                        showActiveRecordingInterruptionNotice("resumed");
+                    } else {
+                        clearActiveRecordingInterruptionDescriptor();
+                    }
+
                     wsSessionReadyRef.current = true;
                     setSessionReady(true);
                     setWsStatus("connected");
@@ -1889,6 +2095,7 @@ export default function NotesClient({ user }: { user: User }) {
                     const capFinalized = capReachedByTime && !manualStopRequestedRef.current;
 
                     removeRecoveryDescriptors((descriptor) => descriptor.kind === "notes_final");
+                    clearActiveRecordingInterruptionDescriptor();
                     setRecoveryNotice(null);
                     completeFinalNotesState({ capFinalized });
                     stopInFlightRef.current = false;
@@ -1988,6 +2195,65 @@ export default function NotesClient({ user }: { user: User }) {
             wsRef.current = null;
         }
     }
+
+    useEffect(() => {
+        const persistIfRecordingIsAtRisk = () => {
+            if (recordStatusRef.current !== "recording") return;
+            persistActiveRecordingInterruptionDescriptor(
+                reconnectingRef.current ? "reconnecting" : "recording"
+            );
+        };
+
+        const handleReturn = () => {
+            if (typeof document !== "undefined" && document.hidden) return;
+            const descriptor = readActiveRecordingInterruptionDescriptor();
+            if (!descriptor) return;
+
+            if (recordStatusRef.current === "recording") {
+                const ws = wsRef.current;
+                if (ws?.readyState !== WebSocket.OPEN || !wsSessionReadyRef.current) {
+                    beginReconnectRef.current("page-return");
+                }
+                return;
+            }
+
+            if (recordStatusRef.current === "finalizing" || startInFlightRef.current || stopInFlightRef.current) {
+                return;
+            }
+
+            setRecoveryNotice({
+                tone: "info",
+                message: "Recording was interrupted",
+                detail:
+                    "Your notes draft is safe. Some audio may not have been captured while you were away. Resume recording to check whether the recent session can continue.",
+            });
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                persistIfRecordingIsAtRisk();
+                return;
+            }
+            handleReturn();
+        };
+
+        readActiveRecordingInterruptionDescriptor();
+        handleReturn();
+        window.addEventListener("focus", handleReturn);
+        window.addEventListener("pageshow", handleReturn);
+        window.addEventListener("pagehide", persistIfRecordingIsAtRisk);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener("focus", handleReturn);
+            window.removeEventListener("pageshow", handleReturn);
+            window.removeEventListener("pagehide", persistIfRecordingIsAtRisk);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, [
+        persistActiveRecordingInterruptionDescriptor,
+        readActiveRecordingInterruptionDescriptor,
+    ]);
 
     useEffect(() => {
         if (!notesDraftStorageKey) {
@@ -2199,6 +2465,7 @@ export default function NotesClient({ user }: { user: User }) {
                         if (result.status === "succeeded") {
                             applyFinalNotesMarkdown(result.notesMarkdown, "recovery");
                             completeFinalNotesState();
+                            clearActiveRecordingInterruptionDescriptor();
                             setWsError(null);
                             setWsStatus("disconnected");
                             setRecoveryNotice({
@@ -2278,6 +2545,7 @@ export default function NotesClient({ user }: { user: User }) {
         }
     }, [
         applyFinalNotesMarkdown,
+        clearActiveRecordingInterruptionDescriptor,
         completeFinalNotesState,
         getNotesFinalRecovery,
         getNotesTransformJob,
@@ -2320,13 +2588,27 @@ export default function NotesClient({ user }: { user: User }) {
             return;
         }
 
+        activeRecordingRecoveryTerminalRef.current = false;
+        const activeRecordingResumeDescriptor = readActiveRecordingInterruptionDescriptor();
+        const shouldResumeActiveRecording =
+            activeRecordingResumeDescriptor !== null && recordStatusRef.current !== "idle";
+
         startInFlightRef.current = true;
         resetReconnectState();
-        clearLogicalRecordingSession();
+        if (shouldResumeActiveRecording) {
+            logicalRecordingSessionIdRef.current = activeRecordingResumeDescriptor.recordingSessionId;
+            finalisationRecoveryIdRef.current = activeRecordingResumeDescriptor.finalisationRecoveryId ?? null;
+            setActiveRecordingRecoveryStatus(null);
+        } else {
+            clearLogicalRecordingSession();
+            clearActiveRecordingInterruptionDescriptor();
+        }
         cancelTransformFlow();
         clearRecoveryDescriptors();
         setRecoveryNotice(null);
-        clearNotesHistory();
+        if (!shouldResumeActiveRecording) {
+            clearNotesHistory();
+        }
         setIsStartingRecording(true);
         setMicError(null);
         manualStopRequestedRef.current = false;
@@ -2359,7 +2641,7 @@ export default function NotesClient({ user }: { user: User }) {
         // ── Mint session token (auth + usage enforcement happens server-side) ──
         let token: string;
         try {
-            token = await mintNotesToken({ reuseLogicalSession: false });
+            token = await mintNotesToken({ reuseLogicalSession: shouldResumeActiveRecording });
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : "Failed to start session";
             clearLogicalRecordingSession();
@@ -2393,7 +2675,7 @@ export default function NotesClient({ user }: { user: User }) {
 
         // ── Send start with locked-in config + token ───────────────────────
         // Config is captured NOW — what the user sees is what gets sent.
-        const startPayload = buildNotesStartPayload(token, false);
+        const startPayload = buildNotesStartPayload(token, shouldResumeActiveRecording);
 
         ws.send(JSON.stringify(startPayload));
 
@@ -2428,6 +2710,7 @@ export default function NotesClient({ user }: { user: User }) {
 
             await waitForSessionStarted(sessionGeneration);
 
+            activeRecordingRecoveryTerminalRef.current = false;
             activeRecorder.start(2000); // 2s chunks — chunk delivery can jitter, so session-limit timing uses wall clock start time.
             recordingSessionStartedAtRef.current = Date.now();
             setSessionLimitRemainingMs(MAX_NOTES_SESSION_MS);
@@ -2438,6 +2721,13 @@ export default function NotesClient({ user }: { user: User }) {
             recordStatusRef.current = "recording";
             setIsStartingRecording(false);
         } catch (err) {
+            if (activeRecordingRecoveryTerminalRef.current) {
+                activeRecordingRecoveryTerminalRef.current = false;
+                startInFlightRef.current = false;
+                setIsStartingRecording(false);
+                return;
+            }
+
             const msg = err instanceof Error ? err.message : "Microphone access denied";
             if (activeSessionGenerationRef.current === sessionGeneration && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ action: "stop" }));
@@ -2466,6 +2756,7 @@ export default function NotesClient({ user }: { user: User }) {
         stopInFlightRef.current = true;
         resetReconnectState();
         manualStopRequestedRef.current = true;
+        clearActiveRecordingInterruptionDescriptor();
         persistFinalRecoveryDescriptor();
         if (finalisationRecoveryIdRef.current) {
             setRecoveryNotice({
@@ -2499,6 +2790,7 @@ export default function NotesClient({ user }: { user: User }) {
     const handleReset = () => {
         clearNotesDraft();
         clearRecoveryDescriptors();
+        clearActiveRecordingInterruptionDescriptor();
         setRecoveryNotice(null);
         sessionGenerationRef.current += 1;
         startInFlightRef.current = false;
@@ -3121,7 +3413,7 @@ export default function NotesClient({ user }: { user: User }) {
                         >
                             {isStartingRecording || getSessionToken.isPending
                                 ? <><Loader2 className="w-4 h-4 animate-spin" />Starting…</>
-                                : <><Mic className="w-4 h-4" />{isPaused ? "Resume" : "Start Recording"}</>
+                                : <><Mic className="w-4 h-4" />{startRecordingLabel}</>
                             }
                         </button>
                     )}
@@ -3145,7 +3437,7 @@ export default function NotesClient({ user }: { user: User }) {
                 </div>
 
                 {/* ── Notes panel ── */}
-                {(hasNotes || isRecording) && (
+                {(hasNotes || isRecording || recoveryNotice) && (
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden flex-1 dark:border-slate-800 dark:bg-slate-900/80">
                         {/* Panel header */}
                         <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/60 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
@@ -3670,13 +3962,53 @@ export default function NotesClient({ user }: { user: User }) {
                                             : "flex items-start justify-between gap-3 border-b border-[#2149A1]/15 bg-[#e8eef9]/70 px-5 py-3 text-xs text-[#2149A1] dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200"
                                 }
                             >
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1">
                                     <p className="font-semibold">{recoveryNotice.message}</p>
                                     <p className="mt-0.5 leading-relaxed opacity-80">{recoveryNotice.detail}</p>
+                                    {activeRecordingRecoveryStatus && (
+                                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                                            {activeRecordingRecoveryStatus === "resumed" && isRecording && (
+                                                <button
+                                                    type="button"
+                                                    onClick={stopRecording}
+                                                    className="rounded-lg border border-current/20 bg-white/70 px-2.5 py-1.5 text-xs font-semibold transition-colors active:scale-[0.98] active:opacity-80 hover:bg-white dark:bg-slate-950/40 dark:hover:bg-slate-950"
+                                                >
+                                                    Finalise captured notes
+                                                </button>
+                                            )}
+                                            {(activeRecordingRecoveryStatus === "expired" || activeRecordingRecoveryStatus === "not_found") && !isRecording && !isFinalizing && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void startRecording()}
+                                                        disabled={!canRecord || getSessionToken.isPending}
+                                                        className="rounded-lg border border-current/20 bg-white/70 px-2.5 py-1.5 text-xs font-semibold transition-colors active:scale-[0.98] active:opacity-80 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-950/40 dark:hover:bg-slate-950"
+                                                    >
+                                                        Start new recording
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setRecoveryNotice(null);
+                                                            setActiveRecordingRecoveryStatus(null);
+                                                        }}
+                                                        className="rounded-lg px-2.5 py-1.5 text-xs font-semibold opacity-80 transition-colors active:scale-[0.98] active:opacity-70 hover:bg-white/60 dark:hover:bg-slate-950/30"
+                                                    >
+                                                        Continue editing
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setRecoveryNotice(null)}
+                                    onClick={() => {
+                                        setRecoveryNotice(null);
+                                        if (activeRecordingRecoveryStatus) {
+                                            setActiveRecordingRecoveryStatus(null);
+                                        }
+                                    }}
                                     className="rounded-md p-1 transition-colors active:scale-95 active:opacity-80 hover:bg-white/60 dark:hover:bg-slate-950/30"
                                     aria-label="Dismiss notes recovery message"
                                 >

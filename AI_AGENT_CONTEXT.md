@@ -27,6 +27,16 @@ Backend T-135 now provides short-window final Notes recovery, and web T-186 brid
 - Clear descriptors on Reset Notes, new recording, destructive template/style/section changes, explicit ignore, cancel, expiry, failed/not-found recovery, or successful normal/recovered final delivery.
 - Remaining order: T-184 Copy Markdown icon, T-185 mobile transform preview actions, then T-187 PDF/export polish.
 
+## T-190 Active Recording Interruption UX
+
+Backend T-188 supports active Notes interruption recovery through the existing WebSocket continuation path, and web T-190 now consumes it in `NotesClient`.
+
+The frontend records a short-lived active-interruption descriptor when a recording is backgrounded or otherwise at reconnect risk. It reconnects using the same signed `recordingSessionId` with `continuation: true`. If the backend restores a snapshot, Notes `started` may include `activeRecordingRecovery: "resumed"`. If the snapshot expired or was unavailable, it may include `"expired"` or `"not_found"`.
+
+No new HTTP/tRPC bridge is required for active-recording recovery v1. The bridge remains relevant to T-186 finalisation/transform result recovery.
+
+The frontend must not imply background audio kept recording. It preserves safe local draft state, detects return-to-page, and offers resume/finalise/new-recording options based on the recovered state. Active-recording interruption descriptors stay separate from T-186 final/transform descriptors and must not store raw audio, transcript, provider output, tokens, secrets, or extra notes content beyond existing draft storage.
+
 ## Main Files
 
 - `src/env.js`: env validation.
