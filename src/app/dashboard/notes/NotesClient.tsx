@@ -105,6 +105,8 @@ type ActiveRecordingInterruptionDescriptor = {
     priorStatus: "recording" | "reconnecting" | "paused";
 };
 
+type NotesStartIntent = "new-recording" | "active-recovery" | "same-session-reconnect";
+
 type NotesRecoveryNotice = {
     tone: "info" | "success" | "warning";
     message: string;
@@ -751,6 +753,8 @@ export default function NotesClient({ user }: { user: User }) {
     const recoveryPollInFlightRef = useRef(false);
     const recoveryPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const pollRecoveryDescriptorsRef = useRef<(reason: string) => Promise<void>>(async () => undefined);
+    const handledActiveRecoverySessionIdsRef = useRef<Set<string>>(new Set());
+    const suppressActiveInterruptionSaveRef = useRef(false);
     const activeRecordingRecoveryTerminalRef = useRef(false);
     const beginReconnectRef = useRef<(reason: string) => boolean>(() => false);
     const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1026,12 +1030,33 @@ export default function NotesClient({ user }: { user: User }) {
         }
     }, [notesRecoveryStorageKey]);
 
+    function normaliseRecordingSessionId(recordingSessionId?: string | null) {
+        const normalised = recordingSessionId?.trim();
+        return normalised && normalised.length > 0 ? normalised : null;
+    }
+
+    function markActiveRecordingRecoveryHandled(recordingSessionId?: string | null) {
+        const normalised = normaliseRecordingSessionId(recordingSessionId);
+        if (normalised) handledActiveRecoverySessionIdsRef.current.add(normalised);
+    }
+
+    function suppressActiveInterruptionSaveDuringCleanup() {
+        suppressActiveInterruptionSaveRef.current = true;
+        setTimeout(() => {
+            suppressActiveInterruptionSaveRef.current = false;
+        }, 0);
+    }
+
     const readActiveRecordingInterruptionDescriptor = useCallback((): ActiveRecordingInterruptionDescriptor | null => {
         if (!notesActiveInterruptionStorageKey || typeof window === "undefined") return null;
 
         const raw = window.localStorage.getItem(notesActiveInterruptionStorageKey);
-        const descriptor = parseActiveRecordingInterruptionDescriptor(raw);
-        if (!descriptor && raw) {
+        const parsedDescriptor = parseActiveRecordingInterruptionDescriptor(raw);
+        const descriptor = parsedDescriptor !== null &&
+            handledActiveRecoverySessionIdsRef.current.has(parsedDescriptor.recordingSessionId)
+            ? null
+            : parsedDescriptor;
+        if ((!descriptor && raw) || parsedDescriptor !== descriptor) {
             try {
                 window.localStorage.removeItem(notesActiveInterruptionStorageKey);
             } catch (error) {
@@ -1085,6 +1110,8 @@ export default function NotesClient({ user }: { user: User }) {
     const persistActiveRecordingInterruptionDescriptor = useCallback((
         priorStatus: ActiveRecordingInterruptionDescriptor["priorStatus"]
     ) => {
+        if (suppressActiveInterruptionSaveRef.current) return;
+
         const recordingSessionId = logicalRecordingSessionIdRef.current;
         if (!recordingSessionId) return;
         if (recordStatusRef.current !== "recording" && priorStatus !== "reconnecting") return;
@@ -1561,6 +1588,9 @@ export default function NotesClient({ user }: { user: User }) {
     }
 
     function pauseAfterUnavailableActiveRecordingRecovery(status: Extract<ActiveRecordingRecoveryStatus, "expired" | "not_found">, ws?: WebSocket) {
+        const terminalRecordingSessionId = logicalRecordingSessionIdRef.current;
+        markActiveRecordingRecoveryHandled(terminalRecordingSessionId);
+        suppressActiveInterruptionSaveDuringCleanup();
         activeRecordingRecoveryTerminalRef.current = true;
         resetReconnectState();
         clearLogicalRecordingSession();
@@ -1604,22 +1634,33 @@ export default function NotesClient({ user }: { user: User }) {
     }
 
     async function mintNotesToken({
-        reuseLogicalSession,
+        recordingSessionId,
+        requireRecordingSessionId = false,
         shouldAcceptResult,
     }: {
-        reuseLogicalSession: boolean;
+        recordingSessionId?: string | null;
+        requireRecordingSessionId?: boolean;
         shouldAcceptResult?: () => boolean;
     }): Promise<string> {
-        const requestedRecordingSessionId = reuseLogicalSession
-            ? logicalRecordingSessionIdRef.current ?? undefined
-            : undefined;
+        const requestedRecordingSessionId = normaliseRecordingSessionId(recordingSessionId);
+        if (requireRecordingSessionId && !requestedRecordingSessionId) {
+            throw new Error("missing-recording-session-id");
+        }
+
         const result = await getSessionToken.mutateAsync({
             mode: "notes",
-            recordingSessionId: requestedRecordingSessionId,
+            recordingSessionId: requestedRecordingSessionId ?? undefined,
         });
 
         if (shouldAcceptResult && !shouldAcceptResult()) {
             throw new Error("token-mint-cancelled");
+        }
+
+        if (
+            requireRecordingSessionId &&
+            result.recordingSessionId !== requestedRecordingSessionId
+        ) {
+            throw new Error("recording-session-id-mismatch");
         }
 
         if (result.recordingSessionId) {
@@ -1631,7 +1672,7 @@ export default function NotesClient({ user }: { user: User }) {
         return result.token;
     }
 
-    function buildNotesStartPayload(token: string, forceContinuation: boolean): NotesStartPayload {
+    function buildNotesStartPayload(token: string, intent: NotesStartIntent): NotesStartPayload {
         const sections = sectionsRaw
             .split(",")
             .map((s) => s.trim())
@@ -1639,8 +1680,7 @@ export default function NotesClient({ user }: { user: User }) {
 
         const continuationNotesMarkdown = visibleNotesMarkdownRef.current;
         const shouldContinueNotesSession =
-            forceContinuation ||
-            (recordStatusRef.current !== "idle" && continuationNotesMarkdown.trim().length > 0);
+            intent === "active-recovery" || intent === "same-session-reconnect";
 
         const startPayload: NotesStartPayload = {
             action: "start",
@@ -1759,7 +1799,8 @@ export default function NotesClient({ user }: { user: User }) {
         if (reconnectTokenRef.current) return reconnectTokenRef.current;
 
         const token = await mintNotesToken({
-            reuseLogicalSession: true,
+            recordingSessionId: logicalRecordingSessionIdRef.current,
+            requireRecordingSessionId: true,
             shouldAcceptResult: isReconnectStillActive,
         });
         if (!isReconnectStillActive()) {
@@ -1919,7 +1960,7 @@ export default function NotesClient({ user }: { user: User }) {
                 return;
             }
 
-            ws.send(JSON.stringify(buildNotesStartPayload(token, true)));
+            ws.send(JSON.stringify(buildNotesStartPayload(token, "same-session-reconnect")));
             await waitForSessionStarted(sessionGeneration);
 
             if (!reconnectingRef.current || recordStatusRef.current !== "recording" || stopInFlightRef.current) {
@@ -2578,7 +2619,7 @@ export default function NotesClient({ user }: { user: User }) {
         };
     }, [notesRecoveryStorageKey]);
 
-    const startRecording = async () => {
+    const startRecording = async (requestedIntent: "auto" | "new-recording" = "auto") => {
         if (startInFlightRef.current || recordStatusRef.current === "recording" || recordStatusRef.current === "finalizing") {
             return;
         }
@@ -2588,10 +2629,24 @@ export default function NotesClient({ user }: { user: User }) {
             return;
         }
 
+        const forceNewRecording =
+            requestedIntent === "new-recording" ||
+            activeRecordingRecoveryStatus === "expired" ||
+            activeRecordingRecoveryStatus === "not_found";
+        const storedActiveRecordingDescriptor = readActiveRecordingInterruptionDescriptor();
+        if (forceNewRecording) {
+            markActiveRecordingRecoveryHandled(
+                storedActiveRecordingDescriptor?.recordingSessionId ?? logicalRecordingSessionIdRef.current
+            );
+            suppressActiveInterruptionSaveDuringCleanup();
+        }
         activeRecordingRecoveryTerminalRef.current = false;
-        const activeRecordingResumeDescriptor = readActiveRecordingInterruptionDescriptor();
+        const activeRecordingResumeDescriptor = forceNewRecording ? null : storedActiveRecordingDescriptor;
         const shouldResumeActiveRecording =
             activeRecordingResumeDescriptor !== null && recordStatusRef.current !== "idle";
+        const startIntent: NotesStartIntent = shouldResumeActiveRecording
+            ? "active-recovery"
+            : "new-recording";
 
         startInFlightRef.current = true;
         resetReconnectState();
@@ -2604,7 +2659,9 @@ export default function NotesClient({ user }: { user: User }) {
             clearActiveRecordingInterruptionDescriptor();
         }
         cancelTransformFlow();
-        clearRecoveryDescriptors();
+        if (!shouldResumeActiveRecording) {
+            clearRecoveryDescriptors();
+        }
         setRecoveryNotice(null);
         if (!shouldResumeActiveRecording) {
             clearNotesHistory();
@@ -2641,7 +2698,12 @@ export default function NotesClient({ user }: { user: User }) {
         // ── Mint session token (auth + usage enforcement happens server-side) ──
         let token: string;
         try {
-            token = await mintNotesToken({ reuseLogicalSession: shouldResumeActiveRecording });
+            token = await mintNotesToken({
+                recordingSessionId: shouldResumeActiveRecording
+                    ? activeRecordingResumeDescriptor.recordingSessionId
+                    : null,
+                requireRecordingSessionId: shouldResumeActiveRecording,
+            });
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : "Failed to start session";
             clearLogicalRecordingSession();
@@ -2675,7 +2737,7 @@ export default function NotesClient({ user }: { user: User }) {
 
         // ── Send start with locked-in config + token ───────────────────────
         // Config is captured NOW — what the user sees is what gets sent.
-        const startPayload = buildNotesStartPayload(token, shouldResumeActiveRecording);
+        const startPayload = buildNotesStartPayload(token, startIntent);
 
         ws.send(JSON.stringify(startPayload));
 
@@ -3407,7 +3469,7 @@ export default function NotesClient({ user }: { user: User }) {
                         </button>
                     ) : (
                         <button
-                            onClick={startRecording}
+                            onClick={() => void startRecording()}
                             disabled={!canRecord || getSessionToken.isPending}
                             className="flex items-center gap-2 bg-[#2149A1] hover:bg-[#1a3a87] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-[background-color,color,transform,opacity] duration-150 hover:scale-[1.02] active:scale-[0.98] active:opacity-90"
                         >
@@ -3980,7 +4042,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                 <>
                                                     <button
                                                         type="button"
-                                                        onClick={() => void startRecording()}
+                                                        onClick={() => void startRecording("new-recording")}
                                                         disabled={!canRecord || getSessionToken.isPending}
                                                         className="rounded-lg border border-current/20 bg-white/70 px-2.5 py-1.5 text-xs font-semibold transition-colors active:scale-[0.98] active:opacity-80 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-950/40 dark:hover:bg-slate-950"
                                                     >
@@ -3989,6 +4051,10 @@ export default function NotesClient({ user }: { user: User }) {
                                                     <button
                                                         type="button"
                                                         onClick={() => {
+                                                            markActiveRecordingRecoveryHandled(logicalRecordingSessionIdRef.current);
+                                                            suppressActiveInterruptionSaveDuringCleanup();
+                                                            resetReconnectState();
+                                                            clearActiveRecordingInterruptionDescriptor();
                                                             setRecoveryNotice(null);
                                                             setActiveRecordingRecoveryStatus(null);
                                                         }}
