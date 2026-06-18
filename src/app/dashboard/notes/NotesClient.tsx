@@ -28,6 +28,7 @@ interface ServerMessage {
     code?: string;
     message?: string;
     notesMarkdown?: string;
+    finalisationRecoveryId?: string;
     // legacy compat
     action?: string;
     notes_markdown?: string;
@@ -74,6 +75,30 @@ type ActiveTransformRun = {
 
 type NotesCopyFormat = "text" | "markdown";
 
+type NotesRecoveryDescriptor =
+    | {
+        kind: "notes_final";
+        recoveryId: string;
+        recordingSessionId?: string;
+        startedAt: number;
+        expiresAt: number;
+    }
+    | {
+        kind: "summarise" | "reorganise";
+        jobId: string;
+        runId: string;
+        sourceHash: string;
+        startedAt: number;
+        expiresAt: number;
+        ignored?: boolean;
+    };
+
+type NotesRecoveryNotice = {
+    tone: "info" | "success" | "warning";
+    message: string;
+    detail: string;
+};
+
 type NotesHistoryEntry = {
     markdown: string;
     preFinalNotesMarkdown: string | null;
@@ -86,7 +111,11 @@ const NOTES_SESSION_WARNING_MS = 15 * 60_000;
 const NOTES_SESSION_FINAL_WARNING_MS = 5 * 60_000;
 const NOTES_SESSION_STRONG_WARNING_MS = 2 * 60_000;
 const NOTES_DRAFT_STORAGE_PREFIX = "formify:notes:draft:v1";
+const NOTES_RECOVERY_STORAGE_PREFIX = "formify:notes:recovery:v1";
 const NOTES_DRAFT_SAVE_DEBOUNCE_MS = 300;
+const NOTES_FINAL_RECOVERY_DESCRIPTOR_TTL_MS = 5 * 60_000;
+const NOTES_TRANSFORM_RECOVERY_DESCRIPTOR_TTL_MS = 30 * 60_000;
+const NOTES_RECOVERY_POLL_INTERVAL_MS = 2000;
 const NOTES_RECONNECT_DELAYS_MS = [500, 1000, 2000, 4000, 8000] as const;
 const NOTES_RECONNECT_TOTAL_WINDOW_MS = 20_000;
 const NOTES_RECONNECT_OVERLOADED_GRACE_MS = 3000;
@@ -242,6 +271,65 @@ function getNotesDraftStorageKey(user: User): string | null {
     return stableIdentifier ? `${NOTES_DRAFT_STORAGE_PREFIX}:${stableIdentifier}` : null;
 }
 
+function getNotesRecoveryStorageKey(user: User): string | null {
+    const stableIdentifier = user.id ?? user.email;
+    return stableIdentifier ? `${NOTES_RECOVERY_STORAGE_PREFIX}:${stableIdentifier}` : null;
+}
+
+function hashNotesSource(markdown: string): string {
+    let hash = 2166136261;
+    for (let index = 0; index < markdown.length; index += 1) {
+        hash ^= markdown.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+    }
+    return `${(hash >>> 0).toString(16)}:${markdown.length}`;
+}
+
+function isNotesRecoveryDescriptor(value: unknown): value is NotesRecoveryDescriptor {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    const descriptor = value as Partial<NotesRecoveryDescriptor>;
+    if (typeof descriptor.startedAt !== "number" || typeof descriptor.expiresAt !== "number") return false;
+
+    if (descriptor.kind === "notes_final") {
+        return (
+            typeof descriptor.recoveryId === "string" &&
+            descriptor.recoveryId.trim().length > 0 &&
+            (descriptor.recordingSessionId === undefined || typeof descriptor.recordingSessionId === "string")
+        );
+    }
+
+    if (descriptor.kind === "summarise" || descriptor.kind === "reorganise") {
+        return (
+            typeof descriptor.jobId === "string" &&
+            descriptor.jobId.trim().length > 0 &&
+            typeof descriptor.runId === "string" &&
+            typeof descriptor.sourceHash === "string" &&
+            (descriptor.ignored === undefined || typeof descriptor.ignored === "boolean")
+        );
+    }
+
+    return false;
+}
+
+function parseNotesRecoveryDescriptors(raw: string | null, now = Date.now()): NotesRecoveryDescriptor[] {
+    if (!raw) return [];
+
+    try {
+        const parsed = JSON.parse(raw) as { version?: unknown; descriptors?: unknown };
+        if (parsed.version !== 1 || !Array.isArray(parsed.descriptors)) return [];
+        return parsed.descriptors
+            .filter(isNotesRecoveryDescriptor)
+            .filter((descriptor) => descriptor.expiresAt > now);
+    } catch {
+        return [];
+    }
+}
+
+function notesRecoveryDescriptorKey(descriptor: NotesRecoveryDescriptor): string {
+    if (descriptor.kind === "notes_final") return "notes_final";
+    return `${descriptor.kind}:${descriptor.jobId}:${descriptor.runId}`;
+}
+
 function parseNotesDraft(raw: string | null): NotesDraft | null {
     if (!raw) return null;
 
@@ -301,6 +389,10 @@ function isRetryableNotesServerError(code: string): boolean {
 
 function countMarkdownWords(markdown: string): number {
     return markdown.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function hasEnoughNotesForTransform(markdown: string): boolean {
@@ -510,6 +602,7 @@ function renderInline(text: string): React.ReactNode {
 
 export default function NotesClient({ user }: { user: User }) {
     const notesDraftStorageKey = getNotesDraftStorageKey(user);
+    const notesRecoveryStorageKey = getNotesRecoveryStorageKey(user);
 
     // Connection
     const wsRef = useRef<WebSocket | null>(null);
@@ -531,8 +624,9 @@ export default function NotesClient({ user }: { user: User }) {
 
     // Token
     const getSessionToken = api.transcription.getSessionToken.useMutation();
-    const summariseNotes = api.transcription.summariseNotes.useMutation();
-    const reorganiseNotes = api.transcription.reorganiseNotes.useMutation();
+    const createNotesTransformJob = api.transcription.createNotesTransformJob.useMutation();
+    const getNotesTransformJob = api.transcription.getNotesTransformJob.useMutation();
+    const getNotesFinalRecovery = api.transcription.getNotesFinalRecovery.useMutation();
     const wsTokenRef = useRef<string | null>(null);
     const utils = api.useUtils();
 
@@ -563,6 +657,7 @@ export default function NotesClient({ user }: { user: User }) {
     const [transformError, setTransformError] = useState<string | null>(null);
     const [transformPreview, setTransformPreview] = useState<NotesTransformPreview | null>(null);
     const [activeTransformRun, setActiveTransformRun] = useState<ActiveTransformRun | null>(null);
+    const [recoveryNotice, setRecoveryNotice] = useState<NotesRecoveryNotice | null>(null);
     const [reorganiseDialogOpen, setReorganiseDialogOpen] = useState(false);
     const [reorganiseSectionsRaw, setReorganiseSectionsRaw] = useState("");
     const [reorganiseAutoSections, setReorganiseAutoSections] = useState(false);
@@ -590,6 +685,10 @@ export default function NotesClient({ user }: { user: User }) {
     const activeTransformRunRef = useRef<ActiveTransformRun | null>(null);
     const ignoredTransformRunIdsRef = useRef<Set<number>>(new Set());
     const componentMountedRef = useRef(true);
+    const finalisationRecoveryIdRef = useRef<string | null>(null);
+    const recoveryPollInFlightRef = useRef(false);
+    const recoveryPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const pollRecoveryDescriptorsRef = useRef<(reason: string) => Promise<void>>(async () => undefined);
     const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reconnectGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reconnectAttemptRef = useRef(0);
@@ -797,6 +896,7 @@ export default function NotesClient({ user }: { user: User }) {
         setActiveTransformRun(run);
         setTransformPreview(null);
         setTransformError(null);
+        setRecoveryNotice(null);
         return run;
     }, []);
 
@@ -806,6 +906,60 @@ export default function NotesClient({ user }: { user: User }) {
         clearActiveTransformRun(run);
         setTransformError(null);
     }, [clearActiveTransformRun]);
+
+    const readRecoveryDescriptors = useCallback((): NotesRecoveryDescriptor[] => {
+        if (!notesRecoveryStorageKey || typeof window === "undefined") return [];
+        return parseNotesRecoveryDescriptors(window.localStorage.getItem(notesRecoveryStorageKey));
+    }, [notesRecoveryStorageKey]);
+
+    const writeRecoveryDescriptors = useCallback((descriptors: NotesRecoveryDescriptor[]) => {
+        if (!notesRecoveryStorageKey || typeof window === "undefined") return;
+
+        const now = Date.now();
+        const activeDescriptors = descriptors.filter((descriptor) => descriptor.expiresAt > now);
+        try {
+            if (activeDescriptors.length === 0) {
+                window.localStorage.removeItem(notesRecoveryStorageKey);
+                return;
+            }
+            window.localStorage.setItem(
+                notesRecoveryStorageKey,
+                JSON.stringify({ version: 1, descriptors: activeDescriptors })
+            );
+        } catch (error) {
+            console.warn("[Notes] Could not save recovery descriptor:", error);
+        }
+    }, [notesRecoveryStorageKey]);
+
+    const upsertRecoveryDescriptor = useCallback((descriptor: NotesRecoveryDescriptor) => {
+        const nextKey = notesRecoveryDescriptorKey(descriptor);
+        const descriptors = readRecoveryDescriptors()
+            .filter((existing) => notesRecoveryDescriptorKey(existing) !== nextKey);
+
+        writeRecoveryDescriptors([...descriptors, descriptor]);
+    }, [readRecoveryDescriptors, writeRecoveryDescriptors]);
+
+    const removeRecoveryDescriptors = useCallback((shouldRemove: (descriptor: NotesRecoveryDescriptor) => boolean) => {
+        writeRecoveryDescriptors(readRecoveryDescriptors().filter((descriptor) => !shouldRemove(descriptor)));
+    }, [readRecoveryDescriptors, writeRecoveryDescriptors]);
+
+    const clearRecoveryDescriptors = useCallback(() => {
+        if (!notesRecoveryStorageKey || typeof window === "undefined") return;
+        try {
+            window.localStorage.removeItem(notesRecoveryStorageKey);
+        } catch (error) {
+            console.warn("[Notes] Could not clear recovery descriptors:", error);
+        }
+    }, [notesRecoveryStorageKey]);
+
+    function scheduleRecoveryPoll(delayMs = NOTES_RECOVERY_POLL_INTERVAL_MS) {
+        if (typeof document !== "undefined" && document.hidden) return;
+        if (recoveryPollTimerRef.current) return;
+        recoveryPollTimerRef.current = setTimeout(() => {
+            recoveryPollTimerRef.current = null;
+            void pollRecoveryDescriptorsRef.current("timer");
+        }, delayMs);
+    }
 
     const openMobileActionsSheet = useCallback(() => {
         if (mobileActionsCloseTimerRef.current) {
@@ -1055,6 +1209,54 @@ export default function NotesClient({ user }: { user: User }) {
         setTransformError(null);
     }, [clearNotesEditState, setNotesManualEdits]);
 
+    const applyFinalNotesMarkdown = useCallback((markdown: string, source: "websocket" | "recovery") => {
+        const previousVisibleNotes = visibleNotesMarkdownRef.current;
+        if (previousVisibleNotes.trim().length > 0) {
+            setPreFinalNotesMarkdown(previousVisibleNotes);
+        }
+
+        if (isEditingNotesRef.current || hasManualEditsRef.current) {
+            setNotesEditMessage(
+                source === "recovery"
+                    ? "Recovered final notes arrived, but your edits were kept."
+                    : "A late final update arrived, but your edits were kept."
+            );
+            return;
+        }
+
+        if (markdown && markdown !== previousVisibleNotes) {
+            pushUndoHistory({
+                markdown: previousVisibleNotes,
+                preFinalNotesMarkdown: null,
+                isFinal: false,
+                hasManualEdits: false,
+            });
+            setNotesMarkdown(markdown);
+            visibleNotesMarkdownRef.current = markdown;
+        }
+    }, [pushUndoHistory]);
+
+    const completeFinalNotesState = useCallback((options: { capFinalized?: boolean } = {}) => {
+        if (options.capFinalized) {
+            stopLocalRecorder();
+            setSessionLimitWarningLevel("reached");
+            setSessionLimitRemainingMs(0);
+        } else {
+            setSessionLimitWarningLevel("none");
+            setSessionLimitRemainingMs(null);
+        }
+
+        setIsFinal(true);
+        setRecordStatus("paused");
+        recordStatusRef.current = "paused";
+        manualStopRequestedRef.current = false;
+        recordingSessionStartedAtRef.current = null;
+        setDismissedSessionLimitWarningLevel(null);
+        clearLogicalRecordingSession();
+        finalisationRecoveryIdRef.current = null;
+        stopInFlightRef.current = false;
+    }, []);
+
     const handleStartNotesEdit = () => {
         if (!canEditNotes) return;
         closeActionsMenu();
@@ -1195,6 +1397,20 @@ export default function NotesClient({ user }: { user: User }) {
 
     function clearLogicalRecordingSession() {
         logicalRecordingSessionIdRef.current = null;
+        finalisationRecoveryIdRef.current = null;
+    }
+
+    function persistFinalRecoveryDescriptor() {
+        const recoveryId = finalisationRecoveryIdRef.current;
+        if (!recoveryId) return;
+
+        upsertRecoveryDescriptor({
+            kind: "notes_final",
+            recoveryId,
+            recordingSessionId: logicalRecordingSessionIdRef.current ?? undefined,
+            startedAt: Date.now(),
+            expiresAt: Date.now() + NOTES_FINAL_RECOVERY_DESCRIPTOR_TTL_MS,
+        });
     }
 
     function isReconnectStillActive() {
@@ -1526,6 +1742,7 @@ export default function NotesClient({ user }: { user: User }) {
             setWsStatus("connected");
             setWsError(null);
             setMicError(null);
+            scheduleRecoveryPoll(0);
             flushBufferedAudio(sessionGeneration);
             resetReconnectState({ clearAudio: false });
         } catch (error) {
@@ -1636,6 +1853,9 @@ export default function NotesClient({ user }: { user: User }) {
                 }
 
                 if (msg.type === "started") {
+                    if (typeof msg.finalisationRecoveryId === "string" && msg.finalisationRecoveryId.trim()) {
+                        finalisationRecoveryIdRef.current = msg.finalisationRecoveryId;
+                    }
                     wsSessionReadyRef.current = true;
                     setSessionReady(true);
                     setWsStatus("connected");
@@ -1660,21 +1880,7 @@ export default function NotesClient({ user }: { user: User }) {
                     resetReconnectState();
                     const md = msg.notesMarkdown ?? "";
                     if (md) {
-                        const previousVisibleNotes = visibleNotesMarkdownRef.current;
-                        if (previousVisibleNotes.trim().length > 0) {
-                            setPreFinalNotesMarkdown(previousVisibleNotes);
-                        }
-                        if (isEditingNotesRef.current || hasManualEditsRef.current) {
-                            setNotesEditMessage("A late final update arrived, but your edits were kept.");
-                        } else if (md !== previousVisibleNotes) {
-                            pushUndoHistory({
-                                markdown: previousVisibleNotes,
-                                preFinalNotesMarkdown: null,
-                                isFinal: false,
-                                hasManualEdits: false,
-                            });
-                            setNotesMarkdown(md);
-                        }
+                        applyFinalNotesMarkdown(md, "websocket");
                     }
 
                     const startedAt = recordingSessionStartedAtRef.current;
@@ -1682,22 +1888,9 @@ export default function NotesClient({ user }: { user: User }) {
                         startedAt !== null && (Date.now() - startedAt) >= MAX_NOTES_SESSION_MS;
                     const capFinalized = capReachedByTime && !manualStopRequestedRef.current;
 
-                    if (capFinalized) {
-                        stopLocalRecorder();
-                        setSessionLimitWarningLevel("reached");
-                        setSessionLimitRemainingMs(0);
-                    } else {
-                        setSessionLimitWarningLevel("none");
-                        setSessionLimitRemainingMs(null);
-                    }
-
-                    setIsFinal(true);
-                    setRecordStatus("paused");
-                    recordStatusRef.current = "paused";
-                    manualStopRequestedRef.current = false;
-                    recordingSessionStartedAtRef.current = null;
-                    setDismissedSessionLimitWarningLevel(null);
-                    clearLogicalRecordingSession();
+                    removeRecoveryDescriptors((descriptor) => descriptor.kind === "notes_final");
+                    setRecoveryNotice(null);
+                    completeFinalNotesState({ capFinalized });
                     stopInFlightRef.current = false;
 
                     // Session is finished — close the socket intentionally so no
@@ -1770,6 +1963,7 @@ export default function NotesClient({ user }: { user: User }) {
                     recordStatusRef.current = "paused";
                     setWsError("The recording connection was interrupted during finalisation. Your notes so far are preserved. Resume to continue.");
                     setWsStatus("error");
+                    scheduleRecoveryPoll(0);
                     return;
                 }
 
@@ -1953,6 +2147,169 @@ export default function NotesClient({ user }: { user: User }) {
         streamRef.current = null;
     };
 
+    const pollRecoveryDescriptors = useCallback(async (_reason: string) => {
+        if (recoveryPollInFlightRef.current) return;
+        if (typeof document !== "undefined" && document.hidden) return;
+
+        const descriptors = readRecoveryDescriptors();
+        if (descriptors.length === 0) return;
+
+        recoveryPollInFlightRef.current = true;
+        let shouldContinuePolling = false;
+        const remainingDescriptors: NotesRecoveryDescriptor[] = [];
+        const polledDescriptorKeys = new Set(descriptors.map(notesRecoveryDescriptorKey));
+
+        try {
+            for (const descriptor of descriptors) {
+                if (descriptor.expiresAt <= Date.now()) {
+                    if (descriptor.kind === "notes_final") {
+                        setRecoveryNotice({
+                            tone: "warning",
+                            message: "Couldn’t recover the final version.",
+                            detail: "Your live draft is still safe.",
+                        });
+                    }
+                    continue;
+                }
+
+                if (descriptor.kind === "notes_final") {
+                    if (recordStatusRef.current === "recording" || isStartingRecording) {
+                        remainingDescriptors.push(descriptor);
+                        continue;
+                    }
+
+                    setRecoveryNotice({
+                        tone: "info",
+                        message: "Checking whether final notes finished while you were away…",
+                        detail: "Your live draft is still safe.",
+                    });
+
+                    try {
+                        const result = await getNotesFinalRecovery.mutateAsync({
+                            recoveryId: descriptor.recoveryId,
+                            recordingSessionId: descriptor.recordingSessionId,
+                        });
+
+                        if (result.status === "pending") {
+                            remainingDescriptors.push(descriptor);
+                            shouldContinuePolling = true;
+                            continue;
+                        }
+
+                        if (result.status === "succeeded") {
+                            applyFinalNotesMarkdown(result.notesMarkdown, "recovery");
+                            completeFinalNotesState();
+                            setWsError(null);
+                            setWsStatus("disconnected");
+                            setRecoveryNotice({
+                                tone: "success",
+                                message: "Final notes recovered.",
+                                detail: "Your final version finished while you were away.",
+                            });
+                            continue;
+                        }
+
+                        setRecoveryNotice({
+                            tone: "warning",
+                            message: "Couldn’t recover the final version.",
+                            detail: "Your live draft is still safe.",
+                        });
+                    } catch {
+                        remainingDescriptors.push(descriptor);
+                        shouldContinuePolling = true;
+                    }
+                    continue;
+                }
+
+                if (descriptor.ignored) continue;
+
+                try {
+                    const result = await getNotesTransformJob.mutateAsync({ jobId: descriptor.jobId });
+
+                    if (result.status === "queued" || result.status === "running") {
+                        remainingDescriptors.push(descriptor);
+                        shouldContinuePolling = true;
+                        continue;
+                    }
+
+                    if (result.status === "succeeded") {
+                        const previewType: NotesTransformType = descriptor.kind === "summarise"
+                            ? "summary"
+                            : "reorganise";
+                        if (
+                            hashNotesSource(visibleNotesMarkdownRef.current) === descriptor.sourceHash &&
+                            result.type === previewType
+                        ) {
+                            setTransformPreview({ type: previewType, markdown: result.markdown });
+                            setRecoveryNotice({
+                                tone: "success",
+                                message: "A transform finished while you were away.",
+                                detail: "Review the preview before applying it.",
+                            });
+                        } else {
+                            setRecoveryNotice({
+                                tone: "warning",
+                                message: "A notes action finished, but your notes changed.",
+                                detail: "Your current notes were kept unchanged.",
+                            });
+                        }
+                        continue;
+                    }
+
+                    if (result.status === "failed") {
+                        setTransformError(result.message || "The transform failed. Your notes were not changed.");
+                    }
+                } catch {
+                    remainingDescriptors.push(descriptor);
+                    shouldContinuePolling = true;
+                }
+            }
+
+            const latestDescriptors = readRecoveryDescriptors();
+            const unpolledLatestDescriptors = latestDescriptors.filter(
+                (descriptor) => !polledDescriptorKeys.has(notesRecoveryDescriptorKey(descriptor))
+            );
+            writeRecoveryDescriptors([...remainingDescriptors, ...unpolledLatestDescriptors]);
+            if (shouldContinuePolling && remainingDescriptors.length > 0) {
+                scheduleRecoveryPoll();
+            }
+        } finally {
+            recoveryPollInFlightRef.current = false;
+        }
+    }, [
+        applyFinalNotesMarkdown,
+        completeFinalNotesState,
+        getNotesFinalRecovery,
+        getNotesTransformJob,
+        isStartingRecording,
+        readRecoveryDescriptors,
+        writeRecoveryDescriptors,
+    ]);
+
+    useEffect(() => {
+        pollRecoveryDescriptorsRef.current = pollRecoveryDescriptors;
+    }, [pollRecoveryDescriptors]);
+
+    useEffect(() => {
+        const poll = () => {
+            if (typeof document !== "undefined" && document.hidden) return;
+            void pollRecoveryDescriptorsRef.current("visibility");
+        };
+
+        poll();
+        window.addEventListener("focus", poll);
+        document.addEventListener("visibilitychange", poll);
+
+        return () => {
+            window.removeEventListener("focus", poll);
+            document.removeEventListener("visibilitychange", poll);
+            if (recoveryPollTimerRef.current) {
+                clearTimeout(recoveryPollTimerRef.current);
+                recoveryPollTimerRef.current = null;
+            }
+        };
+    }, [notesRecoveryStorageKey]);
+
     const startRecording = async () => {
         if (startInFlightRef.current || recordStatusRef.current === "recording" || recordStatusRef.current === "finalizing") {
             return;
@@ -1967,6 +2324,8 @@ export default function NotesClient({ user }: { user: User }) {
         resetReconnectState();
         clearLogicalRecordingSession();
         cancelTransformFlow();
+        clearRecoveryDescriptors();
+        setRecoveryNotice(null);
         clearNotesHistory();
         setIsStartingRecording(true);
         setMicError(null);
@@ -2107,6 +2466,14 @@ export default function NotesClient({ user }: { user: User }) {
         stopInFlightRef.current = true;
         resetReconnectState();
         manualStopRequestedRef.current = true;
+        persistFinalRecoveryDescriptor();
+        if (finalisationRecoveryIdRef.current) {
+            setRecoveryNotice({
+                tone: "info",
+                message: "Checking whether final notes finished while you were away…",
+                detail: "Your live draft is still safe.",
+            });
+        }
         setDismissedSessionLimitWarningLevel(null);
         wsSessionReadyRef.current = false;
         setSessionReady(false);
@@ -2131,6 +2498,8 @@ export default function NotesClient({ user }: { user: User }) {
 
     const handleReset = () => {
         clearNotesDraft();
+        clearRecoveryDescriptors();
+        setRecoveryNotice(null);
         sessionGenerationRef.current += 1;
         startInFlightRef.current = false;
         stopInFlightRef.current = false;
@@ -2226,6 +2595,37 @@ export default function NotesClient({ user }: { user: User }) {
         setReorganiseDialogOpen(true);
     };
 
+    const pollActiveTransformJob = async (
+        run: ActiveTransformRun,
+        descriptor: Extract<NotesRecoveryDescriptor, { kind: "summarise" | "reorganise" }>
+    ): Promise<string | null> => {
+        while (isTransformRunCurrent(run)) {
+            await delay(NOTES_RECOVERY_POLL_INTERVAL_MS);
+            if (!isTransformRunCurrent(run)) return null;
+
+            const result = await getNotesTransformJob.mutateAsync({ jobId: descriptor.jobId });
+
+            if (result.status === "queued" || result.status === "running") {
+                continue;
+            }
+
+            if (result.status === "succeeded") {
+                if (result.type !== run.type) {
+                    return null;
+                }
+                return result.markdown;
+            }
+
+            if (result.status === "failed") {
+                throw new Error(result.message || "The transform failed. Your notes were not changed.");
+            }
+
+            throw new Error("The transform failed. Your notes were not changed.");
+        }
+
+        return null;
+    };
+
     const handleSummariseNotes = async () => {
         closeActionsMenu();
 
@@ -2236,23 +2636,53 @@ export default function NotesClient({ user }: { user: User }) {
         }
 
         const run = beginTransformRun("summary");
+        const sourceMarkdown = visibleNotesMarkdownRef.current;
+        const sourceHash = hashNotesSource(sourceMarkdown);
 
         try {
-            const result = await summariseNotes.mutateAsync({
-                notesMarkdown: visibleNotesMarkdownRef.current,
+            const created = await createNotesTransformJob.mutateAsync({
+                operation: "summarise",
+                notesMarkdown: sourceMarkdown,
                 noteStyle,
             });
             if (!isTransformRunCurrent(run)) return;
 
-            if (!result.summaryMarkdown.trim()) {
+            const descriptor: Extract<NotesRecoveryDescriptor, { kind: "summarise" | "reorganise" }> = {
+                kind: "summarise",
+                jobId: created.jobId,
+                runId: String(run.id),
+                sourceHash,
+                startedAt: Date.now(),
+                expiresAt: Date.now() + NOTES_TRANSFORM_RECOVERY_DESCRIPTOR_TTL_MS,
+            };
+            upsertRecoveryDescriptor(descriptor);
+
+            const markdown = await pollActiveTransformJob(run, descriptor);
+            if (!isTransformRunCurrent(run) || markdown === null) return;
+
+            if (!markdown.trim()) {
                 clearActiveTransformRun(run);
                 setTransformError("The transform result looked incomplete. Your notes were not changed.");
                 return;
             }
+            removeRecoveryDescriptors((descriptor) => (
+                descriptor.kind !== "notes_final" && descriptor.runId === String(run.id)
+            ));
             clearActiveTransformRun(run);
-            setTransformPreview({ type: "summary", markdown: result.summaryMarkdown });
+            if (hashNotesSource(visibleNotesMarkdownRef.current) !== sourceHash) {
+                setRecoveryNotice({
+                    tone: "warning",
+                    message: "A notes action finished, but your notes changed.",
+                    detail: "Your current notes were kept unchanged.",
+                });
+                return;
+            }
+            setTransformPreview({ type: "summary", markdown });
         } catch (error) {
             if (!isTransformRunCurrent(run)) return;
+            removeRecoveryDescriptors((descriptor) => (
+                descriptor.kind !== "notes_final" && descriptor.runId === String(run.id)
+            ));
             clearActiveTransformRun(run);
             setTransformError(getSafeTransformErrorMessage(error, "summary"));
         } finally {
@@ -2274,25 +2704,55 @@ export default function NotesClient({ user }: { user: User }) {
         }
 
         const run = beginTransformRun("reorganise");
+        const sourceMarkdown = visibleNotesMarkdownRef.current;
+        const sourceHash = hashNotesSource(sourceMarkdown);
 
         try {
-            const result = await reorganiseNotes.mutateAsync({
-                notesMarkdown: visibleNotesMarkdownRef.current,
+            const created = await createNotesTransformJob.mutateAsync({
+                operation: "reorganise",
+                notesMarkdown: sourceMarkdown,
                 noteStyle,
                 targetSections,
             });
             if (!isTransformRunCurrent(run)) return;
 
-            if (!result.reorganisedMarkdown.trim()) {
+            const descriptor: Extract<NotesRecoveryDescriptor, { kind: "summarise" | "reorganise" }> = {
+                kind: "reorganise",
+                jobId: created.jobId,
+                runId: String(run.id),
+                sourceHash,
+                startedAt: Date.now(),
+                expiresAt: Date.now() + NOTES_TRANSFORM_RECOVERY_DESCRIPTOR_TTL_MS,
+            };
+            upsertRecoveryDescriptor(descriptor);
+
+            const markdown = await pollActiveTransformJob(run, descriptor);
+            if (!isTransformRunCurrent(run) || markdown === null) return;
+
+            if (!markdown.trim()) {
                 clearActiveTransformRun(run);
                 setTransformError("The transform result looked incomplete. Your notes were not changed.");
                 return;
             }
+            removeRecoveryDescriptors((descriptor) => (
+                descriptor.kind !== "notes_final" && descriptor.runId === String(run.id)
+            ));
             clearActiveTransformRun(run);
-            setTransformPreview({ type: "reorganise", markdown: result.reorganisedMarkdown });
+            if (hashNotesSource(visibleNotesMarkdownRef.current) !== sourceHash) {
+                setRecoveryNotice({
+                    tone: "warning",
+                    message: "A notes action finished, but your notes changed.",
+                    detail: "Your current notes were kept unchanged.",
+                });
+                return;
+            }
+            setTransformPreview({ type: "reorganise", markdown });
             setReorganiseDialogOpen(false);
         } catch (error) {
             if (!isTransformRunCurrent(run)) return;
+            removeRecoveryDescriptors((descriptor) => (
+                descriptor.kind !== "notes_final" && descriptor.runId === String(run.id)
+            ));
             clearActiveTransformRun(run);
             setTransformError(getSafeTransformErrorMessage(error, "reorganise"));
         } finally {
@@ -2300,8 +2760,18 @@ export default function NotesClient({ user }: { user: User }) {
         }
     };
 
+    const ignoreActiveTransformResult = () => {
+        const run = activeTransformRunRef.current;
+        if (run) {
+            removeRecoveryDescriptors((descriptor) => (
+                descriptor.kind !== "notes_final" && descriptor.runId === String(run.id)
+            ));
+        }
+        ignoreTransformRun(run);
+    };
+
     const cancelTransformFlow = () => {
-        ignoreTransformRun();
+        ignoreActiveTransformResult();
         setTransformPreview(null);
         setReorganiseDialogOpen(false);
         setTransformError(null);
@@ -3190,6 +3660,31 @@ export default function NotesClient({ user }: { user: User }) {
                             </div>
                         )}
 
+                        {recoveryNotice && (
+                            <div
+                                className={
+                                    recoveryNotice.tone === "success"
+                                        ? "flex items-start justify-between gap-3 border-b border-emerald-100 bg-emerald-50 px-5 py-3 text-xs text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300"
+                                        : recoveryNotice.tone === "warning"
+                                            ? "flex items-start justify-between gap-3 border-b border-amber-100 bg-amber-50 px-5 py-3 text-xs text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300"
+                                            : "flex items-start justify-between gap-3 border-b border-[#2149A1]/15 bg-[#e8eef9]/70 px-5 py-3 text-xs text-[#2149A1] dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200"
+                                }
+                            >
+                                <div className="min-w-0">
+                                    <p className="font-semibold">{recoveryNotice.message}</p>
+                                    <p className="mt-0.5 leading-relaxed opacity-80">{recoveryNotice.detail}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setRecoveryNotice(null)}
+                                    className="rounded-md p-1 transition-colors active:scale-95 active:opacity-80 hover:bg-white/60 dark:hover:bg-slate-950/30"
+                                    aria-label="Dismiss notes recovery message"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                        )}
+
                         {activeTransformRun && activeTransformLabel && activeTransformBody && (
                             <div className="flex flex-col gap-2 border-b border-[#2149A1]/15 bg-[#e8eef9]/70 px-5 py-3 text-xs text-[#2149A1] dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex min-w-0 items-start gap-2">
@@ -3203,7 +3698,7 @@ export default function NotesClient({ user }: { user: User }) {
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => ignoreTransformRun()}
+                                    onClick={ignoreActiveTransformResult}
                                     className="self-start rounded-lg border border-[#2149A1]/20 bg-white/70 px-2.5 py-1.5 text-xs font-semibold text-[#2149A1] transition-colors active:scale-[0.98] active:opacity-80 hover:bg-white dark:border-blue-400/30 dark:bg-slate-950/40 dark:text-blue-200 dark:hover:bg-slate-950"
                                 >
                                     Ignore result

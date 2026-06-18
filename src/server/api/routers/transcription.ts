@@ -23,6 +23,8 @@ const NOTES_TRANSFORM_MIN_CHARS = 500;
 const NOTES_TRANSFORM_MIN_WORDS = 80;
 const NOTES_TRANSFORM_MAX_SECTIONS = 12;
 const NOTES_TRANSFORM_TIMEOUT_MS = 60_000;
+const NOTES_TRANSFORM_JOB_TIMEOUT_MS = 15_000;
+const NOTES_FINAL_RECOVERY_TIMEOUT_MS = 15_000;
 
 type NotesTransformKind = "summarise" | "reorganise";
 
@@ -58,6 +60,54 @@ const summariseResponseSchema = z.object({
 const reorganiseResponseSchema = z.object({
     reorganisedMarkdown: z.string(),
 });
+
+const transformJobCreateResponseSchema = z.object({
+    jobId: z.string(),
+    status: z.enum(["queued", "running", "succeeded", "failed", "expired"]),
+});
+
+const transformJobResponseSchema = z.object({
+    jobId: z.string(),
+    type: z.string().optional(),
+    status: z.enum(["queued", "running", "succeeded", "failed", "expired"]),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+    completedAt: z.string().optional(),
+    expiresAt: z.string().optional(),
+    result: z.object({
+        summaryMarkdown: z.string().optional(),
+        reorganisedMarkdown: z.string().optional(),
+    }).optional(),
+    error: z.object({
+        code: z.string().optional(),
+        message: z.string().optional(),
+    }).optional(),
+});
+
+const notesFinalRecoveryResponseSchema = z.discriminatedUnion("status", [
+    z.object({
+        status: z.literal("pending"),
+        expiresAt: z.string(),
+    }),
+    z.object({
+        status: z.literal("succeeded"),
+        notesMarkdown: z.string(),
+        completedAt: z.string().optional(),
+        expiresAt: z.string(),
+    }),
+    z.object({
+        status: z.literal("failed"),
+        errorCode: z.string().optional(),
+        completedAt: z.string().optional(),
+        expiresAt: z.string().optional(),
+    }),
+    z.object({
+        status: z.literal("expired"),
+    }),
+    z.object({
+        status: z.literal("not_found"),
+    }),
+]);
 
 function todayUTC(): string {
     return new Date().toISOString().split("T")[0]!;
@@ -248,6 +298,72 @@ async function callNotesTransform(
     }
 }
 
+async function fetchNotesBackendJson(
+    endpoint: string,
+    options: {
+        method: "GET" | "POST";
+        body?: Record<string, unknown>;
+        timeoutMs: number;
+        unavailableMessage: string;
+        timeoutMessage: string;
+        failureMessage: string;
+        allowErrorPayload?: boolean;
+    }
+): Promise<{ payload: unknown; httpStatus: number }> {
+    const baseUrl = getNotesTransformBaseUrl();
+    if (!baseUrl || !env.NOTES_TRANSFORM_SECRET) {
+        throw new TRPCError({
+            code: "SERVICE_UNAVAILABLE",
+            message: options.unavailableMessage,
+        });
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), options.timeoutMs);
+
+    try {
+        const response = await fetch(`${baseUrl}${endpoint}`, {
+            method: options.method,
+            headers: {
+                "Authorization": `Bearer ${env.NOTES_TRANSFORM_SECRET}`,
+                "Content-Type": "application/json",
+            },
+            body: options.body ? JSON.stringify(options.body) : undefined,
+            signal: controller.signal,
+        });
+
+        let payload: unknown = null;
+        try {
+            payload = await response.json();
+        } catch {
+            payload = null;
+        }
+
+        if (!response.ok && options.allowErrorPayload) {
+            return { payload, httpStatus: response.status };
+        }
+
+        if (!response.ok) {
+            throw new TRPCError({
+                code: response.status === 503 ? "SERVICE_UNAVAILABLE" : "BAD_GATEWAY",
+                message: options.failureMessage,
+            });
+        }
+
+        return { payload, httpStatus: response.status };
+    } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
+        const isAbort = error instanceof Error && error.name === "AbortError";
+        throw new TRPCError({
+            code: isAbort ? "TIMEOUT" : "BAD_GATEWAY",
+            message: isAbort ? options.timeoutMessage : options.failureMessage,
+        });
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
 export const transcriptionRouter = createTRPCRouter({
     /**
      * Mint a short-lived WS session token.
@@ -377,5 +493,177 @@ export const transcriptionRouter = createTRPCRouter({
             });
 
             return { reorganisedMarkdown: parsed.data.reorganisedMarkdown };
+        }),
+
+    createNotesTransformJob: protectedProcedure
+        .input(notesTransformBaseSchema.extend({
+            operation: z.enum(["summarise", "reorganise"]),
+            targetSections: z.array(z.string().trim().min(1)).max(50).optional(),
+        }))
+        .mutation(async ({ input }) => {
+            validateNotesTransformInput(input.notesMarkdown, input.operation);
+
+            const targetSections = input.operation === "reorganise"
+                ? Array.from(
+                    new Map((input.targetSections ?? [])
+                        .map((section) => [section.toLocaleLowerCase(), section])).values()
+                )
+                : [];
+
+            if (targetSections.length > NOTES_TRANSFORM_MAX_SECTIONS) {
+                throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message: "Use up to 12 sections.",
+                });
+            }
+
+            const { payload } = await fetchNotesBackendJson("/notes/transform-jobs", {
+                method: "POST",
+                body: input.operation === "summarise"
+                    ? {
+                        operation: input.operation,
+                        notesMarkdown: input.notesMarkdown,
+                        noteStyle: input.noteStyle,
+                    }
+                    : {
+                        operation: input.operation,
+                        notesMarkdown: input.notesMarkdown,
+                        noteStyle: input.noteStyle,
+                        targetSections,
+                    },
+                timeoutMs: NOTES_TRANSFORM_JOB_TIMEOUT_MS,
+                unavailableMessage: "The notes transform service is unavailable. Your notes were not changed.",
+                timeoutMessage: "The notes transform service is unavailable. Your notes were not changed.",
+                failureMessage: "The transform failed. Your notes were not changed.",
+            });
+
+            const parsed = transformJobCreateResponseSchema.safeParse(payload);
+            if (!parsed.success) {
+                throw new TRPCError({
+                    code: "BAD_GATEWAY",
+                    message: "The transform failed. Your notes were not changed.",
+                });
+            }
+
+            return parsed.data;
+        }),
+
+    getNotesTransformJob: protectedProcedure
+        .input(z.object({
+            jobId: z.string().trim().min(1).max(200),
+        }))
+        .mutation(async ({ input }) => {
+            const { payload, httpStatus } = await fetchNotesBackendJson(
+                `/notes/transform-jobs/${encodeURIComponent(input.jobId)}`,
+                {
+                    method: "GET",
+                    timeoutMs: NOTES_TRANSFORM_JOB_TIMEOUT_MS,
+                    unavailableMessage: "The notes transform service is unavailable. Your notes were not changed.",
+                    timeoutMessage: "The notes transform service is unavailable. Your notes were not changed.",
+                    failureMessage: "The transform failed. Your notes were not changed.",
+                    allowErrorPayload: true,
+                }
+            );
+
+            if (httpStatus === 404) {
+                return { status: "not_found" as const };
+            }
+
+            if (httpStatus >= 400) {
+                const parsed = backendErrorSchema.safeParse(payload);
+                throw new TRPCError({
+                    code: httpStatus === 503 ? "SERVICE_UNAVAILABLE" : "BAD_GATEWAY",
+                    message: mapBackendTransformError("summarise", parsed.success ? parsed.data.error.code : undefined, httpStatus),
+                });
+            }
+
+            const parsed = transformJobResponseSchema.safeParse(payload);
+            if (!parsed.success) {
+                throw new TRPCError({
+                    code: "BAD_GATEWAY",
+                    message: "The transform failed. Your notes were not changed.",
+                });
+            }
+
+            const job = parsed.data;
+            if (job.status === "succeeded") {
+                const summaryMarkdown = job.result?.summaryMarkdown;
+                const reorganisedMarkdown = job.result?.reorganisedMarkdown;
+                if (typeof summaryMarkdown === "string" && summaryMarkdown.trim()) {
+                    return {
+                        status: "succeeded" as const,
+                        type: "summary" as const,
+                        markdown: summaryMarkdown,
+                        expiresAt: job.expiresAt,
+                    };
+                }
+                if (typeof reorganisedMarkdown === "string" && reorganisedMarkdown.trim()) {
+                    return {
+                        status: "succeeded" as const,
+                        type: "reorganise" as const,
+                        markdown: reorganisedMarkdown,
+                        expiresAt: job.expiresAt,
+                    };
+                }
+                throw new TRPCError({
+                    code: "BAD_GATEWAY",
+                    message: "The transform result looked incomplete. Your notes were not changed.",
+                });
+            }
+
+            if (job.status === "failed") {
+                const kind: NotesTransformKind = job.type === "notes-transform-reorganise"
+                    ? "reorganise"
+                    : "summarise";
+                return {
+                    status: "failed" as const,
+                    code: job.error?.code ?? "transform-failed",
+                    message: mapBackendTransformError(kind, job.error?.code),
+                    expiresAt: job.expiresAt,
+                };
+            }
+
+            return {
+                status: job.status,
+                expiresAt: job.expiresAt,
+            };
+        }),
+
+    getNotesFinalRecovery: protectedProcedure
+        .input(z.object({
+            recoveryId: z.string().trim().min(1).max(200),
+            recordingSessionId: z.string().trim().min(1).max(200).optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const { payload, httpStatus } = await fetchNotesBackendJson("/notes/finalisation-recovery", {
+                method: "POST",
+                body: {
+                    recoveryId: input.recoveryId,
+                    userId: ctx.session.user.id,
+                    recordingSessionId: input.recordingSessionId,
+                },
+                timeoutMs: NOTES_FINAL_RECOVERY_TIMEOUT_MS,
+                unavailableMessage: "Notes finalisation recovery is unavailable.",
+                timeoutMessage: "Notes finalisation recovery took too long.",
+                failureMessage: "Could not check final notes recovery.",
+                allowErrorPayload: true,
+            });
+
+            if (httpStatus >= 400) {
+                throw new TRPCError({
+                    code: httpStatus === 503 ? "SERVICE_UNAVAILABLE" : "BAD_GATEWAY",
+                    message: "Could not check final notes recovery.",
+                });
+            }
+
+            const parsed = notesFinalRecoveryResponseSchema.safeParse(payload);
+            if (!parsed.success) {
+                throw new TRPCError({
+                    code: "BAD_GATEWAY",
+                    message: "Could not check final notes recovery.",
+                });
+            }
+
+            return parsed.data;
         }),
 });

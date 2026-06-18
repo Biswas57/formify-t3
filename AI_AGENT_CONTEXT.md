@@ -12,20 +12,20 @@ Formify is now free-app-first. Do not add Free/Pro distinctions, paywall gates, 
 - The web server mints short-lived WS JWTs in `src/server/ws-token.ts`.
 - Tokens are signed with `WS_TOKEN_SECRET`, which must match the transcription server.
 - Token minting happens through `transcription.getSessionToken` and remains auth-based.
-- Notes Summarise/Reorganise calls protected `transcription.summariseNotes` / `transcription.reorganiseNotes` tRPC mutations; the web server then calls `ws-transcription` HTTP endpoints with `NOTES_TRANSFORM_SECRET`.
+- Notes Summarise/Reorganise use protected async transform-job tRPC bridge procedures; the web server calls `ws-transcription` HTTP endpoints with `NOTES_TRANSFORM_SECRET`.
 - Do not touch the sibling `ws-transcription` repo unless explicitly asked.
 
 ## T-186 Cross-Repo Recovery Split
 
-Frontend T-186 must wait for backend T-135. Frontend-only recovery cannot retrieve a lost `notes_final` if the WebSocket disconnects before delivery; the backend needs short-window final Notes recovery first.
+Backend T-135 now provides short-window final Notes recovery, and web T-186 bridges it without exposing backend secrets to the browser.
 
-- Backend `ws-transcription` owns T-135: retain completed final Notes results for a short window, guard by authenticated owner/session, expose safe pending/succeeded/failed/expired/not-found states, keep normal WebSocket `notes_final` as the fast path, and avoid raw notes/transcript/audio/provider-output logging.
-- The web app server/tRPC layer should later bridge to backend recovery endpoints using the existing server-secret pattern and never expose backend secrets to the browser.
-- The browser should later store only short-lived recovery descriptors: recovery id, kind, session/run guard, started/expires timestamps, and source hash where needed.
-- Recovered final notes may apply only when the session still matches.
-- Recovered Summarise/Reorganise output must open as preview only when the source notes hash still matches and must never auto-apply.
-- Clear descriptors on Reset Notes, new recording, destructive template/style/section changes, explicit ignore, or cancel.
-- Implementation order: T-184 Copy Markdown icon, T-185 mobile transform preview actions, backend T-135 finalisation recovery, frontend T-186 recovery UX/bridge, then T-187 PDF/export polish.
+- Backend `ws-transcription` owns T-135: authenticated Notes `started` may include `finalisationRecoveryId`, normal WebSocket `notes_final` remains the fast path, and completed final Notes results are retained briefly behind owner/session guards.
+- The web app server/tRPC layer bridges final recovery and async transform jobs with the existing `NOTES_TRANSFORM_SECRET` pattern. Browser code must never call backend recovery routes directly.
+- The browser stores only short-lived recovery descriptors: recovery id or transform job id, kind, session/run guard, started/expires timestamps, and source hash where needed. It must not store audio, transcript, raw backend messages, tokens, provider output, or recovered transform/final output.
+- Recovered final notes may apply only when the session still matches and use the same undo-aware final replacement path as normal `notes_final`.
+- Recovered Summarise/Reorganise output opens as preview only when the source notes hash still matches and must never auto-apply.
+- Clear descriptors on Reset Notes, new recording, destructive template/style/section changes, explicit ignore, cancel, expiry, failed/not-found recovery, or successful normal/recovered final delivery.
+- Remaining order: T-184 Copy Markdown icon, T-185 mobile transform preview actions, then T-187 PDF/export polish.
 
 ## Main Files
 
