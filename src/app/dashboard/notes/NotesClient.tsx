@@ -3357,7 +3357,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                         {copiedFormat === "markdown" ? (
                                                             <Check className="h-4 w-4 text-emerald-600" />
                                                         ) : (
-                                                            <FileText className="h-4 w-4 text-slate-400" />
+                                                            <FileDown className="h-4 w-4 text-slate-400" />
                                                         )}
                                                         {copiedFormat === "markdown" ? "Copied Markdown" : "Copy Markdown"}
                                                     </button>
@@ -3466,7 +3466,7 @@ export default function NotesClient({ user }: { user: User }) {
                                                         onClick={() => void handleCopy("markdown")}
                                                         className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors active:bg-slate-100 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-800"
                                                     >
-                                                        <FileText className="h-3.5 w-3.5 text-slate-400" />
+                                                        <FileDown className="h-3.5 w-3.5 text-slate-400" />
                                                         Copy Markdown
                                                     </button>
                                                 </div>
@@ -3781,8 +3781,8 @@ export default function NotesClient({ user }: { user: User }) {
                         className="absolute inset-0 bg-black/50 motion-safe:animate-fade-in motion-reduce:animate-none disabled:cursor-default"
                         onClick={isReorganiseTransforming ? undefined : cancelTransformFlow}
                     />
-                    <div className="relative flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl motion-safe:animate-slide-up motion-reduce:animate-none sm:rounded-xl sm:motion-safe:animate-fade-up dark:bg-slate-900 dark:shadow-slate-950/60">
-                        <div className="border-b border-slate-100 px-6 py-5 dark:border-slate-800">
+                    <div className="relative flex max-h-[calc(100dvh-0.75rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl motion-safe:animate-slide-up motion-reduce:animate-none sm:max-h-[92dvh] sm:rounded-xl sm:motion-safe:animate-fade-up dark:bg-slate-900 dark:shadow-slate-950/60">
+                        <div className="flex-shrink-0 border-b border-slate-100 px-6 py-5 dark:border-slate-800">
                             <button
                                 type="button"
                                 onClick={cancelTransformFlow}
@@ -3841,7 +3841,7 @@ export default function NotesClient({ user }: { user: User }) {
                             )}
                         </div>
 
-                        <div className="sticky bottom-0 flex flex-col gap-3 border-t border-slate-100 bg-white px-6 py-4 sm:flex-row dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex flex-shrink-0 flex-col gap-3 border-t border-slate-100 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex-row sm:px-6 sm:py-4 sm:pb-4 dark:border-slate-800 dark:bg-slate-900">
                             <button
                                 type="button"
                                 onClick={() => void handleGenerateReorganisePreview()}
@@ -3871,8 +3871,8 @@ export default function NotesClient({ user }: { user: User }) {
                         className="absolute inset-0 bg-black/50 motion-safe:animate-fade-in motion-reduce:animate-none"
                         onClick={cancelTransformFlow}
                     />
-                    <div className="relative flex max-h-[94dvh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl motion-safe:animate-slide-up motion-reduce:animate-none sm:max-h-[88vh] sm:rounded-xl sm:motion-safe:animate-fade-up dark:bg-slate-900 dark:shadow-slate-950/60">
-                        <div className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+                    <div className="relative flex max-h-[calc(100dvh-0.75rem)] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl motion-safe:animate-slide-up motion-reduce:animate-none sm:max-h-[88vh] sm:rounded-xl sm:motion-safe:animate-fade-up dark:bg-slate-900 dark:shadow-slate-950/60">
+                        <div className="flex-shrink-0 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
                             <button
                                 type="button"
                                 onClick={cancelTransformFlow}
@@ -3895,12 +3895,12 @@ export default function NotesClient({ user }: { user: User }) {
                             </div>
                         </div>
 
-                        <div className="sticky bottom-0 flex flex-col gap-3 border-t border-slate-100 bg-white px-6 py-4 sm:flex-row dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex flex-shrink-0 flex-col gap-3 border-t border-slate-100 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex-row sm:px-6 sm:py-4 sm:pb-4 dark:border-slate-800 dark:bg-slate-900">
                             {transformPreview.type === "reorganise" && (
                                 <button
                                     type="button"
                                     onClick={backToReorganiseSections}
-                                    className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    className="order-2 flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 sm:order-1 sm:py-2 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                                 >
                                     Back to sections
                                 </button>
@@ -3908,14 +3908,14 @@ export default function NotesClient({ user }: { user: User }) {
                             <button
                                 type="button"
                                 onClick={cancelTransformFlow}
-                                className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                className="order-3 flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-[background-color,transform,opacity] hover:bg-slate-50 active:scale-[0.98] active:opacity-80 sm:order-2 sm:py-2 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
                                 onClick={applyTransformPreview}
-                                className="flex-1 rounded-lg bg-[#2149A1] px-4 py-2 text-sm font-medium text-white transition-[background-color,transform,opacity] hover:bg-[#1a3a87] active:scale-[0.98] active:opacity-90"
+                                className="order-1 flex-1 rounded-lg bg-[#2149A1] px-4 py-2.5 text-sm font-medium text-white transition-[background-color,transform,opacity] hover:bg-[#1a3a87] active:scale-[0.98] active:opacity-90 sm:order-3 sm:py-2"
                             >
                                 {transformPreview.type === "summary" ? "Apply Summary" : "Apply Reorganised Notes"}
                             </button>

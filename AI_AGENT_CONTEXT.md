@@ -180,3 +180,11 @@ Current frontend form messages expect `{ type, attributes }`; `corrected_audio` 
 - Historical billing migrations remain; do not delete old migrations casually.
 - Fair-use session/cost limits are not implemented yet (see D-008 in `DECISIONS.md`).
 - PDF exports embed the repo-owned `public/favicon.svg` mark when available and render the "Formify" wordmark as text. A separate exportable wordmark asset still does not exist.
+
+## T-187 PDF/Export Polish Criteria
+
+PDF/export polish is a final professional layer, not the next core blocker. Current exports are client-side `jsPDF`, dynamically imported, and use shared Formify branding, safe filenames, headers, footers, page numbers, basic Notes Markdown rendering, and grouped Forms field rendering.
+
+Future export polish should keep recording, transform, WebSocket, backend, and localStorage contracts unchanged. Forms and Notes exports should use safe meaningful filenames, readable typography, clear heading hierarchy, sensible page breaks, no clipped text, clean multiline handling, and a consistent Formify visual style. Notes PDF should render headings, lists, quotes, tables, code blocks, and long paragraphs deliberately. Forms PDF should group fields and answers clearly, handle long/multiline answers, and represent empty values cleanly.
+
+Implementation follow-ups are tracked separately as T-188 for Notes PDF formatting and T-189 for Forms PDF formatting. Do not mix export polish into Notes reliability or recording lifecycle work.
