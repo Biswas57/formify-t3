@@ -169,7 +169,7 @@ Current frontend form messages expect `{ type, attributes }`; `corrected_audio` 
 - Start flows should acquire microphone access before sending backend `start` so denied mic permission does not leave a started backend session open.
 - Audio chunks should only be sent after the backend confirms `{ type: "started" }` for the active session.
 - Reset/new-session flows should invalidate abandoned sessions so late backend messages cannot repopulate stale UI state.
-- Notes `continuation: true` is reserved for active recovery or active reconnect with the same signed `recordingSessionId`; fresh/new sessions must not send continuation just because visible notes exist.
+- Notes `continuation: true` is reserved for active recovery or active reconnect with the same signed `recordingSessionId`; fresh/new sessions must not send continuation just because visible notes exist. `currentNotesMarkdown` is separate context seeding and should carry existing visible/canonical notes into resumed fresh segments even when `continuation` is false.
 
 ## Safe-Change Rules
 

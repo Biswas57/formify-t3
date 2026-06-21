@@ -1678,7 +1678,7 @@ export default function NotesClient({ user }: { user: User }) {
             .map((s) => s.trim())
             .filter(Boolean);
 
-        const continuationNotesMarkdown = visibleNotesMarkdownRef.current;
+        const notesContextMarkdown = getCurrentNotesContextMarkdown();
         const shouldContinueNotesSession =
             intent === "active-recovery" || intent === "same-session-reconnect";
 
@@ -1692,10 +1692,31 @@ export default function NotesClient({ user }: { user: User }) {
 
         if (shouldContinueNotesSession) {
             startPayload.continuation = true;
-            startPayload.currentNotesMarkdown = continuationNotesMarkdown;
+        }
+
+        if (notesContextMarkdown) {
+            startPayload.currentNotesMarkdown = notesContextMarkdown;
         }
 
         return startPayload;
+    }
+
+    function getCurrentNotesContextMarkdown() {
+        const candidates = [
+            visibleNotesMarkdownRef.current,
+            notesMarkdown,
+        ];
+
+        for (const candidate of candidates) {
+            if (candidate.trim().length > 0) return candidate;
+        }
+
+        if (notesDraftStorageKey && typeof window !== "undefined") {
+            const draft = parseNotesDraft(window.localStorage.getItem(notesDraftStorageKey));
+            if (draft?.notesMarkdown.trim()) return draft.notesMarkdown;
+        }
+
+        return "";
     }
 
     function moveToPausedAfterReconnectFailure(message: string) {
@@ -2663,9 +2684,6 @@ export default function NotesClient({ user }: { user: User }) {
             clearRecoveryDescriptors();
         }
         setRecoveryNotice(null);
-        if (!shouldResumeActiveRecording) {
-            clearNotesHistory();
-        }
         setIsStartingRecording(true);
         setMicError(null);
         manualStopRequestedRef.current = false;
